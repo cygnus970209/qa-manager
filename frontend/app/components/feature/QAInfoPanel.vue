@@ -84,12 +84,11 @@ async function onSave() {
   }
 }
 
-async function onPickFile(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (!input.files || input.files.length === 0) return
+async function uploadFiles(files: Iterable<File>) {
   uploading.value = true
+  error.value = null
   try {
-    for (const file of Array.from(input.files)) {
+    for (const file of files) {
       const url = await upload.uploadImage(file, 'qa_image')
       form.images.push(url)
     }
@@ -97,8 +96,31 @@ async function onPickFile(e: Event) {
     error.value = e?.message ?? '업로드 실패'
   } finally {
     uploading.value = false
-    input.value = ''
   }
+}
+
+async function onPickFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  await uploadFiles(Array.from(input.files))
+  input.value = ''
+}
+
+/** 클립보드 이미지 paste → 자동 업로드 (편집 모드에서만 동작) */
+async function onPaste(e: ClipboardEvent) {
+  if (!editing.value) return
+  const items = e.clipboardData?.items
+  if (!items) return
+  const files: File[] = []
+  for (const item of Array.from(items)) {
+    if (item.type.startsWith('image/')) {
+      const f = item.getAsFile()
+      if (f) files.push(f)
+    }
+  }
+  if (files.length === 0) return
+  e.preventDefault()
+  await uploadFiles(files)
 }
 
 function removeImage(idx: number) {
@@ -165,7 +187,9 @@ async function onDelete() {
         v-if="editing"
         v-model="form.description"
         rows="5"
+        placeholder="설명을 입력하세요 (이미지 붙여넣기 가능)"
         class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        @paste="onPaste"
       />
       <p v-else class="whitespace-pre-wrap text-sm text-slate-700">
         {{ item.description ?? '—' }}

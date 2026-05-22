@@ -107,13 +107,13 @@ async function refresh() {
   emit('refreshed', next)
 }
 
-async function uploadFiles(files: FileList | null, target: 'new' | 'edit' | 'reply') {
-  if (!files || files.length === 0) return
+async function uploadFiles(files: FileList | File[] | null, target: 'new' | 'edit' | 'reply') {
+  if (!files || (files as File[]).length === 0) return
   uploading.value = true
   error.value = null
   try {
     const urls: string[] = []
-    for (const f of Array.from(files)) {
+    for (const f of Array.from(files as Iterable<File>)) {
       urls.push(await upload.uploadImage(f, 'comment_image'))
     }
     if (target === 'new') newImages.value.push(...urls)
@@ -124,6 +124,22 @@ async function uploadFiles(files: FileList | null, target: 'new' | 'edit' | 'rep
   } finally {
     uploading.value = false
   }
+}
+
+/** 클립보드 이미지 paste → 자동 업로드 */
+async function onPaste(e: ClipboardEvent, target: 'new' | 'edit' | 'reply') {
+  const items = e.clipboardData?.items
+  if (!items) return
+  const files: File[] = []
+  for (const item of Array.from(items)) {
+    if (item.type.startsWith('image/')) {
+      const f = item.getAsFile()
+      if (f) files.push(f)
+    }
+  }
+  if (files.length === 0) return
+  e.preventDefault()
+  await uploadFiles(files, target)
 }
 
 async function submitNew() {
@@ -336,6 +352,7 @@ function memberInitial(name: string) {
                     class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                     @input="checkMention($event.target as HTMLTextAreaElement, 'edit')"
                     @keydown="onMentionKey"
+                    @paste="onPaste($event, 'edit')"
                   />
                   <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" class="absolute left-0 right-auto top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
@@ -490,6 +507,7 @@ function memberInitial(name: string) {
                     class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                     @input="checkMention($event.target as HTMLTextAreaElement, 'reply')"
                     @keydown="onMentionKey"
+                    @paste="onPaste($event, 'reply')"
                   />
                   <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" class="absolute left-0 top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
@@ -544,10 +562,11 @@ function memberInitial(name: string) {
                 v-model="newContent"
                 rows="2"
                 :maxlength="MAX_LEN"
-                placeholder="코멘트를 입력하세요... (@를 입력하면 멤버 멘션)"
+                placeholder="코멘트를 입력하세요... (@를 입력하면 멤버 멘션, 이미지 붙여넣기 가능)"
                 class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                 @input="checkMention($event.target as HTMLTextAreaElement, 'new')"
                 @keydown="onMentionKey"
+                @paste="onPaste($event, 'new')"
               />
               <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" class="absolute left-0 top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                 <li v-for="(m, i) in filteredMembers" :key="m.id">
