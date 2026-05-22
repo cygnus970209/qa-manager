@@ -84,16 +84,23 @@ async function onSave() {
   }
 }
 
+function ensureNamed(f: File): File {
+  if (f.name && f.name.length > 0) return f
+  const ext = (f.type.split('/')[1] ?? 'png').replace(/[^a-z0-9]/gi, '')
+  return new File([f], `clipboard-${Date.now()}.${ext}`, { type: f.type })
+}
+
 async function uploadFiles(files: Iterable<File>) {
   uploading.value = true
   error.value = null
   try {
     for (const file of files) {
-      const url = await upload.uploadImage(file, 'qa_image')
+      const url = await upload.uploadImage(ensureNamed(file), 'qa_image')
       form.images.push(url)
     }
   } catch (e: any) {
-    error.value = e?.message ?? '업로드 실패'
+    console.error('QAInfoPanel upload failed', e)
+    error.value = e?.data?.message ?? e?.message ?? '업로드 실패'
   } finally {
     uploading.value = false
   }
@@ -108,14 +115,24 @@ async function onPickFile(e: Event) {
 
 /** 클립보드 이미지 paste → 자동 업로드 (편집 모드에서만 동작) */
 async function onPaste(e: ClipboardEvent) {
+  console.debug('[paste] QAInfoPanel editing=', editing.value, e.clipboardData?.types, e.clipboardData?.files?.length, e.clipboardData?.items?.length)
   if (!editing.value) return
-  const items = e.clipboardData?.items
-  if (!items) return
+  const cd = e.clipboardData
+  if (!cd) return
   const files: File[] = []
-  for (const item of Array.from(items)) {
-    if (item.type.startsWith('image/')) {
-      const f = item.getAsFile()
-      if (f) files.push(f)
+  // 1) 일부 브라우저는 files 에 직접 노출
+  if (cd.files && cd.files.length > 0) {
+    for (const f of Array.from(cd.files)) {
+      if (f.type.startsWith('image/')) files.push(f)
+    }
+  }
+  // 2) items fallback
+  if (files.length === 0 && cd.items) {
+    for (const item of Array.from(cd.items)) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const f = item.getAsFile()
+        if (f) files.push(f)
+      }
     }
   }
   if (files.length === 0) return
