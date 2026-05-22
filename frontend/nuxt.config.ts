@@ -34,8 +34,9 @@ export default defineNuxtConfig({
   },
 
   // 모든 응답에 기본 보안 헤더 부착.
-  // CSP 는 외부 이미지(아바타) 와 API base 를 허용하면서 인라인 스크립트는 차단.
-  // 운영에서 도메인이 추가되면 connect-src/img-src 갱신 필요.
+  // CSP: Nuxt SSR 은 hydration 용 인라인 <script> 를 주입하므로 'unsafe-inline' 필요.
+  //      더 강한 보안(nonce 기반)을 원하면 nuxt-security 모듈 도입 고려.
+  //      운영에서 외부 도메인이 추가되면 connect-src/img-src 갱신 필요.
   routeRules: {
     '/**': {
       headers: {
@@ -47,7 +48,7 @@ export default defineNuxtConfig({
           "default-src 'self'",
           "img-src 'self' data: https:",
           "style-src 'self' 'unsafe-inline'",
-          "script-src 'self'",
+          "script-src 'self' 'unsafe-inline'",
           "font-src 'self' data:",
           "connect-src 'self' http://localhost:8080 https:",
           "frame-ancestors 'none'",
