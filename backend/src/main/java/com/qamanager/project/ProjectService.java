@@ -82,7 +82,7 @@ public class ProjectService {
                 return false;
             })
             .orElseGet(() -> {
-                TeamMember member = memberRepository.findById(memberId)
+                TeamMember member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
                     .orElseThrow(() -> ApiException.unauthorized("멤버가 존재하지 않습니다."));
                 pinRepository.save(new ProjectPin(project, member));
                 return true;

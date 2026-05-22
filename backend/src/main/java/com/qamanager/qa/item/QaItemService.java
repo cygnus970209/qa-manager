@@ -165,7 +165,7 @@ public class QaItemService {
             if (required) throw ApiException.badRequest("assigneeId 가 필요합니다.");
             return null;
         }
-        return memberRepository.findById(id)
+        return memberRepository.findByIdAndDeletedAtIsNull(id)
             .orElseThrow(() -> ApiException.notFound("담당자를 찾을 수 없습니다. id=" + id));
     }
 

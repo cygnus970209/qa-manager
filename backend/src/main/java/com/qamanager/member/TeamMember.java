@@ -7,13 +7,18 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
+/**
+ * 소프트 삭제 정책:
+ * - deleted_at IS NULL 인 row 만 활성 멤버.
+ * - 엔티티 레벨 SQLRestriction 은 두지 않는다 (ManyToOne 참조의 lazy 초기화까지 막아
+ *   historical 데이터인 댓글/QA assignee 등이 깨지기 때문).
+ * - 로그인/인증/멤버 목록은 Repository 의 active 메서드(`findByIdAndDeletedAtIsNull` 등)로 필터링.
+ */
 @Entity
 @Table(name = "team_member")
-@SQLRestriction("deleted_at IS NULL")
 public class TeamMember extends BaseEntity {
 
     @Id

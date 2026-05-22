@@ -29,7 +29,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthDto.IssuedTokens login(AuthDto.LoginRequest req) {
-        TeamMember m = memberRepository.findByUsername(req.username())
+        TeamMember m = memberRepository.findByUsernameAndDeletedAtIsNull(req.username())
             .orElseThrow(() -> ApiException.unauthorized("아이디 또는 비밀번호가 일치하지 않습니다."));
 
         if (!passwordEncoder.matches(req.password(), m.getPasswordHash())) {
@@ -54,21 +54,21 @@ public class AuthService {
             throw ApiException.unauthorized("이미 사용된 리프레시 토큰입니다.");
         }
         Long memberId = tokenProvider.getMemberId(claims);
-        TeamMember m = memberRepository.findById(memberId)
+        TeamMember m = memberRepository.findByIdAndDeletedAtIsNull(memberId)
             .orElseThrow(() -> ApiException.unauthorized("멤버가 존재하지 않습니다."));
         return issueTokens(m);
     }
 
     @Transactional(readOnly = true)
     public AuthDto.MeResponse me(Long memberId) {
-        TeamMember m = memberRepository.findById(memberId)
+        TeamMember m = memberRepository.findByIdAndDeletedAtIsNull(memberId)
             .orElseThrow(() -> ApiException.unauthorized("멤버가 존재하지 않습니다."));
         return new AuthDto.MeResponse(m.getId(), m.getUsername(), m.getName(), m.getRole(), m.getAvatarUrl());
     }
 
     @Transactional
     public AuthDto.MeResponse updateMe(Long memberId, AuthDto.UpdateMeRequest req) {
-        TeamMember m = memberRepository.findById(memberId)
+        TeamMember m = memberRepository.findByIdAndDeletedAtIsNull(memberId)
             .orElseThrow(() -> ApiException.unauthorized("멤버가 존재하지 않습니다."));
         // 본인은 name, avatarUrl 만 수정 가능 (role 은 관리자 권한)
         m.update(req.name(), null, req.avatarUrl());
@@ -77,7 +77,7 @@ public class AuthService {
 
     @Transactional
     public void changeMyPassword(Long memberId, AuthDto.ChangeMyPasswordRequest req) {
-        TeamMember m = memberRepository.findById(memberId)
+        TeamMember m = memberRepository.findByIdAndDeletedAtIsNull(memberId)
             .orElseThrow(() -> ApiException.unauthorized("멤버가 존재하지 않습니다."));
         if (!passwordEncoder.matches(req.currentPassword(), m.getPasswordHash())) {
             throw ApiException.unauthorized("현재 비밀번호가 일치하지 않습니다.");

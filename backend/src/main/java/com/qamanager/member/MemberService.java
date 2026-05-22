@@ -25,7 +25,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<MemberDto.Response> list() {
-        return memberRepository.findAll().stream().map(MemberDto.Response::from).toList();
+        return memberRepository.findAllByDeletedAtIsNull().stream().map(MemberDto.Response::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -65,7 +65,7 @@ public class MemberService {
     }
 
     private TeamMember findOrThrow(Long id) {
-        return memberRepository.findById(id)
+        return memberRepository.findByIdAndDeletedAtIsNull(id)
             .orElseThrow(() -> ApiException.notFound("멤버를 찾을 수 없습니다. id=" + id));
     }
 }

@@ -48,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String jti = tokenProvider.getJti(claims);
                 if (tokenProvider.isAccess(claims) && !blacklist.isBlacklisted(jti)) {
                     Long memberId = tokenProvider.getMemberId(claims);
-                    memberRepository.findById(memberId)
+                    memberRepository.findByIdAndDeletedAtIsNull(memberId)
                         .map(AuthPrincipal::from)
                         .ifPresent(principal -> {
                             UsernamePasswordAuthenticationToken auth =

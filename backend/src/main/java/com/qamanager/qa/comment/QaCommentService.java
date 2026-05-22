@@ -66,7 +66,7 @@ public class QaCommentService {
                 throw ApiException.badRequest("부모 댓글이 같은 QA 항목에 속하지 않습니다.");
             }
         }
-        TeamMember author = memberRepository.findById(currentMemberId)
+        TeamMember author = memberRepository.findByIdAndDeletedAtIsNull(currentMemberId)
             .orElseThrow(() -> ApiException.unauthorized("로그인 멤버가 존재하지 않습니다."));
         QaComment c = new QaComment(item, parent, author, req.content());
         c.replaceImages(req.images());
@@ -119,7 +119,7 @@ public class QaCommentService {
             .ifPresentOrElse(
                 reactionRepository::delete,
                 () -> {
-                    TeamMember m = memberRepository.findById(currentMemberId)
+                    TeamMember m = memberRepository.findByIdAndDeletedAtIsNull(currentMemberId)
                         .orElseThrow(() -> ApiException.unauthorized("로그인 멤버가 존재하지 않습니다."));
                     reactionRepository.save(new QaCommentReaction(c, emoji, m));
                 }

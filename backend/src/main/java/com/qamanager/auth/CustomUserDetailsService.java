@@ -17,7 +17,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) {
-        return memberRepository.findByUsername(username)
+        return memberRepository.findByUsernameAndDeletedAtIsNull(username)
             .map(AuthPrincipal::from)
             .orElseThrow(() -> new UsernameNotFoundException("username not found: " + username));
     }
