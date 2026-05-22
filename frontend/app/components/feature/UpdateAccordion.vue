@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDown, Plus } from '@lucide/vue'
+import { ChevronDown, Pencil, Plus, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import type { ProjectUpdate, QaItem, UpdateStatus } from '~/types/api'
@@ -12,6 +12,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   changeStatus: [updateId: number, status: 'IN_PROGRESS' | 'TESTING' | 'RELEASED']
   addQa: [updateId: number]
+  edit: [update: ProjectUpdate]
+  remove: [update: ProjectUpdate]
 }>()
 
 const open = ref(!!props.defaultOpen)
@@ -75,6 +77,22 @@ function onChangeStatus(e: Event) {
           @click.stop="emit('addQa', update.id)"
         >
           <Plus class="h-3.5 w-3.5" /> QA 추가
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
+          title="업데이트 수정"
+          @click.stop="emit('edit', update)"
+        >
+          <Pencil class="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
+          title="업데이트 삭제"
+          @click.stop="emit('remove', update)"
+        >
+          <Trash2 class="h-3.5 w-3.5" />
         </button>
       </div>
 

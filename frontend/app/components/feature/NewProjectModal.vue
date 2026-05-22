@@ -2,10 +2,20 @@
 import AppDialog from '~/components/base/AppDialog.vue'
 import type { Project, ProjectCreateRequest } from '~/types/api'
 
-const props = defineProps<{ open: boolean }>()
-const emit = defineEmits<{ close: []; created: [project: Project] }>()
+const props = defineProps<{
+  open: boolean
+  mode?: 'create' | 'edit'
+  project?: Project | null
+}>()
+const emit = defineEmits<{
+  close: []
+  created: [project: Project]
+  updated: [project: Project]
+}>()
 
 const projects = useProjects()
+
+const mode = computed<'create' | 'edit'>(() => props.mode ?? 'create')
 
 const form = reactive<{ name: string; description: string; status: ProjectCreateRequest['status'] }>({
   name: '',
@@ -16,11 +26,16 @@ const submitting = ref(false)
 const error = ref<string | null>(null)
 
 watch(() => props.open, (v) => {
-  if (v) {
+  if (!v) return
+  error.value = null
+  if (mode.value === 'edit' && props.project) {
+    form.name = props.project.name
+    form.description = props.project.description ?? ''
+    form.status = (props.project.status.toUpperCase()) as ProjectCreateRequest['status']
+  } else {
     form.name = ''
     form.description = ''
     form.status = 'ACTIVE'
-    error.value = null
   }
 })
 
@@ -28,15 +43,24 @@ async function onSubmit() {
   error.value = null
   submitting.value = true
   try {
-    const created = await projects.create({
-      name: form.name,
-      description: form.description || undefined,
-      status: form.status,
-    })
-    emit('created', created)
+    if (mode.value === 'edit' && props.project) {
+      const updated = await projects.update(props.project.id, {
+        name: form.name,
+        description: form.description || undefined,
+        status: form.status,
+      })
+      emit('updated', updated)
+    } else {
+      const created = await projects.create({
+        name: form.name,
+        description: form.description || undefined,
+        status: form.status,
+      })
+      emit('created', created)
+    }
     emit('close')
   } catch (e: any) {
-    error.value = e?.data?.message ?? '프로젝트 생성에 실패했습니다.'
+    error.value = e?.data?.message ?? (mode.value === 'edit' ? '프로젝트 수정에 실패했습니다.' : '프로젝트 생성에 실패했습니다.')
   } finally {
     submitting.value = false
   }
@@ -44,7 +68,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AppDialog :open="open" title="새 프로젝트" @close="emit('close')">
+  <AppDialog :open="open" :title="mode === 'edit' ? '프로젝트 수정' : '새 프로젝트'" @close="emit('close')">
     <form id="new-project-form" class="space-y-4" @submit.prevent="onSubmit">
       <label class="block">
         <span class="block text-xs font-medium text-slate-600">프로젝트명</span>
@@ -90,7 +114,7 @@ async function onSubmit() {
         :disabled="submitting"
         class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
       >
-        {{ submitting ? '생성 중…' : '생성' }}
+        {{ submitting ? (mode === 'edit' ? '저장 중…' : '생성 중…') : (mode === 'edit' ? '저장' : '생성') }}
       </button>
     </template>
   </AppDialog>

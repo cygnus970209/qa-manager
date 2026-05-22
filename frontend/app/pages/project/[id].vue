@@ -4,7 +4,9 @@ import ProjectHeader from '~/components/feature/ProjectHeader.vue'
 import UpdateAccordion from '~/components/feature/UpdateAccordion.vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
 import NewUpdateModal from '~/components/feature/NewUpdateModal.vue'
+import NewProjectModal from '~/components/feature/NewProjectModal.vue'
 import NewQAModal from '~/components/feature/NewQAModal.vue'
+import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
 import type { Member, Project, ProjectUpdate, QaItem } from '~/types/api'
 
 const route = useRoute()
@@ -27,6 +29,14 @@ const error = ref<string | null>(null)
 const updateModalOpen = ref(false)
 const qaModalOpen = ref(false)
 const qaDefaultUpdateId = ref<number | undefined>()
+
+const projectEditOpen = ref(false)
+const projectDeleteOpen = ref(false)
+
+const updateEditOpen = ref(false)
+const updateEditTarget = ref<ProjectUpdate | null>(null)
+const updateDeleteOpen = ref(false)
+const updateDeleteTarget = ref<ProjectUpdate | null>(null)
 
 async function load() {
   loading.value = true
@@ -87,6 +97,38 @@ function onUpdateCreated(u: ProjectUpdate) {
 function onQaCreated(q: QaItem) {
   items.value = [q, ...items.value]
 }
+
+function onProjectEdited(updated: Project) {
+  project.value = updated
+}
+async function confirmProjectDelete() {
+  if (!project.value) return
+  await projectsApi.remove(project.value.id)
+  projectDeleteOpen.value = false
+  router.push('/')
+}
+
+function openUpdateEdit(u: ProjectUpdate) {
+  updateEditTarget.value = u
+  updateEditOpen.value = true
+}
+function onUpdateEdited(u: ProjectUpdate) {
+  updates.value = updates.value.map((x) => (x.id === u.id ? u : x))
+}
+function openUpdateDelete(u: ProjectUpdate) {
+  updateDeleteTarget.value = u
+  updateDeleteOpen.value = true
+}
+async function confirmUpdateDelete() {
+  if (!updateDeleteTarget.value) return
+  const id = updateDeleteTarget.value.id
+  await updatesApi.remove(id)
+  updates.value = updates.value.filter((u) => u.id !== id)
+  // 해당 업데이트에 속한 QA 항목도 화면에서 즉시 제거 (백엔드 cascade 정책에 따름)
+  items.value = items.value.filter((q) => q.updateId !== id)
+  updateDeleteOpen.value = false
+  updateDeleteTarget.value = null
+}
 </script>
 
 <template>
@@ -143,6 +185,8 @@ function onQaCreated(q: QaItem) {
         :resolved-count="stats.resolved"
         :update-count="updates.length"
         @change-status="onProjectStatus"
+        @edit="projectEditOpen = true"
+        @remove="projectDeleteOpen = true"
       />
 
       <section class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-5">
@@ -191,6 +235,8 @@ function onQaCreated(q: QaItem) {
             :default-open="u === updates[0]"
             @change-status="onUpdateStatus"
             @add-qa="onAddInlineQa"
+            @edit="openUpdateEdit"
+            @remove="openUpdateDelete"
           />
         </div>
       </section>
@@ -200,6 +246,35 @@ function onQaCreated(q: QaItem) {
         :project-id="project.id"
         @close="updateModalOpen = false"
         @created="onUpdateCreated"
+      />
+      <NewUpdateModal
+        :open="updateEditOpen"
+        :project-id="project.id"
+        mode="edit"
+        :update="updateEditTarget"
+        @close="updateEditOpen = false; updateEditTarget = null"
+        @updated="onUpdateEdited"
+      />
+      <NewProjectModal
+        :open="projectEditOpen"
+        mode="edit"
+        :project="project"
+        @close="projectEditOpen = false"
+        @updated="onProjectEdited"
+      />
+      <DeleteConfirmModal
+        :open="projectDeleteOpen"
+        :title="`'${project.name}' 프로젝트를 삭제하시겠습니까?`"
+        message="프로젝트에 속한 업데이트와 QA 항목까지 영향이 갈 수 있습니다. 정말 삭제하시겠습니까?"
+        @confirm="confirmProjectDelete"
+        @cancel="projectDeleteOpen = false"
+      />
+      <DeleteConfirmModal
+        :open="updateDeleteOpen"
+        :title="updateDeleteTarget ? `'${updateDeleteTarget.title}' 업데이트를 삭제하시겠습니까?` : undefined"
+        message="해당 업데이트에 속한 QA 항목까지 영향이 갈 수 있습니다. 정말 삭제하시겠습니까?"
+        @confirm="confirmUpdateDelete"
+        @cancel="updateDeleteOpen = false; updateDeleteTarget = null"
       />
       <NewQAModal
         :open="qaModalOpen"

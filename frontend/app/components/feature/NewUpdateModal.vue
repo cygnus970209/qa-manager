@@ -5,10 +5,18 @@ import type { ProjectUpdate, UpdateCreateRequest } from '~/types/api'
 const props = defineProps<{
   open: boolean
   projectId: number
+  mode?: 'create' | 'edit'
+  update?: ProjectUpdate | null
 }>()
-const emit = defineEmits<{ close: []; created: [update: ProjectUpdate] }>()
+const emit = defineEmits<{
+  close: []
+  created: [update: ProjectUpdate]
+  updated: [update: ProjectUpdate]
+}>()
 
 const updates = useUpdates()
+
+const mode = computed<'create' | 'edit'>(() => props.mode ?? 'create')
 
 const form = reactive<{ version: string; title: string; description: string; status: UpdateCreateRequest['status'] }>({
   version: '',
@@ -20,12 +28,18 @@ const submitting = ref(false)
 const error = ref<string | null>(null)
 
 watch(() => props.open, (v) => {
-  if (v) {
+  if (!v) return
+  error.value = null
+  if (mode.value === 'edit' && props.update) {
+    form.version = props.update.version
+    form.title = props.update.title
+    form.description = props.update.description ?? ''
+    form.status = (props.update.status.toUpperCase()) as UpdateCreateRequest['status']
+  } else {
     form.version = ''
     form.title = ''
     form.description = ''
     form.status = 'IN_PROGRESS'
-    error.value = null
   }
 })
 
@@ -33,16 +47,26 @@ async function onSubmit() {
   error.value = null
   submitting.value = true
   try {
-    const created = await updates.create(props.projectId, {
-      version: form.version,
-      title: form.title,
-      description: form.description || undefined,
-      status: form.status,
-    })
-    emit('created', created)
+    if (mode.value === 'edit' && props.update) {
+      const updated = await updates.update(props.update.id, {
+        version: form.version,
+        title: form.title,
+        description: form.description || undefined,
+        status: form.status,
+      })
+      emit('updated', updated)
+    } else {
+      const created = await updates.create(props.projectId, {
+        version: form.version,
+        title: form.title,
+        description: form.description || undefined,
+        status: form.status,
+      })
+      emit('created', created)
+    }
     emit('close')
   } catch (e: any) {
-    error.value = e?.data?.message ?? '업데이트 생성에 실패했습니다.'
+    error.value = e?.data?.message ?? (mode.value === 'edit' ? '업데이트 수정에 실패했습니다.' : '업데이트 생성에 실패했습니다.')
   } finally {
     submitting.value = false
   }
@@ -50,7 +74,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AppDialog :open="open" title="새 업데이트" @close="emit('close')">
+  <AppDialog :open="open" :title="mode === 'edit' ? '업데이트 수정' : '새 업데이트'" @close="emit('close')">
     <form id="new-update-form" class="space-y-4" @submit.prevent="onSubmit">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
@@ -100,7 +124,7 @@ async function onSubmit() {
     <template #footer>
       <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="emit('close')">취소</button>
       <button type="submit" form="new-update-form" :disabled="submitting" class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
-        {{ submitting ? '생성 중…' : '생성' }}
+        {{ submitting ? (mode === 'edit' ? '저장 중…' : '생성 중…') : (mode === 'edit' ? '저장' : '생성') }}
       </button>
     </template>
   </AppDialog>

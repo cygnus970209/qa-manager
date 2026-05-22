@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft } from '@lucide/vue'
+import { ArrowLeft, Pencil, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import type { Project, ProjectStatus } from '~/types/api'
 
@@ -11,6 +11,8 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   changeStatus: [status: 'ACTIVE' | 'PAUSED' | 'COMPLETED']
+  edit: []
+  remove: []
 }>()
 
 const router = useRouter()
@@ -66,6 +68,22 @@ function onSelectStatus(e: Event) {
             상태: {{ opt.label }}
           </option>
         </select>
+        <button
+          type="button"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
+          title="프로젝트 수정"
+          @click="emit('edit')"
+        >
+          <Pencil class="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
+          title="프로젝트 삭제"
+          @click="emit('remove')"
+        >
+          <Trash2 class="h-4 w-4" />
+        </button>
       </div>
     </div>
 
