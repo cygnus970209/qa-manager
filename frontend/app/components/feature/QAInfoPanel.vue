@@ -1,0 +1,238 @@
+<script setup lang="ts">
+import { Save, Trash2 } from '@lucide/vue'
+import StatusBadge from '~/components/base/StatusBadge.vue'
+import PriorityBadge from '~/components/base/PriorityBadge.vue'
+import type { Member, QaItem, QaPatchRequest } from '~/types/api'
+
+const props = defineProps<{
+  item: QaItem
+  members: Member[]
+}>()
+const emit = defineEmits<{
+  updated: [item: QaItem]
+  removed: []
+}>()
+
+const qaApi = useQa()
+const upload = useUpload()
+
+const editing = ref(false)
+const saving = ref(false)
+const uploading = ref(false)
+const error = ref<string | null>(null)
+
+const form = reactive({
+  title: props.item.title,
+  description: props.item.description ?? '',
+  category: props.item.category ?? '',
+  status: props.item.status,
+  priority: props.item.priority,
+  assigneeId: props.item.assignee?.id ?? null,
+  images: [...props.item.images],
+})
+
+watch(() => props.item, (next) => {
+  form.title = next.title
+  form.description = next.description ?? ''
+  form.category = next.category ?? ''
+  form.status = next.status
+  form.priority = next.priority
+  form.assigneeId = next.assignee?.id ?? null
+  form.images = [...next.images]
+})
+
+const upperStatus = computed<'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'>(() => {
+  switch (form.status) {
+    case 'pending':     return 'PENDING'
+    case 'in_progress': return 'IN_PROGRESS'
+    case 'resolved':    return 'RESOLVED'
+    case 'closed':      return 'CLOSED'
+  }
+})
+const upperPriority = computed<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>(() => {
+  switch (form.priority) {
+    case 'low':      return 'LOW'
+    case 'medium':   return 'MEDIUM'
+    case 'high':     return 'HIGH'
+    case 'critical': return 'CRITICAL'
+  }
+})
+
+async function onSave() {
+  saving.value = true
+  error.value = null
+  try {
+    const body: QaPatchRequest = {
+      title: form.title,
+      description: form.description,
+      category: form.category || undefined,
+      status: upperStatus.value,
+      priority: upperPriority.value,
+      images: form.images,
+    }
+    if (form.assigneeId == null) body.clearAssignee = true
+    else body.assigneeId = form.assigneeId
+    const updated = await qaApi.update(props.item.id, body)
+    emit('updated', updated)
+    editing.value = false
+  } catch (e: any) {
+    error.value = e?.data?.message ?? '저장 실패'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function onPickFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  uploading.value = true
+  try {
+    for (const file of Array.from(input.files)) {
+      const url = await upload.uploadImage(file, 'qa_image')
+      form.images.push(url)
+    }
+  } catch (e: any) {
+    error.value = e?.message ?? '업로드 실패'
+  } finally {
+    uploading.value = false
+    input.value = ''
+  }
+}
+
+function removeImage(idx: number) {
+  form.images.splice(idx, 1)
+}
+
+async function onDelete() {
+  if (!confirm('정말 삭제하시겠습니까?')) return
+  await qaApi.remove(props.item.id)
+  emit('removed')
+}
+</script>
+
+<template>
+  <article class="rounded-xl border border-slate-200 bg-white p-5 md:p-6">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        <input
+          v-if="editing"
+          v-model="form.title"
+          class="w-full rounded-md border border-slate-300 px-3 py-2 text-lg font-bold focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+        <h1 v-else class="text-xl font-bold text-slate-800 md:text-2xl">{{ item.title }}</h1>
+      </div>
+      <div class="flex shrink-0 items-center gap-2">
+        <button v-if="!editing" type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = true">편집</button>
+        <button v-else type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = false">취소</button>
+        <button
+          v-if="editing"
+          type="button"
+          :disabled="saving"
+          class="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+          @click="onSave"
+        >
+          <Save class="h-3.5 w-3.5" /> {{ saving ? '저장 중…' : '저장' }}
+        </button>
+        <button
+          v-if="!editing"
+          type="button"
+          class="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-100"
+          @click="onDelete"
+        >
+          <Trash2 class="h-3.5 w-3.5" /> 삭제
+        </button>
+      </div>
+    </div>
+
+    <!-- 메타 -->
+    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+      <span v-if="item.category" class="rounded-md bg-slate-100 px-2 py-0.5">{{ item.category }}</span>
+      <StatusBadge :status="item.status" />
+      <PriorityBadge :priority="item.priority" />
+      <span>·</span>
+      <span>담당자 {{ item.assignee?.name ?? '미지정' }}</span>
+      <span>·</span>
+      <span>생성 {{ item.createdAt?.slice(0, 10) }}</span>
+      <span>수정 {{ item.updatedAt?.slice(0, 10) }}</span>
+    </div>
+
+    <!-- 본문 -->
+    <div class="mt-5">
+      <h2 class="mb-2 text-xs font-medium text-slate-500">설명</h2>
+      <textarea
+        v-if="editing"
+        v-model="form.description"
+        rows="5"
+        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+      />
+      <p v-else class="whitespace-pre-wrap text-sm text-slate-700">
+        {{ item.description ?? '—' }}
+      </p>
+    </div>
+
+    <!-- 편집 모드: 상태/우선순위/담당자/카테고리 -->
+    <div v-if="editing" class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <label class="block">
+        <span class="block text-xs text-slate-500">상태</span>
+        <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+          <option value="pending">대기중</option>
+          <option value="in_progress">진행중</option>
+          <option value="resolved">해결됨</option>
+          <option value="closed">종료</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="block text-xs text-slate-500">우선순위</span>
+        <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+          <option value="low">낮음</option>
+          <option value="medium">보통</option>
+          <option value="high">높음</option>
+          <option value="critical">긴급</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="block text-xs text-slate-500">담당자</span>
+        <select v-model="form.assigneeId" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+          <option :value="null">미지정</option>
+          <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="block text-xs text-slate-500">카테고리</span>
+        <input v-model="form.category" maxlength="50" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs" />
+      </label>
+    </div>
+
+    <!-- 이미지 -->
+    <div class="mt-5">
+      <h2 class="mb-2 text-xs font-medium text-slate-500">이미지</h2>
+      <div class="flex flex-wrap gap-2">
+        <div
+          v-for="(img, i) in (editing ? form.images : item.images)"
+          :key="img + i"
+          class="relative h-24 w-24 overflow-hidden rounded border border-slate-200"
+        >
+          <a :href="img" target="_blank" rel="noreferrer">
+            <img :src="img" :alt="`image-${i}`" class="h-full w-full object-cover" />
+          </a>
+          <button
+            v-if="editing"
+            type="button"
+            class="absolute right-0 top-0 m-0.5 rounded bg-black/60 px-1 text-[10px] text-white"
+            @click="removeImage(i)"
+          >×</button>
+        </div>
+        <label
+          v-if="editing"
+          class="flex h-24 w-24 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500"
+        >
+          <input type="file" accept="image/*" multiple class="hidden" @change="onPickFile" />
+          {{ uploading ? '업로드…' : '+ 추가' }}
+        </label>
+        <p v-if="(editing ? form.images : item.images).length === 0 && !editing" class="text-xs text-slate-400">첨부 이미지 없음</p>
+      </div>
+    </div>
+
+    <p v-if="error" class="mt-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
+  </article>
+</template>

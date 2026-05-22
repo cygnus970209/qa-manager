@@ -1,0 +1,36 @@
+# ─────────────── OS / Editor ───────────────
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# ─────────────── Secrets ───────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ─────────────── Frontend (Nuxt) ───────────────
+frontend/node_modules/
+frontend/.nuxt/
+frontend/.output/
+frontend/.nitro/
+frontend/.cache/
+frontend/dist/
+frontend/.data/
+frontend/*.log
+frontend/.env
+
+# ─────────────── Backend (Gradle / Spring Boot) ───────────────
+backend/.gradle/
+backend/build/
+backend/out/
+backend/bin/
+backend/.idea/
+backend/*.iml
+backend/HELP.md
+backend/**/.kotlin/
+
+# Generated OpenAPI spec
+docs/openapi.json

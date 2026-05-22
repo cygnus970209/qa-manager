@@ -1,0 +1,105 @@
+# QA Manager - 단일 호스트 운영용 구성.
+# 사전 준비: 루트 .env (DB_HOST=db 로 설정 — 컨테이너 네트워크 호스트명).
+#
+# 실행:
+#   docker compose up -d --build
+# 종료:
+#   docker compose down              # 컨테이너만 제거 (DB 데이터 유지)
+#   docker compose down -v           # 볼륨까지 제거 (DB 데이터 삭제)
+
+services:
+  db:
+    image: mariadb:11
+    container_name: qa-manager-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    # 운영 호스트에서 DB 포트를 노출하지 않는다.
+    # 로컬 디버깅이 필요하면 docker-compose.override.yml 에서 ports 추가:
+    #   ports: ["127.0.0.1:3306:3306"]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: qa-manager-redis
+    restart: unless-stopped
+    # 영속화 없이 휘발성 캐시로 사용 (블랙리스트는 토큰 TTL 동안만 유효하면 충분)
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: qa-manager-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Spring 프로필 (운영 로깅/설정 활성화)
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      # DB
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # Redis (토큰 블랙리스트)
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TTL_MINUTES: ${JWT_ACCESS_TTL_MINUTES:-15}
+      JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-14}
+      # Auth Cookie (운영 HTTPS 에서는 COOKIE_SECURE=true 필수)
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-Lax}
+      # AWS S3
+      AWS_REGION: ${AWS_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_S3_PRESIGN_TTL_SECONDS: ${AWS_S3_PRESIGN_TTL_SECONDS:-300}
+      # CORS — 프론트 도메인 (compose 내부에서는 frontend:3000)
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+    ports:
+      - "8357:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: qa-manager-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      # Nuxt 런타임에서 API 호출 base URL
+      # SSR (서버 사이드 fetch) 은 컨테이너 네트워크로, 클라이언트 fetch 는 호스트에서 접근 가능한 URL 필요
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE}
+    ports:
+      - "3247:3000"
+
+volumes:
+  db-data:
