@@ -14,4 +14,6 @@ public interface ProjectPinRepository extends JpaRepository<ProjectPin, ProjectP
     Optional<ProjectPin> findByProjectIdAndMemberId(Long projectId, Long memberId);
 
     void deleteByProjectIdAndMemberId(Long projectId, Long memberId);
+
+    void deleteByMemberId(Long memberId);
 }

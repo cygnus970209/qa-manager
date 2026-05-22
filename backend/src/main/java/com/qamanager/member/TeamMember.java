@@ -7,9 +7,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "team_member")
+@SQLRestriction("deleted_at IS NULL")
 public class TeamMember extends BaseEntity {
 
     @Id
@@ -31,6 +35,9 @@ public class TeamMember extends BaseEntity {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     protected TeamMember() {}
 
     public TeamMember(String username, String passwordHash, String name, String role, String avatarUrl) {
@@ -51,10 +58,15 @@ public class TeamMember extends BaseEntity {
         this.passwordHash = newPasswordHash;
     }
 
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
     public Long getId() { return id; }
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }
     public String getName() { return name; }
     public String getRole() { return role; }
     public String getAvatarUrl() { return avatarUrl; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
 }

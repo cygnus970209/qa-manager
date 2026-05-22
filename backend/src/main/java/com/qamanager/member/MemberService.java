@@ -1,6 +1,7 @@
 package com.qamanager.member;
 
 import com.qamanager.common.ApiException;
+import com.qamanager.project.ProjectPinRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,10 +12,14 @@ import java.util.List;
 public class MemberService {
 
     private final TeamMemberRepository memberRepository;
+    private final ProjectPinRepository pinRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public MemberService(TeamMemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+    public MemberService(TeamMemberRepository memberRepository,
+                         ProjectPinRepository pinRepository,
+                         PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
+        this.pinRepository = pinRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -52,10 +57,11 @@ public class MemberService {
 
     @Transactional
     public void delete(Long id) {
-        if (!memberRepository.existsById(id)) {
-            throw ApiException.notFound("멤버를 찾을 수 없습니다. id=" + id);
-        }
-        memberRepository.deleteById(id);
+        TeamMember m = findOrThrow(id);
+        // 소프트 삭제: 댓글/이력/알림 등 historical 데이터는 보존하고 로그인만 차단.
+        m.softDelete();
+        // 자기 자신을 위한 핀은 의미 없으므로 정리.
+        pinRepository.deleteByMemberId(id);
     }
 
     private TeamMember findOrThrow(Long id) {
