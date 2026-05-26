@@ -15,6 +15,8 @@ const emit = defineEmits<{ close: []; created: [item: QaItem] }>()
 const qa = useQa()
 const upload = useUpload()
 
+const auth = useAuthStore()
+
 const form = reactive<{
   projectId: number | null
   updateId: number | null
@@ -23,7 +25,9 @@ const form = reactive<{
   category: string
   status: QaCreateRequest['status']
   priority: QaCreateRequest['priority']
-  assigneeId: number | null
+  testerId: number | null
+  assignee1Id: number | null
+  assignee2Id: number | null
   images: string[]
 }>({
   projectId: null,
@@ -31,9 +35,11 @@ const form = reactive<{
   title: '',
   description: '',
   category: '',
-  status: 'PENDING',
+  status: 'NEEDS_FIX',
   priority: 'MEDIUM',
-  assigneeId: null,
+  testerId: null,
+  assignee1Id: null,
+  assignee2Id: null,
   images: [],
 })
 
@@ -53,9 +59,12 @@ watch(() => props.open, (v) => {
   form.title = ''
   form.description = ''
   form.category = ''
-  form.status = 'PENDING'
+  form.status = 'NEEDS_FIX'
   form.priority = 'MEDIUM'
-  form.assigneeId = null
+  // tester 기본값: 현재 로그인 사용자
+  form.testerId = auth.user?.id ?? null
+  form.assignee1Id = null
+  form.assignee2Id = null
   form.images = []
   error.value = null
 
@@ -155,7 +164,9 @@ async function onSubmit() {
       category: form.category || undefined,
       status: form.status,
       priority: form.priority,
-      assigneeId: form.assigneeId ?? undefined,
+      testerId: form.testerId ?? undefined,
+      assignee1Id: form.assignee1Id ?? undefined,
+      assignee2Id: form.assignee2Id ?? undefined,
       images: form.images,
     })
     emit('created', created)
@@ -233,10 +244,12 @@ async function onSubmit() {
         <label class="block">
           <span class="block text-xs font-medium text-slate-600">상태</span>
           <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-            <option value="PENDING">대기중</option>
+            <option value="NEEDS_FIX">수정필요</option>
             <option value="IN_PROGRESS">진행중</option>
-            <option value="RESOLVED">해결됨</option>
-            <option value="CLOSED">종료</option>
+            <option value="FIX_DONE">수정완료</option>
+            <option value="CONFIRMED">확인완료</option>
+            <option value="ON_HOLD">보류</option>
+            <option value="NEEDS_RECHECK">추가확인필요</option>
           </select>
         </label>
         <label class="block">
@@ -250,18 +263,44 @@ async function onSubmit() {
         </label>
       </div>
 
-      <label class="block">
-        <span class="block text-xs font-medium text-slate-600">담당자</span>
-        <select
-          v-model="form.assigneeId"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-        >
-          <option :value="null">미지정</option>
-          <option v-for="m in members" :key="m.id" :value="m.id">
-            {{ m.name }} · {{ m.role ?? '' }}
-          </option>
-        </select>
-      </label>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label class="block">
+          <span class="block text-xs font-medium text-slate-600">테스터 (작성자)</span>
+          <select
+            v-model="form.testerId"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          >
+            <option :value="null">미지정</option>
+            <option v-for="m in members" :key="m.id" :value="m.id">
+              {{ m.name }}<template v-if="m.role"> · {{ m.role }}</template>
+            </option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="block text-xs font-medium text-slate-600">담당자 1</span>
+          <select
+            v-model="form.assignee1Id"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          >
+            <option :value="null">미지정</option>
+            <option v-for="m in members" :key="m.id" :value="m.id">
+              {{ m.name }}<template v-if="m.role"> · {{ m.role }}</template>
+            </option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="block text-xs font-medium text-slate-600">담당자 2</span>
+          <select
+            v-model="form.assignee2Id"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          >
+            <option :value="null">미지정</option>
+            <option v-for="m in members" :key="m.id" :value="m.id">
+              {{ m.name }}<template v-if="m.role"> · {{ m.role }}</template>
+            </option>
+          </select>
+        </label>
+      </div>
 
       <div>
         <span class="block text-xs font-medium text-slate-600">이미지</span>

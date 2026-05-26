@@ -53,7 +53,11 @@ public class QaItemService {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("priority"), code));
         }
         if (assigneeId != null) {
-            spec = spec.and((root, q, cb) -> cb.equal(root.get("assignee").get("id"), assigneeId));
+            // assignee1 또는 assignee2 슬롯 어디에 있어도 매칭
+            spec = spec.and((root, q, cb) -> cb.or(
+                cb.equal(root.get("assignee1").get("id"), assigneeId),
+                cb.equal(root.get("assignee2").get("id"), assigneeId)
+            ));
         }
         spec = spec.and((root, q, cb) -> {
             q.orderBy(cb.desc(root.get("createdAt")));
@@ -71,22 +75,30 @@ public class QaItemService {
     public QaDto.Response create(QaDto.CreateRequest req, Long currentMemberId) {
         ProjectUpdate update = updateRepository.findById(req.updateId())
             .orElseThrow(() -> ApiException.notFound("업데이트를 찾을 수 없습니다. id=" + req.updateId()));
-        TeamMember assignee = resolveAssignee(req.assigneeId(), false);
+
+        // tester: 명시 안 하면 현재 로그인 사용자 자동
+        Long testerId = req.testerId() != null ? req.testerId() : currentMemberId;
+        TeamMember tester = resolveMemberOrThrow(testerId);
+        TeamMember assignee1 = resolveMemberOptional(req.assignee1Id());
+        TeamMember assignee2 = resolveMemberOptional(req.assignee2Id());
 
         QaItem item = new QaItem(update, req.title(), req.description(), req.category(),
-            req.status(), assignee, req.priority());
+            req.status(), tester, assignee1, assignee2, req.priority());
         item.replaceImages(req.images());
         QaItem saved = qaRepository.save(item);
 
         events.publishEvent(new QaCreatedEvent(saved.getId(), update.getProject().getId(),
-            saved.getTitle(), currentMemberId, assignee == null ? null : assignee.getId()));
+            saved.getTitle(), currentMemberId,
+            tester == null ? null : tester.getId(),
+            assignee1 == null ? null : assignee1.getId(),
+            assignee2 == null ? null : assignee2.getId()));
         return QaDto.Response.from(saved);
     }
 
     @Transactional
     public QaDto.Response update(Long id, QaDto.UpdateRequest req, Long currentMemberId) {
         QaItem q = findOrThrow(id);
-        TeamMember changedBy = memberRepository.findById(currentMemberId).orElse(null);
+        TeamMember changedBy = memberRepository.findByIdAndDeletedAtIsNull(currentMemberId).orElse(null);
         List<QaHistory> diffs = new ArrayList<>();
 
         if (req.title() != null && !req.title().equals(q.getTitle())) {
@@ -106,36 +118,58 @@ public class QaItemService {
             q.setStatus(req.status());
             events.publishEvent(new QaStatusChangedEvent(q.getId(), q.getProjectUpdate().getProject().getId(),
                 q.getTitle(), q.getStatus().getCode(), currentMemberId,
-                q.getAssignee() == null ? null : q.getAssignee().getId()));
+                q.getTester() == null ? null : q.getTester().getId(),
+                q.getAssignee1() == null ? null : q.getAssignee1().getId(),
+                q.getAssignee2() == null ? null : q.getAssignee2().getId()));
         }
         if (req.priority() != null && req.priority() != q.getPriority()) {
             diffs.add(new QaHistory(q, "priority", q.getPriority().getCode(), req.priority().getCode(), changedBy));
             q.setPriority(req.priority());
         }
-        if (Boolean.TRUE.equals(req.clearAssignee())) {
-            if (q.getAssignee() != null) {
-                diffs.add(new QaHistory(q, "assignee", q.getAssignee().getName(), null, changedBy));
-                q.setAssignee(null);
-            }
-        } else if (req.assigneeId() != null) {
-            Long currentId = q.getAssignee() == null ? null : q.getAssignee().getId();
-            if (!Objects.equals(currentId, req.assigneeId())) {
-                TeamMember next = resolveAssignee(req.assigneeId(), true);
-                diffs.add(new QaHistory(q, "assignee",
-                    q.getAssignee() == null ? null : q.getAssignee().getName(),
-                    next.getName(), changedBy));
-                q.setAssignee(next);
-                events.publishEvent(new QaAssigneeChangedEvent(
-                    q.getId(), q.getProjectUpdate().getProject().getId(),
-                    q.getTitle(), currentMemberId, next.getId()
-                ));
-            }
-        }
+
+        // tester / assignee1 / assignee2 — 각 슬롯 독립 처리
+        handleMemberSlot(q, "tester", q.getTester(), req.testerId(), req.clearTester(),
+            diffs, changedBy, q::setTester, currentMemberId, /*notify=*/false);
+        handleMemberSlot(q, "assignee1", q.getAssignee1(), req.assignee1Id(), req.clearAssignee1(),
+            diffs, changedBy, q::setAssignee1, currentMemberId, /*notify=*/true);
+        handleMemberSlot(q, "assignee2", q.getAssignee2(), req.assignee2Id(), req.clearAssignee2(),
+            diffs, changedBy, q::setAssignee2, currentMemberId, /*notify=*/true);
+
         if (req.images() != null) {
             q.replaceImages(req.images());
         }
         if (!diffs.isEmpty()) historyRepository.saveAll(diffs);
         return QaDto.Response.from(q);
+    }
+
+    private interface MemberSetter { void set(TeamMember m); }
+
+    private void handleMemberSlot(QaItem q, String fieldName, TeamMember current,
+                                  Long newId, Boolean clear,
+                                  List<QaHistory> diffs, TeamMember changedBy,
+                                  MemberSetter setter, Long actorMemberId, boolean notify) {
+        if (Boolean.TRUE.equals(clear)) {
+            if (current != null) {
+                diffs.add(new QaHistory(q, fieldName, current.getName(), null, changedBy));
+                setter.set(null);
+            }
+            return;
+        }
+        if (newId == null) return; // 변경 없음
+        Long currentId = current == null ? null : current.getId();
+        if (Objects.equals(currentId, newId)) return;
+
+        TeamMember next = resolveMemberOrThrow(newId);
+        diffs.add(new QaHistory(q, fieldName,
+            current == null ? null : current.getName(),
+            next.getName(), changedBy));
+        setter.set(next);
+        if (notify) {
+            events.publishEvent(new QaAssigneeChangedEvent(
+                q.getId(), q.getProjectUpdate().getProject().getId(),
+                q.getTitle(), actorMemberId, next.getId()
+            ));
+        }
     }
 
     @Transactional
@@ -160,13 +194,14 @@ public class QaItemService {
             .orElseThrow(() -> ApiException.notFound("QA 항목을 찾을 수 없습니다. id=" + id));
     }
 
-    private TeamMember resolveAssignee(Long id, boolean required) {
-        if (id == null) {
-            if (required) throw ApiException.badRequest("assigneeId 가 필요합니다.");
-            return null;
-        }
+    private TeamMember resolveMemberOptional(Long id) {
+        if (id == null) return null;
+        return resolveMemberOrThrow(id);
+    }
+
+    private TeamMember resolveMemberOrThrow(Long id) {
         return memberRepository.findByIdAndDeletedAtIsNull(id)
-            .orElseThrow(() -> ApiException.notFound("담당자를 찾을 수 없습니다. id=" + id));
+            .orElseThrow(() -> ApiException.notFound("멤버를 찾을 수 없습니다. id=" + id));
     }
 
     private String truncate(String s) {
@@ -176,12 +211,18 @@ public class QaItemService {
 
     /* ─────── 이벤트 (Notification 도메인에서 구독) ─────── */
     public record QaCreatedEvent(Long qaItemId, Long projectId, String title,
-                                 Long actorMemberId, Long assigneeMemberId) {}
+                                 Long actorMemberId,
+                                 Long testerMemberId,
+                                 Long assignee1MemberId,
+                                 Long assignee2MemberId) {}
 
     public record QaStatusChangedEvent(Long qaItemId, Long projectId, String title,
-                                       String newStatus, Long actorMemberId, Long assigneeMemberId) {}
+                                       String newStatus, Long actorMemberId,
+                                       Long testerMemberId,
+                                       Long assignee1MemberId,
+                                       Long assignee2MemberId) {}
 
-    /** assignee 가 비어있다가 지정되거나 다른 사람으로 변경됐을 때 */
+    /** 담당자(assignee1/2) 가 새로 지정/변경됐을 때만 발행. tester 변경은 발행 안 함. */
     public record QaAssigneeChangedEvent(Long qaItemId, Long projectId, String title,
                                          Long actorMemberId, Long assigneeMemberId) {}
 }

@@ -46,9 +46,18 @@ public class QaItem extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
+    /** 작성자(테스터). 기본은 QA 생성자. */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignee_id")
-    private TeamMember assignee;
+    @JoinColumn(name = "tester_id")
+    private TeamMember tester;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee1_id")
+    private TeamMember assignee1;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee2_id")
+    private TeamMember assignee2;
 
     @Column(name = "priority", nullable = false, length = 20)
     private String priority;
@@ -60,13 +69,16 @@ public class QaItem extends BaseEntity {
     protected QaItem() {}
 
     public QaItem(ProjectUpdate update, String title, String description, String category,
-                  QaStatus status, TeamMember assignee, QaPriority priority) {
+                  QaStatus status, TeamMember tester, TeamMember assignee1, TeamMember assignee2,
+                  QaPriority priority) {
         this.projectUpdate = update;
         this.title = title;
         this.description = description;
         this.category = category;
         this.status = status.getCode();
-        this.assignee = assignee;
+        this.tester = tester;
+        this.assignee1 = assignee1;
+        this.assignee2 = assignee2;
         this.priority = priority.getCode();
     }
 
@@ -75,7 +87,9 @@ public class QaItem extends BaseEntity {
     public void setDescription(String description) { this.description = description; }
     public void setCategory(String category) { this.category = category; }
     public void setStatus(QaStatus status) { this.status = status.getCode(); }
-    public void setAssignee(TeamMember assignee) { this.assignee = assignee; }
+    public void setTester(TeamMember tester) { this.tester = tester; }
+    public void setAssignee1(TeamMember assignee1) { this.assignee1 = assignee1; }
+    public void setAssignee2(TeamMember assignee2) { this.assignee2 = assignee2; }
     public void setPriority(QaPriority priority) { this.priority = priority.getCode(); }
 
     public void replaceImages(List<String> urls) {
@@ -92,7 +106,9 @@ public class QaItem extends BaseEntity {
     public String getDescription() { return description; }
     public String getCategory() { return category; }
     public QaStatus getStatus() { return QaStatus.from(status); }
-    public TeamMember getAssignee() { return assignee; }
+    public TeamMember getTester() { return tester; }
+    public TeamMember getAssignee1() { return assignee1; }
+    public TeamMember getAssignee2() { return assignee2; }
     public QaPriority getPriority() { return QaPriority.from(priority); }
     public List<QaItemImage> getImages() { return Collections.unmodifiableList(images); }
 }

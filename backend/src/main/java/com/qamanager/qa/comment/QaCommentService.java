@@ -74,11 +74,13 @@ public class QaCommentService {
 
         Long projectId = item.getProjectUpdate().getProject().getId();
         if (parent == null) {
-            // 새 루트 코멘트 → QA 담당자에게 알림 (조건 2)
-            Long assigneeId = item.getAssignee() == null ? null : item.getAssignee().getId();
+            // 새 루트 코멘트 → tester + assignee1 + assignee2 모두에게 알림 (조건 2)
             events.publishEvent(new QaCommentCreatedEvent(
                 saved.getId(), item.getId(), projectId, item.getTitle(),
-                currentMemberId, assigneeId
+                currentMemberId,
+                item.getTester()    == null ? null : item.getTester().getId(),
+                item.getAssignee1() == null ? null : item.getAssignee1().getId(),
+                item.getAssignee2() == null ? null : item.getAssignee2().getId()
             ));
         } else {
             // 답글 → 부모 코멘트 작성자에게 알림 (조건 3)
@@ -143,7 +145,10 @@ public class QaCommentService {
     /* ─────── 이벤트 (Notification 도메인에서 구독) ─────── */
     public record QaCommentCreatedEvent(Long commentId, Long qaItemId, Long projectId,
                                         String qaTitle,
-                                        Long actorMemberId, Long assigneeMemberId) {}
+                                        Long actorMemberId,
+                                        Long testerMemberId,
+                                        Long assignee1MemberId,
+                                        Long assignee2MemberId) {}
 
     public record QaCommentRepliedEvent(Long commentId, Long parentCommentId, Long qaItemId,
                                         Long projectId, String qaTitle,

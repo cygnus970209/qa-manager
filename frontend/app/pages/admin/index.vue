@@ -15,7 +15,7 @@ import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
 import MemberModal from '~/components/feature/MemberModal.vue'
 import SettingsPanel from '~/components/feature/SettingsPanel.vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
-import type { Member, Project, ProjectStatus, ProjectUpdate, QaItem, QaPriority, QaStatus } from '~/types/api'
+import type { Member, Project, ProjectStatus, ProjectUpdate, QaItem, QaPriority, QaStatus, QaStatusUpper } from '~/types/api'
 
 const router = useRouter()
 const membersApi = useMembers()
@@ -63,7 +63,7 @@ const stats = computed(() => ({
   totalProjects: projects.value.length,
   totalQA: qas.value.length,
   activeProjects: projects.value.filter((p) => p.status === 'active').length,
-  criticalQA: qas.value.filter((q) => q.priority === 'critical' && q.status !== 'resolved' && q.status !== 'closed').length,
+  criticalQA: qas.value.filter((q) => q.priority === 'critical' && q.status !== 'fix_done' && q.status !== 'confirmed').length,
 }))
 
 const updateToProject = computed(() => {
@@ -83,7 +83,9 @@ function projectQaCount(projectId: number) {
 }
 
 function memberAssignedCount(memberId: number) {
-  return qas.value.filter((q) => q.assignee?.id === memberId).length
+  return qas.value.filter((q) =>
+    q.assignee1?.id === memberId || q.assignee2?.id === memberId,
+  ).length
 }
 
 const projectStatusConfig: Record<ProjectStatus, { label: string; color: string; bg: string }> = {
@@ -93,10 +95,12 @@ const projectStatusConfig: Record<ProjectStatus, { label: string; color: string;
 }
 
 const qaStatusConfig: Record<QaStatus, { label: string; color: string; bg: string }> = {
-  pending: { label: '대기중', color: 'text-slate-500', bg: 'bg-slate-50' },
-  in_progress: { label: '진행중', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  resolved: { label: '해결됨', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  closed: { label: '종료', color: 'text-slate-500', bg: 'bg-slate-50' },
+  needs_fix:     { label: '수정필요',     color: 'text-rose-600',    bg: 'bg-rose-50' },
+  in_progress:   { label: '진행중',       color: 'text-blue-600',    bg: 'bg-blue-50' },
+  fix_done:      { label: '수정완료',     color: 'text-amber-600',   bg: 'bg-amber-50' },
+  confirmed:     { label: '확인완료',     color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  on_hold:       { label: '보류',         color: 'text-slate-600',   bg: 'bg-slate-100' },
+  needs_recheck: { label: '추가확인필요', color: 'text-purple-600',  bg: 'bg-purple-50' },
 }
 
 const priorityConfig: Record<QaPriority, { label: string; color: string }> = {
@@ -109,8 +113,8 @@ const priorityConfig: Record<QaPriority, { label: string; color: string }> = {
 function statusToCode(s: string): 'ACTIVE' | 'COMPLETED' | 'PAUSED' {
   return s.toUpperCase() as 'ACTIVE' | 'COMPLETED' | 'PAUSED'
 }
-function qaStatusToCode(s: string): 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' {
-  return s.toUpperCase() as 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+function qaStatusToCode(s: string): QaStatusUpper {
+  return s.toUpperCase() as QaStatusUpper
 }
 
 async function changeProjectStatus(p: Project, next: ProjectStatus) {
@@ -341,13 +345,23 @@ async function confirmDelete() {
                   :class="['cursor-pointer rounded-full border-0 px-2 py-1 text-xs font-medium outline-none', qaStatusConfig[q.status].bg, qaStatusConfig[q.status].color]"
                   @change="changeQaStatus(q, ($event.target as HTMLSelectElement).value as QaStatus)"
                 >
-                  <option value="pending">{{ qaStatusConfig.pending.label }}</option>
+                  <option value="needs_fix">{{ qaStatusConfig.needs_fix.label }}</option>
                   <option value="in_progress">{{ qaStatusConfig.in_progress.label }}</option>
-                  <option value="resolved">{{ qaStatusConfig.resolved.label }}</option>
-                  <option value="closed">{{ qaStatusConfig.closed.label }}</option>
+                  <option value="fix_done">{{ qaStatusConfig.fix_done.label }}</option>
+                  <option value="confirmed">{{ qaStatusConfig.confirmed.label }}</option>
+                  <option value="on_hold">{{ qaStatusConfig.on_hold.label }}</option>
+                  <option value="needs_recheck">{{ qaStatusConfig.needs_recheck.label }}</option>
                 </select>
               </td>
-              <td class="px-4 py-3 text-slate-600">{{ q.assignee?.name ?? '-' }}</td>
+              <td class="px-4 py-3 text-xs text-slate-600">
+                <div class="flex flex-col gap-0.5">
+                  <span v-if="q.tester" class="text-slate-500">T: {{ q.tester.name }}</span>
+                  <span v-if="q.assignee1 || q.assignee2">
+                    {{ [q.assignee1?.name, q.assignee2?.name].filter(Boolean).join(', ') }}
+                  </span>
+                  <span v-if="!q.tester && !q.assignee1 && !q.assignee2" class="text-slate-400">-</span>
+                </div>
+              </td>
               <td class="px-4 py-3">
                 <button
                   type="button"

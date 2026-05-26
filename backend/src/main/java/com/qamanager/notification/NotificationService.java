@@ -13,7 +13,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class NotificationService {
@@ -63,20 +65,28 @@ public class NotificationService {
     @EventListener
     @Transactional
     public void onQaCreated(QaItemService.QaCreatedEvent ev) {
-        if (ev.assigneeMemberId() == null || ev.assigneeMemberId().equals(ev.actorMemberId())) return;
-        String msg = "새 QA가 배정되었습니다: " + ev.title();
-        publishOne(ev.assigneeMemberId(), ev.actorMemberId(), "qa", msg, ev.projectId(), ev.qaItemId());
+        // 신규 QA 등록 → tester + assignee1 + assignee2 모두에게 (actor 제외)
+        String msg = "새 QA가 등록되었습니다: " + ev.title();
+        Set<Long> recipients = distinctRecipients(ev.actorMemberId(),
+            ev.testerMemberId(), ev.assignee1MemberId(), ev.assignee2MemberId());
+        for (Long rid : recipients) {
+            publishOne(rid, ev.actorMemberId(), "qa", msg, ev.projectId(), ev.qaItemId());
+        }
     }
 
     @EventListener
     @Transactional
     public void onQaStatusChanged(QaItemService.QaStatusChangedEvent ev) {
-        if (ev.assigneeMemberId() == null || ev.assigneeMemberId().equals(ev.actorMemberId())) return;
+        // 상태 변경 → tester + assignee1 + assignee2 모두에게 (actor 제외)
         String msg = "QA 상태 변경: " + ev.title() + " → " + ev.newStatus();
-        publishOne(ev.assigneeMemberId(), ev.actorMemberId(), "qa", msg, ev.projectId(), ev.qaItemId());
+        Set<Long> recipients = distinctRecipients(ev.actorMemberId(),
+            ev.testerMemberId(), ev.assignee1MemberId(), ev.assignee2MemberId());
+        for (Long rid : recipients) {
+            publishOne(rid, ev.actorMemberId(), "qa", msg, ev.projectId(), ev.qaItemId());
+        }
     }
 
-    /** 조건 1: 수정 중 담당자가 변경/새로 지정될 때 */
+    /** 조건 1: 담당자가 새로 지정/변경될 때 — 해당 담당자에게만 */
     @EventListener
     @Transactional
     public void onQaAssigneeChanged(QaItemService.QaAssigneeChangedEvent ev) {
@@ -85,13 +95,16 @@ public class NotificationService {
         publishOne(ev.assigneeMemberId(), ev.actorMemberId(), "qa", msg, ev.projectId(), ev.qaItemId());
     }
 
-    /** 조건 2: 담당 QA에 코멘트가 달렸을 때 */
+    /** 조건 2: QA에 코멘트가 달렸을 때 → tester + assignee1 + assignee2 모두에게 */
     @EventListener
     @Transactional
     public void onQaCommentCreated(QaCommentService.QaCommentCreatedEvent ev) {
-        if (ev.assigneeMemberId() == null || ev.assigneeMemberId().equals(ev.actorMemberId())) return;
-        String msg = "담당 QA에 새 코멘트: " + ev.qaTitle();
-        publishOne(ev.assigneeMemberId(), ev.actorMemberId(), "comment", msg, ev.projectId(), ev.qaItemId());
+        String msg = "QA에 새 코멘트: " + ev.qaTitle();
+        Set<Long> recipients = distinctRecipients(ev.actorMemberId(),
+            ev.testerMemberId(), ev.assignee1MemberId(), ev.assignee2MemberId());
+        for (Long rid : recipients) {
+            publishOne(rid, ev.actorMemberId(), "comment", msg, ev.projectId(), ev.qaItemId());
+        }
     }
 
     /** 조건 3: 내 코멘트에 답글이 달렸을 때 */
@@ -101,6 +114,17 @@ public class NotificationService {
         if (ev.parentAuthorMemberId() == null || ev.parentAuthorMemberId().equals(ev.actorMemberId())) return;
         String msg = "내 코멘트에 답글이 달렸습니다: " + ev.qaTitle();
         publishOne(ev.parentAuthorMemberId(), ev.actorMemberId(), "reply", msg, ev.projectId(), ev.qaItemId());
+    }
+
+    /** actor 본인 제외 + null 제외 + 중복 제거. 삽입 순서 유지 (LinkedHashSet). package-private for test. */
+    Set<Long> distinctRecipients(Long actorId, Long... candidates) {
+        Set<Long> set = new LinkedHashSet<>();
+        for (Long id : candidates) {
+            if (id == null) continue;
+            if (id.equals(actorId)) continue;
+            set.add(id);
+        }
+        return set;
     }
 
     private void publishOne(Long recipientId, Long actorId, String type, String message,

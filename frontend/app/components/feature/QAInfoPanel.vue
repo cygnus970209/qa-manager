@@ -3,7 +3,7 @@ import { Save, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
-import type { Member, QaItem, QaPatchRequest } from '~/types/api'
+import type { Member, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
 
 const props = defineProps<{
   item: QaItem
@@ -24,13 +24,25 @@ const error = ref<string | null>(null)
 const lightboxIndex = ref<number | null>(null)
 const lightboxImages = computed<string[]>(() => (editing.value ? form.images : props.item.images))
 
-const form = reactive({
+const form = reactive<{
+  title: string
+  description: string
+  category: string
+  status: QaItem['status']
+  priority: QaItem['priority']
+  testerId: number | null
+  assignee1Id: number | null
+  assignee2Id: number | null
+  images: string[]
+}>({
   title: props.item.title,
   description: props.item.description ?? '',
   category: props.item.category ?? '',
   status: props.item.status,
   priority: props.item.priority,
-  assigneeId: props.item.assignee?.id ?? null,
+  testerId: props.item.tester?.id ?? null,
+  assignee1Id: props.item.assignee1?.id ?? null,
+  assignee2Id: props.item.assignee2?.id ?? null,
   images: [...props.item.images],
 })
 
@@ -40,18 +52,13 @@ watch(() => props.item, (next) => {
   form.category = next.category ?? ''
   form.status = next.status
   form.priority = next.priority
-  form.assigneeId = next.assignee?.id ?? null
+  form.testerId = next.tester?.id ?? null
+  form.assignee1Id = next.assignee1?.id ?? null
+  form.assignee2Id = next.assignee2?.id ?? null
   form.images = [...next.images]
 })
 
-const upperStatus = computed<'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'>(() => {
-  switch (form.status) {
-    case 'pending':     return 'PENDING'
-    case 'in_progress': return 'IN_PROGRESS'
-    case 'resolved':    return 'RESOLVED'
-    case 'closed':      return 'CLOSED'
-  }
-})
+const upperStatus = computed<QaStatusUpper>(() => form.status.toUpperCase() as QaStatusUpper)
 const upperPriority = computed<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>(() => {
   switch (form.priority) {
     case 'low':      return 'LOW'
@@ -73,8 +80,12 @@ async function onSave() {
       priority: upperPriority.value,
       images: form.images,
     }
-    if (form.assigneeId == null) body.clearAssignee = true
-    else body.assigneeId = form.assigneeId
+    if (form.testerId == null) body.clearTester = true
+    else body.testerId = form.testerId
+    if (form.assignee1Id == null) body.clearAssignee1 = true
+    else body.assignee1Id = form.assignee1Id
+    if (form.assignee2Id == null) body.clearAssignee2 = true
+    else body.assignee2Id = form.assignee2Id
     const updated = await qaApi.update(props.item.id, body)
     emit('updated', updated)
     editing.value = false
@@ -151,8 +162,8 @@ async function onDelete() {
   emit('removed')
 }
 
-function statusToUpper(s: QaItem['status']): 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' {
-  return s.toUpperCase() as 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+function statusToUpper(s: QaItem['status']): QaStatusUpper {
+  return s.toUpperCase() as QaStatusUpper
 }
 
 /** 편집 모드 진입 없이 상태 단독 변경 (즉시 PATCH) */
@@ -217,14 +228,24 @@ async function onQuickStatusChange(next: QaItem['status']) {
         class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50"
         @change="onQuickStatusChange(($event.target as HTMLSelectElement).value as any)"
       >
-        <option value="pending">대기중</option>
+        <option value="needs_fix">수정필요</option>
         <option value="in_progress">진행중</option>
-        <option value="resolved">해결됨</option>
-        <option value="closed">종료</option>
+        <option value="fix_done">수정완료</option>
+        <option value="confirmed">확인완료</option>
+        <option value="on_hold">보류</option>
+        <option value="needs_recheck">추가확인필요</option>
       </select>
       <PriorityBadge :priority="item.priority" />
       <span>·</span>
-      <span>담당자 {{ item.assignee?.name ?? '미지정' }}</span>
+      <span>테스터 {{ item.tester?.name ?? '미지정' }}</span>
+      <span>·</span>
+      <span>
+        담당자
+        <template v-if="item.assignee1 || item.assignee2">
+          {{ [item.assignee1?.name, item.assignee2?.name].filter(Boolean).join(', ') }}
+        </template>
+        <template v-else>미지정</template>
+      </span>
       <span>·</span>
       <span>생성 {{ item.createdAt?.slice(0, 10) }}</span>
       <span>수정 {{ item.updatedAt?.slice(0, 10) }}</span>
@@ -246,37 +267,57 @@ async function onQuickStatusChange(next: QaItem['status']) {
       </p>
     </div>
 
-    <!-- 편집 모드: 상태/우선순위/담당자/카테고리 -->
-    <div v-if="editing" class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-      <label class="block">
-        <span class="block text-xs text-slate-500">상태</span>
-        <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
-          <option value="pending">대기중</option>
-          <option value="in_progress">진행중</option>
-          <option value="resolved">해결됨</option>
-          <option value="closed">종료</option>
-        </select>
-      </label>
-      <label class="block">
-        <span class="block text-xs text-slate-500">우선순위</span>
-        <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
-          <option value="low">낮음</option>
-          <option value="medium">보통</option>
-          <option value="high">높음</option>
-          <option value="critical">긴급</option>
-        </select>
-      </label>
-      <label class="block">
-        <span class="block text-xs text-slate-500">담당자</span>
-        <select v-model="form.assigneeId" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
-          <option :value="null">미지정</option>
-          <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}</option>
-        </select>
-      </label>
-      <label class="block">
-        <span class="block text-xs text-slate-500">카테고리</span>
-        <input v-model="form.category" maxlength="50" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs" />
-      </label>
+    <!-- 편집 모드: 상태/우선순위/카테고리 + 테스터/담당자1/담당자2 -->
+    <div v-if="editing" class="mt-5 space-y-3">
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <label class="block">
+          <span class="block text-xs text-slate-500">상태</span>
+          <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+            <option value="needs_fix">수정필요</option>
+            <option value="in_progress">진행중</option>
+            <option value="fix_done">수정완료</option>
+            <option value="confirmed">확인완료</option>
+            <option value="on_hold">보류</option>
+            <option value="needs_recheck">추가확인필요</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="block text-xs text-slate-500">우선순위</span>
+          <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+            <option value="low">낮음</option>
+            <option value="medium">보통</option>
+            <option value="high">높음</option>
+            <option value="critical">긴급</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="block text-xs text-slate-500">카테고리</span>
+          <input v-model="form.category" maxlength="50" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs" />
+        </label>
+      </div>
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <label class="block">
+          <span class="block text-xs text-slate-500">테스터 (작성자)</span>
+          <select v-model="form.testerId" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+            <option :value="null">미지정</option>
+            <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="block text-xs text-slate-500">담당자 1</span>
+          <select v-model="form.assignee1Id" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+            <option :value="null">미지정</option>
+            <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="block text-xs text-slate-500">담당자 2</span>
+          <select v-model="form.assignee2Id" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+            <option :value="null">미지정</option>
+            <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}</option>
+          </select>
+        </label>
+      </div>
     </div>
 
     <!-- 이미지 -->

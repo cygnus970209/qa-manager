@@ -20,11 +20,14 @@ const filtered = computed(() => props.items.filter((item) => {
   if (updateFilter.value !== 'all' && String(item.updateId) !== updateFilter.value) return false
   if (search.value.trim()) {
     const s = search.value.toLowerCase()
-    const a = item.assignee?.name ?? ''
+    const names = [item.tester?.name, item.assignee1?.name, item.assignee2?.name]
+      .filter((x): x is string => Boolean(x))
+      .join(' ')
+      .toLowerCase()
     return (
       item.title.toLowerCase().includes(s) ||
       (item.description ?? '').toLowerCase().includes(s) ||
-      a.toLowerCase().includes(s)
+      names.includes(s)
     )
   }
   return true
@@ -54,10 +57,12 @@ function findUpdate(id: number) {
           class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
         >
           <option value="all">모든 상태</option>
-          <option value="pending">대기중</option>
+          <option value="needs_fix">수정필요</option>
           <option value="in_progress">진행중</option>
-          <option value="resolved">해결됨</option>
-          <option value="closed">종료</option>
+          <option value="fix_done">수정완료</option>
+          <option value="confirmed">확인완료</option>
+          <option value="on_hold">보류</option>
+          <option value="needs_recheck">추가확인필요</option>
         </select>
         <select
           v-model="priorityFilter"
@@ -118,13 +123,15 @@ function findUpdate(id: number) {
             <td class="px-4 py-3"><StatusBadge :status="item.status" /></td>
             <td class="px-4 py-3"><PriorityBadge :priority="item.priority" /></td>
             <td class="hidden px-4 py-3 sm:table-cell">
-              <div v-if="item.assignee" class="flex items-center gap-2">
-                <div class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600">
-                  {{ item.assignee.name.charAt(0) }}
-                </div>
-                <span class="text-sm text-slate-600">{{ item.assignee.name }}</span>
+              <div class="flex flex-col gap-0.5 text-xs">
+                <span v-if="item.tester" class="text-slate-500">
+                  T: {{ item.tester.name }}
+                </span>
+                <span v-if="item.assignee1 || item.assignee2" class="text-slate-700">
+                  {{ [item.assignee1?.name, item.assignee2?.name].filter(Boolean).join(', ') }}
+                </span>
+                <span v-if="!item.tester && !item.assignee1 && !item.assignee2" class="text-slate-400">미지정</span>
               </div>
-              <span v-else class="text-xs text-slate-400">미지정</span>
             </td>
             <td class="hidden px-4 py-3 text-xs text-slate-400 lg:table-cell">
               {{ item.updatedAt?.slice(0, 10) }}

@@ -39,9 +39,9 @@ if (import.meta.client) {
 
 const stats = computed(() => {
   const totalQA = qaItems.value.length
-  const resolved = qaItems.value.filter((q) => q.status === 'resolved' || q.status === 'closed').length
+  const resolved = qaItems.value.filter((q) => q.status === 'fix_done' || q.status === 'confirmed').length
   const inProgress = qaItems.value.filter((q) => q.status === 'in_progress').length
-  const pending = qaItems.value.filter((q) => q.status === 'pending').length
+  const pending = qaItems.value.filter((q) => q.status === 'needs_fix').length
   const critical = qaItems.value.filter((q) => q.priority === 'critical').length
   return { totalQA, resolved, inProgress, pending, critical }
 })
@@ -55,7 +55,7 @@ const projectQaStats = computed(() => {
     if (pid == null) continue
     const s = stat.get(pid) ?? { count: 0, resolved: 0 }
     s.count += 1
-    if (q.status === 'resolved' || q.status === 'closed') s.resolved += 1
+    if (q.status === 'fix_done' || q.status === 'confirmed') s.resolved += 1
     stat.set(pid, s)
   }
   return stat

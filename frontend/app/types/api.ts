@@ -120,7 +120,21 @@ export interface UpdateCreateRequest {
 export type UpdatePatchRequest = Partial<UpdateCreateRequest>
 
 /* ─────────────── QA Item ─────────────── */
-export type QaStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
+export type QaStatus =
+  | 'needs_fix'      // 수정필요
+  | 'in_progress'    // 진행중
+  | 'fix_done'       // 수정완료
+  | 'confirmed'      // 확인완료
+  | 'on_hold'        // 보류
+  | 'needs_recheck'  // 추가확인필요
+
+export type QaStatusUpper =
+  | 'NEEDS_FIX'
+  | 'IN_PROGRESS'
+  | 'FIX_DONE'
+  | 'CONFIRMED'
+  | 'ON_HOLD'
+  | 'NEEDS_RECHECK'
 export type QaPriority = 'low' | 'medium' | 'high' | 'critical'
 
 export interface QaItem {
@@ -130,7 +144,9 @@ export interface QaItem {
   description: string | null
   category: string | null
   status: QaStatus
-  assignee: AssigneeSummary | null
+  tester: AssigneeSummary | null
+  assignee1: AssigneeSummary | null
+  assignee2: AssigneeSummary | null
   priority: QaPriority
   images: string[]
   createdAt: string | null
@@ -142,8 +158,11 @@ export interface QaCreateRequest {
   title: string
   description?: string
   category?: string
-  status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
-  assigneeId?: number
+  status: QaStatusUpper
+  /** null/생략하면 현재 로그인 사용자가 tester 로 자동 지정됨. */
+  testerId?: number
+  assignee1Id?: number
+  assignee2Id?: number
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
   images?: string[]
 }
@@ -153,10 +172,14 @@ export interface QaPatchRequest {
   description?: string
   category?: string
   status?: QaCreateRequest['status']
-  assigneeId?: number
+  testerId?: number
+  assignee1Id?: number
+  assignee2Id?: number
   priority?: QaCreateRequest['priority']
   images?: string[]
-  clearAssignee?: boolean
+  clearTester?: boolean
+  clearAssignee1?: boolean
+  clearAssignee2?: boolean
 }
 
 export interface QaHistoryEntry {

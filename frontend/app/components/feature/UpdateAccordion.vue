@@ -2,7 +2,7 @@
 import { ChevronDown, Pencil, Plus, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
-import type { ProjectUpdate, QaItem, UpdateStatus } from '~/types/api'
+import type { ProjectUpdate, QaItem, QaStatusUpper, UpdateStatus } from '~/types/api'
 
 const props = defineProps<{
   update: ProjectUpdate
@@ -14,13 +14,13 @@ const emit = defineEmits<{
   addQa: [updateId: number]
   edit: [update: ProjectUpdate]
   remove: [update: ProjectUpdate]
-  changeQaStatus: [qaId: number, status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED']
+  changeQaStatus: [qaId: number, status: QaStatusUpper]
 }>()
 
 const open = ref(!!props.defaultOpen)
 
 const resolvedCount = computed(() => props.items.filter(
-  (q) => q.status === 'resolved' || q.status === 'closed',
+  (q) => q.status === 'fix_done' || q.status === 'confirmed',
 ).length)
 
 const upperStatus = computed<'IN_PROGRESS' | 'TESTING' | 'RELEASED'>(() => {
@@ -37,7 +37,7 @@ function onChangeStatus(e: Event) {
 }
 
 function onChangeQaStatus(qaId: number, e: Event) {
-  const v = (e.target as HTMLSelectElement).value as 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+  const v = (e.target as HTMLSelectElement).value as QaStatusUpper
   emit('changeQaStatus', qaId, v)
 }
 </script>
@@ -121,10 +121,12 @@ function onChangeQaStatus(qaId: number, e: Event) {
                 @click.stop
                 @change="onChangeQaStatus(q.id, $event)"
               >
-                <option value="PENDING">대기중</option>
+                <option value="NEEDS_FIX">수정필요</option>
                 <option value="IN_PROGRESS">진행중</option>
-                <option value="RESOLVED">해결됨</option>
-                <option value="CLOSED">종료</option>
+                <option value="FIX_DONE">수정완료</option>
+                <option value="CONFIRMED">확인완료</option>
+                <option value="ON_HOLD">보류</option>
+                <option value="NEEDS_RECHECK">추가확인필요</option>
               </select>
               <PriorityBadge :priority="q.priority" />
             </div>

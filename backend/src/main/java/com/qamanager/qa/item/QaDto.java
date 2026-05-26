@@ -1,5 +1,6 @@
 package com.qamanager.qa.item;
 
+import com.qamanager.member.TeamMember;
 import com.qamanager.qa.shared.QaPriority;
 import com.qamanager.qa.shared.QaStatus;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +11,11 @@ import java.util.List;
 
 public class QaDto {
 
-    public record AssigneeSummary(Long id, String name, String avatarUrl) {}
+    public record AssigneeSummary(Long id, String name, String avatarUrl) {
+        public static AssigneeSummary of(TeamMember m) {
+            return m == null ? null : new AssigneeSummary(m.getId(), m.getName(), m.getAvatarUrl());
+        }
+    }
 
     public record Response(
         Long id,
@@ -19,16 +24,15 @@ public class QaDto {
         String description,
         String category,
         String status,
-        AssigneeSummary assignee,
+        AssigneeSummary tester,
+        AssigneeSummary assignee1,
+        AssigneeSummary assignee2,
         String priority,
         List<String> images,
         String createdAt,
         String updatedAt
     ) {
         public static Response from(QaItem q) {
-            AssigneeSummary a = q.getAssignee() == null ? null : new AssigneeSummary(
-                q.getAssignee().getId(), q.getAssignee().getName(), q.getAssignee().getAvatarUrl()
-            );
             return new Response(
                 q.getId(),
                 q.getProjectUpdate().getId(),
@@ -36,7 +40,9 @@ public class QaDto {
                 q.getDescription(),
                 q.getCategory(),
                 q.getStatus().getCode(),
-                a,
+                AssigneeSummary.of(q.getTester()),
+                AssigneeSummary.of(q.getAssignee1()),
+                AssigneeSummary.of(q.getAssignee2()),
                 q.getPriority().getCode(),
                 q.getImages().stream().map(QaItemImage::getImageUrl).toList(),
                 q.getCreatedAt() != null ? q.getCreatedAt().toString() : null,
@@ -51,7 +57,10 @@ public class QaDto {
         @Size(max = 4000) String description,
         @Size(max = 50) String category,
         @NotNull QaStatus status,
-        Long assigneeId,
+        /** null 이면 현재 로그인 사용자를 tester 로 자동 지정. */
+        Long testerId,
+        Long assignee1Id,
+        Long assignee2Id,
         @NotNull QaPriority priority,
         List<@Size(max = 800) String> images
     ) {}
@@ -61,11 +70,15 @@ public class QaDto {
         @Size(max = 4000) String description,
         @Size(max = 50) String category,
         QaStatus status,
-        Long assigneeId,
+        Long testerId,
+        Long assignee1Id,
+        Long assignee2Id,
         QaPriority priority,
         List<@Size(max = 800) String> images,
-        /** assigneeId 를 null로 명시 비우려면 clearAssignee=true */
-        Boolean clearAssignee
+        /** 명시적으로 비우려면 true. (null 인 채로 보내면 '변경 없음' 으로 간주) */
+        Boolean clearTester,
+        Boolean clearAssignee1,
+        Boolean clearAssignee2
     ) {}
 
     public record HistoryResponse(
@@ -77,12 +90,10 @@ public class QaDto {
         String changedAt
     ) {
         public static HistoryResponse from(QaHistory h) {
-            AssigneeSummary by = h.getChangedBy() == null ? null : new AssigneeSummary(
-                h.getChangedBy().getId(), h.getChangedBy().getName(), h.getChangedBy().getAvatarUrl()
-            );
             return new HistoryResponse(
                 h.getId(), h.getField(), h.getOldValue(), h.getNewValue(),
-                by, h.getChangedAt() != null ? h.getChangedAt().toString() : null
+                AssigneeSummary.of(h.getChangedBy()),
+                h.getChangedAt() != null ? h.getChangedAt().toString() : null
             );
         }
     }

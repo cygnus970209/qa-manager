@@ -7,7 +7,7 @@ import NewUpdateModal from '~/components/feature/NewUpdateModal.vue'
 import NewProjectModal from '~/components/feature/NewProjectModal.vue'
 import NewQAModal from '~/components/feature/NewQAModal.vue'
 import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
-import type { Member, Project, ProjectUpdate, QaItem } from '~/types/api'
+import type { Member, Project, ProjectUpdate, QaItem, QaStatusUpper } from '~/types/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,9 +62,9 @@ if (import.meta.client) onMounted(load)
 
 const stats = computed(() => {
   const t = items.value.length
-  const resolved = items.value.filter((q) => q.status === 'resolved' || q.status === 'closed').length
+  const resolved = items.value.filter((q) => q.status === 'fix_done' || q.status === 'confirmed').length
   const inProgress = items.value.filter((q) => q.status === 'in_progress').length
-  const pending = items.value.filter((q) => q.status === 'pending').length
+  const pending = items.value.filter((q) => q.status === 'needs_fix').length
   const critical = items.value.filter((q) => q.priority === 'critical').length
   return { total: t, resolved, inProgress, pending, critical }
 })
@@ -87,7 +87,7 @@ async function onUpdateStatus(updateId: number, status: 'IN_PROGRESS' | 'TESTING
   const updated = await updatesApi.update(updateId, { status })
   updates.value = updates.value.map((u) => u.id === updateId ? updated : u)
 }
-async function onQaStatusChange(qaId: number, status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED') {
+async function onQaStatusChange(qaId: number, status: QaStatusUpper) {
   const updated = await qaApi.update(qaId, { status })
   items.value = items.value.map((q) => (q.id === qaId ? updated : q))
 }
