@@ -34,3 +34,8 @@ backend/**/.kotlin/
 
 # Generated OpenAPI spec
 docs/openapi.json
+
+# ─────────────── Teams 앱 패키지 ───────────────
+# 실제 App ID 가 든 작업본과 빌드 산출물은 추적하지 않는다. 템플릿(manifest.example.json)만 커밋.
+teams-app/manifest.json
+teams-app/qa-manager-teams-app.zip
