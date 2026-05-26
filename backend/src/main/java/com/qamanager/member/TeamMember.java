@@ -46,8 +46,9 @@ public class TeamMember extends BaseEntity {
     @Column(name = "teams_user_id", length = 64)
     private String teamsUserId;
 
-    /** Bot Framework conversation id (봇과의 1:1). 최초 발송 또는 설치 이벤트 시 캐시. */
-    @Column(name = "teams_chat_id", length = 128)
+    /** Bot Framework conversation id (봇과의 1:1). 최초 발송 또는 설치 이벤트 시 캐시.
+     *  Bot Framework conversation id 는 길어서(개인 1:1 의 a: 형식은 150자+) 512 로 둔다. */
+    @Column(name = "teams_chat_id", length = 512)
     private String teamsChatId;
 
     /** Bot Connector serviceUrl. 설치 이벤트에서 캐시. 없으면 글로벌 기본값으로 발송. */
