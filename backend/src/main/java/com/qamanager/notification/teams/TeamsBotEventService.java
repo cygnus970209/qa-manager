@@ -1,6 +1,6 @@
 package com.qamanager.notification.teams;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.qamanager.member.TeamMemberRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

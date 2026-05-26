@@ -1,7 +1,7 @@
 package com.qamanager.notification.teams;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -43,7 +43,7 @@ public class TeamsBotClient {
 
     private final TeamsProperties props;
     private final RestClient http;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = JsonMapper.builder().build();
 
     private final ReentrantLock tokenLock = new ReentrantLock();
     private volatile String cachedToken;

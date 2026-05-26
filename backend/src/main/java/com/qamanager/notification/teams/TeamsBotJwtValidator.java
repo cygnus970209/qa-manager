@@ -1,7 +1,7 @@
 package com.qamanager.notification.teams;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwsHeader;
@@ -51,7 +51,7 @@ public class TeamsBotJwtValidator {
 
     private final TeamsProperties props;
     private final RestClient http;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = JsonMapper.builder().build();
 
     private volatile Map<String, PublicKey> keyCache = Map.of();
     private volatile Instant keysFetchedAt = Instant.EPOCH;
