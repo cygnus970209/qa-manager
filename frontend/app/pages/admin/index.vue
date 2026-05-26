@@ -6,6 +6,7 @@ import {
   Edit3,
   Folder,
   Loader2,
+  Send,
   Settings,
   Trash2,
   UserPlus,
@@ -15,7 +16,8 @@ import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
 import MemberModal from '~/components/feature/MemberModal.vue'
 import SettingsPanel from '~/components/feature/SettingsPanel.vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
-import type { Member, Project, ProjectStatus, ProjectUpdate, QaItem, QaPriority, QaStatus, QaStatusUpper } from '~/types/api'
+import TeamsTestResultModal from '~/components/feature/TeamsTestResultModal.vue'
+import type { Member, Project, ProjectStatus, ProjectUpdate, QaItem, QaPriority, QaStatus, QaStatusUpper, TeamsTestResult } from '~/types/api'
 
 const router = useRouter()
 const membersApi = useMembers()
@@ -39,6 +41,33 @@ const editTarget = ref<Member | null>(null)
 
 const deleteOpen = ref(false)
 const deleteTarget = ref<Member | null>(null)
+
+const teamsTestOpen = ref(false)
+const teamsTestLoading = ref(false)
+const teamsTestResult = ref<TeamsTestResult | null>(null)
+const teamsTestTarget = ref<Member | null>(null)
+
+async function runTeamsTest(m: Member) {
+  teamsTestTarget.value = m
+  teamsTestResult.value = null
+  teamsTestLoading.value = true
+  teamsTestOpen.value = true
+  try {
+    teamsTestResult.value = await membersApi.teamsTest(m.id)
+  } catch (e: unknown) {
+    teamsTestResult.value = {
+      success: false,
+      errorMessage: e instanceof Error ? e.message : '요청 실패',
+      configOk: false,
+      notifyEnabled: false,
+      aadMapped: false,
+      chatOk: false,
+      sent: false,
+    }
+  } finally {
+    teamsTestLoading.value = false
+  }
+}
 
 async function loadAll() {
   loading.value = true
@@ -416,6 +445,14 @@ async function confirmDelete() {
                 <div class="flex items-center gap-2">
                   <button
                     type="button"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-sky-50 hover:text-sky-500"
+                    title="Teams 발송 테스트"
+                    @click="runTeamsTest(m)"
+                  >
+                    <Send class="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
                     class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-500"
                     title="수정"
                     @click="openEdit(m)"
@@ -459,6 +496,14 @@ async function confirmDelete() {
       message="삭제하면 복구할 수 없습니다. 계속하시겠습니까?"
       @confirm="confirmDelete"
       @cancel="deleteOpen = false; deleteTarget = null"
+    />
+
+    <TeamsTestResultModal
+      :open="teamsTestOpen"
+      :loading="teamsTestLoading"
+      :result="teamsTestResult"
+      :member-name="teamsTestTarget?.name"
+      @close="teamsTestOpen = false"
     />
   </section>
 </template>

@@ -53,8 +53,25 @@ export interface Member {
   id: number
   username: string
   name: string
+  email?: string | null
   role: string | null
   avatarUrl: string | null
+  teamsLinked?: boolean
+  teamsNotifyEnabled?: boolean
+}
+
+export interface TeamsTestResult {
+  success: boolean
+  errorMessage?: string | null
+  memberName?: string | null
+  email?: string | null
+  configOk: boolean
+  notifyEnabled: boolean
+  aadMapped: boolean
+  teamsUserId?: string | null
+  chatOk: boolean
+  chatId?: string | null
+  sent: boolean
 }
 
 export interface MemberCreateRequest {

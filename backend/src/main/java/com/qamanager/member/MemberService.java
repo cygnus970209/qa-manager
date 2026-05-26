@@ -2,6 +2,8 @@ package com.qamanager.member;
 
 import com.qamanager.common.ApiException;
 import com.qamanager.notification.teams.TeamsGraphClient;
+import com.qamanager.notification.teams.TeamsNotifier;
+import com.qamanager.notification.teams.TestSendResult;
 import com.qamanager.project.ProjectPinRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,15 +19,18 @@ public class MemberService {
     private final ProjectPinRepository pinRepository;
     private final PasswordEncoder passwordEncoder;
     private final TeamsGraphClient teamsGraphClient;
+    private final TeamsNotifier teamsNotifier;
 
     public MemberService(TeamMemberRepository memberRepository,
                          ProjectPinRepository pinRepository,
                          PasswordEncoder passwordEncoder,
-                         TeamsGraphClient teamsGraphClient) {
+                         TeamsGraphClient teamsGraphClient,
+                         TeamsNotifier teamsNotifier) {
         this.memberRepository = memberRepository;
         this.pinRepository = pinRepository;
         this.passwordEncoder = passwordEncoder;
         this.teamsGraphClient = teamsGraphClient;
+        this.teamsNotifier = teamsNotifier;
     }
 
     @Transactional(readOnly = true)
@@ -109,6 +114,11 @@ public class MemberService {
         TeamMember m = findOrThrow(id);
         m.setTeamsNotifyEnabled(enabled);
         return MemberDto.Response.from(m);
+    }
+
+    /** Teams 발송 진단 + 테스트 메세지 발송. UI 의 "테스트" 버튼이 호출. */
+    public TestSendResult testTeamsSend(Long memberId) {
+        return teamsNotifier.testSend(memberId);
     }
 
     private TeamMember findOrThrow(Long id) {

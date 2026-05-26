@@ -2,6 +2,7 @@ package com.qamanager.member;
 
 import com.qamanager.auth.CurrentUser;
 import com.qamanager.common.ApiException;
+import com.qamanager.notification.teams.TestSendResult;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -69,6 +70,18 @@ public class MemberController {
                                                 @RequestBody @Valid MemberDto.TeamsNotifyRequest req) {
         requireSelf(id);
         return memberService.updateTeamsNotify(id, req.enabled());
+    }
+
+    /**
+     * Teams 발송 진단 + 테스트 메세지 발송.
+     * 본인 또는 다른 멤버 대상으로 호출 가능 (관리자 페이지 디버깅 용도).
+     * 실패해도 200 으로 응답하고 errorMessage 필드에 사유를 담는다.
+     */
+    @PostMapping("/{id}/teams-test")
+    public TestSendResult teamsTest(@PathVariable Long id) {
+        // 로그인 필요. role 기반 권한 체크는 시스템에 admin 개념이 없어 생략.
+        CurrentUser.getIdOrThrow();
+        return memberService.testTeamsSend(id);
     }
 
     private void requireSelf(Long id) {

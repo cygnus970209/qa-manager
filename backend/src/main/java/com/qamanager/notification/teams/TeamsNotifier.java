@@ -81,6 +81,74 @@ public class TeamsNotifier {
         }
     }
 
+    /**
+     * 진단 정보를 포함한 동기 테스트 발송. UI 의 "테스트 발송" 버튼이 호출한다.
+     * 실패해도 예외 던지지 않고 결과 객체에 상세 사유를 담아 반환.
+     */
+    @Transactional
+    public TestSendResult testSend(Long recipientId) {
+        TestSendResult.Builder b = TestSendResult.builder();
+
+        if (!client.isUsable()) {
+            return b.fail("Teams 설정이 활성화되지 않았습니다. 환경변수(TEAMS_ENABLED, TENANT/CLIENT/SECRET, BOT_USER_OID)를 확인하세요.").build();
+        }
+        b.configOk(true);
+
+        TeamMember recipient = memberRepository.findByIdAndDeletedAtIsNull(recipientId).orElse(null);
+        if (recipient == null) return b.fail("멤버를 찾을 수 없습니다 (id=" + recipientId + ").").build();
+        b.memberName(recipient.getName());
+
+        if (recipient.getEmail() == null || recipient.getEmail().isBlank()) {
+            return b.fail("이 멤버에 email 이 등록되어 있지 않습니다. 본인 설정에서 email 을 먼저 등록하세요.").build();
+        }
+        b.email(recipient.getEmail());
+
+        if (!recipient.isTeamsNotifyEnabled()) {
+            return b.fail("이 멤버가 Teams 알림을 비활성화했습니다.").build();
+        }
+        b.notifyEnabled(true);
+
+        // AAD 매핑
+        String teamsUserId = recipient.getTeamsUserId();
+        try {
+            if (teamsUserId == null) {
+                teamsUserId = client.findUserIdByEmail(recipient.getEmail()).orElse(null);
+                if (teamsUserId == null) {
+                    return b.fail("Azure AD 에서 사용자를 찾지 못했습니다 (email=" + recipient.getEmail() + ").").build();
+                }
+                recipient.linkTeamsUser(teamsUserId);
+            }
+            b.aadMapped(true).teamsUserId(teamsUserId);
+        } catch (TeamsApiException e) {
+            return b.fail("AAD 사용자 조회 실패: " + e.getMessage()).build();
+        }
+
+        // chat 캐시 / 생성
+        String chatId = recipient.getTeamsChatId();
+        try {
+            if (chatId == null) {
+                chatId = client.createOneOnOneChat(teamsUserId);
+                recipient.cacheTeamsChat(chatId);
+            }
+            b.chatOk(true).chatId(chatId);
+        } catch (TeamsApiException e) {
+            return b.fail("1:1 chat 생성 실패: " + e.getMessage()).build();
+        }
+
+        // 발송
+        try {
+            Map<String, Object> card = buildCard(new NotificationPayload(
+                "test",
+                "[테스트] Teams 알림이 정상적으로 연결되었습니다.",
+                null, null, null, null
+            ));
+            client.sendAdaptiveCard(chatId, "Teams 알림 테스트", card);
+            return b.sent(true).build();
+        } catch (TeamsApiException e) {
+            return b.fail("메세지 발송 실패: " + e.getMessage()).build();
+        }
+    }
+
     /* ─────────────── Adaptive Card ─────────────── */
 
     private Map<String, Object> buildCard(NotificationPayload p) {
