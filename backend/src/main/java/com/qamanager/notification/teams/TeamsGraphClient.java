@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -187,22 +188,24 @@ public class TeamsGraphClient {
     /** Adaptive Card 첨부 메세지 발송. card 는 JSON Map. */
     public void sendAdaptiveCard(String chatId, String fallbackText, Map<String, Object> card) {
         // Graph 에서 Adaptive Card 는 message.attachments + body 의 <attachment id> 마커로 묶는다.
+        // 주의: Map.of 는 null value 를 허용하지 않으므로 optional 필드(contentUrl/thumbnailUrl) 는 생략.
         String attachmentId = "1";
         try {
             String cardJson = mapper.writeValueAsString(card);
+            Map<String, Object> attachment = new LinkedHashMap<>();
+            attachment.put("id", attachmentId);
+            attachment.put("contentType", "application/vnd.microsoft.card.adaptive");
+            attachment.put("content", cardJson);
+            if (fallbackText != null && !fallbackText.isBlank()) {
+                attachment.put("name", fallbackText);
+            }
+
             Map<String, Object> payload = Map.of(
                 "body", Map.of(
                     "contentType", "html",
                     "content", "<attachment id=\"" + attachmentId + "\"></attachment>"
                 ),
-                "attachments", List.of(Map.of(
-                    "id", attachmentId,
-                    "contentType", "application/vnd.microsoft.card.adaptive",
-                    "contentUrl", null,
-                    "content", cardJson,
-                    "name", fallbackText,
-                    "thumbnailUrl", null
-                ))
+                "attachments", List.of(attachment)
             );
             postMessage(chatId, payload);
         } catch (Exception e) {
