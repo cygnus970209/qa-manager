@@ -41,9 +41,8 @@ spring:
 
   jackson:
     default-property-inclusion: non_null
+    # 컨테이너 TZ=Asia/Seoul 와 일관성. Jackson 3 에선 ISO 문자열이 기본이라 별도 옵션 불필요.
     time-zone: Asia/Seoul
-    serialization:
-      write-dates-as-timestamps: false
 
   data:
     redis:
