@@ -23,7 +23,7 @@ COPY --from=build /workspace/build/libs/*.jar /app/app.jar
 RUN chown app:app /app/app.jar
 USER app
 
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.security.egd=file:/dev/./urandom" \
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.security.egd=file:/dev/./urandom --enable-native-access=ALL-UNNAMED" \
     TZ="Asia/Seoul"
 EXPOSE 8080
 
