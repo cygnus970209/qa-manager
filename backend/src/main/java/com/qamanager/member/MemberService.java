@@ -1,12 +1,14 @@
 package com.qamanager.member;
 
 import com.qamanager.common.ApiException;
+import com.qamanager.notification.teams.TeamsGraphClient;
 import com.qamanager.project.ProjectPinRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class MemberService {
@@ -14,13 +16,16 @@ public class MemberService {
     private final TeamMemberRepository memberRepository;
     private final ProjectPinRepository pinRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TeamsGraphClient teamsGraphClient;
 
     public MemberService(TeamMemberRepository memberRepository,
                          ProjectPinRepository pinRepository,
-                         PasswordEncoder passwordEncoder) {
+                         PasswordEncoder passwordEncoder,
+                         TeamsGraphClient teamsGraphClient) {
         this.memberRepository = memberRepository;
         this.pinRepository = pinRepository;
         this.passwordEncoder = passwordEncoder;
+        this.teamsGraphClient = teamsGraphClient;
     }
 
     @Transactional(readOnly = true)
@@ -62,6 +67,48 @@ public class MemberService {
         m.softDelete();
         // 자기 자신을 위한 핀은 의미 없으므로 정리.
         pinRepository.deleteByMemberId(id);
+    }
+
+    /**
+     * email 을 등록/변경한다. 변경 즉시 AAD 조회를 시도해서 teams_user_id 도 같이 저장한다.
+     * AAD 조회가 실패해도 email 변경 자체는 성공 — Teams 발송 시점에 다시 시도된다.
+     */
+    @Transactional
+    public MemberDto.Response updateEmail(Long id, MemberDto.EmailRequest req) {
+        TeamMember m = findOrThrow(id);
+        String email = req.email() == null ? null : req.email().trim();
+        if (email != null && email.isEmpty()) email = null;
+
+        if (email == null) {
+            // 등록 해제
+            m.updateEmail(null);
+            return MemberDto.Response.from(m);
+        }
+
+        if (memberRepository.findByEmailAndDeletedAtIsNull(email)
+                .filter(other -> !other.getId().equals(id))
+                .isPresent()) {
+            throw ApiException.conflict("이미 사용 중인 email 입니다.");
+        }
+
+        m.updateEmail(email);
+        if (teamsGraphClient.isUsable()) {
+            try {
+                Optional<String> aadId = teamsGraphClient.findUserIdByEmail(email);
+                aadId.ifPresent(m::linkTeamsUser);
+            } catch (RuntimeException ignore) {
+                // 조회 실패는 비치명적 — 발송 시점에 재시도.
+            }
+        }
+        return MemberDto.Response.from(m);
+    }
+
+    /** Teams 알림 on/off. */
+    @Transactional
+    public MemberDto.Response updateTeamsNotify(Long id, boolean enabled) {
+        TeamMember m = findOrThrow(id);
+        m.setTeamsNotifyEnabled(enabled);
+        return MemberDto.Response.from(m);
     }
 
     private TeamMember findOrThrow(Long id) {

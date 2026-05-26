@@ -3,6 +3,7 @@ package com.qamanager.notification;
 import com.qamanager.common.ApiException;
 import com.qamanager.member.TeamMember;
 import com.qamanager.member.TeamMemberRepository;
+import com.qamanager.notification.teams.TeamsNotifier;
 import com.qamanager.project.Project;
 import com.qamanager.project.ProjectRepository;
 import com.qamanager.qa.comment.QaCommentService;
@@ -12,6 +13,8 @@ import com.qamanager.qa.item.QaItemService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,17 +28,20 @@ public class NotificationService {
     private final ProjectRepository projectRepository;
     private final QaItemRepository qaRepository;
     private final SseEmitterRegistry sse;
+    private final TeamsNotifier teamsNotifier;
 
     public NotificationService(NotificationRepository notificationRepository,
                                TeamMemberRepository memberRepository,
                                ProjectRepository projectRepository,
                                QaItemRepository qaRepository,
-                               SseEmitterRegistry sse) {
+                               SseEmitterRegistry sse,
+                               TeamsNotifier teamsNotifier) {
         this.notificationRepository = notificationRepository;
         this.memberRepository = memberRepository;
         this.projectRepository = projectRepository;
         this.qaRepository = qaRepository;
         this.sse = sse;
+        this.teamsNotifier = teamsNotifier;
     }
 
     @Transactional(readOnly = true)
@@ -139,5 +145,17 @@ public class NotificationService {
             new Notification(recipient, actor, type, message, project, qa)
         );
         sse.publish(recipientId, "notification", NotificationDto.Response.from(n));
+
+        // Teams 발송은 트랜잭션 커밋 후에 (rollback 시 발송 방지). 비동기 + 실패 격리.
+        TeamsNotifier.NotificationPayload payload = TeamsNotifier.NotificationPayload.from(n);
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() {
+                    teamsNotifier.send(recipientId, payload);
+                }
+            });
+        } else {
+            teamsNotifier.send(recipientId, payload);
+        }
     }
 }

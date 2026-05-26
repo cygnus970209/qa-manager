@@ -18,4 +18,7 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
 
     /** username 중복 검사용. unique 인덱스가 deleted 까지 포함하므로 모든 row 대상. */
     boolean existsByUsername(String username);
+
+    /** email 로 활성 멤버 조회 (Teams 알림 매핑 검증용). */
+    Optional<TeamMember> findByEmailAndDeletedAtIsNull(String email);
 }

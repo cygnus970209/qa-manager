@@ -34,11 +34,23 @@ public class TeamMember extends BaseEntity {
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
+    @Column(name = "email", length = 255, unique = true)
+    private String email;
+
     @Column(name = "role", length = 50)
     private String role;
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
+
+    @Column(name = "teams_user_id", length = 64)
+    private String teamsUserId;
+
+    @Column(name = "teams_chat_id", length = 128)
+    private String teamsChatId;
+
+    @Column(name = "teams_notify_enabled", nullable = false)
+    private boolean teamsNotifyEnabled = true;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -67,11 +79,38 @@ public class TeamMember extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
     }
 
+    /** email 등록/변경. 변경되면 캐시된 AAD/chat id 는 무효화. */
+    public void updateEmail(String email) {
+        if (email != null && !email.equals(this.email)) {
+            this.email = email;
+            this.teamsUserId = null;
+            this.teamsChatId = null;
+        }
+    }
+
+    /** Teams 발송 가능 상태 캐시. AAD 조회 결과를 저장한다. */
+    public void linkTeamsUser(String teamsUserId) {
+        this.teamsUserId = teamsUserId;
+        this.teamsChatId = null;
+    }
+
+    public void cacheTeamsChat(String chatId) {
+        this.teamsChatId = chatId;
+    }
+
+    public void setTeamsNotifyEnabled(boolean enabled) {
+        this.teamsNotifyEnabled = enabled;
+    }
+
     public Long getId() { return id; }
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }
     public String getName() { return name; }
+    public String getEmail() { return email; }
     public String getRole() { return role; }
     public String getAvatarUrl() { return avatarUrl; }
+    public String getTeamsUserId() { return teamsUserId; }
+    public String getTeamsChatId() { return teamsChatId; }
+    public boolean isTeamsNotifyEnabled() { return teamsNotifyEnabled; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
 }

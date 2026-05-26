@@ -85,6 +85,17 @@ app:
     access-key: ${AWS_ACCESS_KEY_ID:}
     secret-key: ${AWS_SECRET_ACCESS_KEY:}
     presign-ttl-seconds: ${AWS_S3_PRESIGN_TTL_SECONDS:300}
+  teams:
+    # 비활성화 기본값: 환경변수 누락 시 모든 발송 no-op (테스트/로컬 안전).
+    enabled: ${TEAMS_ENABLED:false}
+    tenant-id: ${TEAMS_TENANT_ID:}
+    client-id: ${TEAMS_CLIENT_ID:}
+    client-secret: ${TEAMS_CLIENT_SECRET:}
+    # 발송 봇으로 사용할 user 의 AAD Object ID. oneOnOne chat 의 한쪽 멤버가 된다.
+    bot-user-oid: ${TEAMS_BOT_USER_OID:}
+    # Graph API 호출 timeout (초).
+    connect-timeout-seconds: ${TEAMS_CONNECT_TIMEOUT:5}
+    read-timeout-seconds: ${TEAMS_READ_TIMEOUT:10}
 
 logging:
   level:

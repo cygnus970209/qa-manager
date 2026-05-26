@@ -1,6 +1,7 @@
 package com.qamanager.notification;
 
 import com.qamanager.member.TeamMemberRepository;
+import com.qamanager.notification.teams.TeamsNotifier;
 import com.qamanager.project.ProjectRepository;
 import com.qamanager.qa.item.QaItemRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,8 @@ class NotificationServiceDistinctRecipientsTest {
             mock(TeamMemberRepository.class),
             mock(ProjectRepository.class),
             mock(QaItemRepository.class),
-            mock(SseEmitterRegistry.class)
+            mock(SseEmitterRegistry.class),
+            mock(TeamsNotifier.class)
         );
     }
 
