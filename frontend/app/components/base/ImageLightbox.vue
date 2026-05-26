@@ -139,7 +139,7 @@ function onBackdrop(e: MouseEvent) {
       v-if="isOpen && currentSrc"
       class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 select-none"
       @mousedown="onBackdrop"
-      @wheel.passive="onWheel"
+      @wheel="onWheel"
     >
       <!-- 상단 도구막대 -->
       <div class="absolute top-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white/10 px-2 py-1 backdrop-blur">

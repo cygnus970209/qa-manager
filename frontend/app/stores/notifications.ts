@@ -43,6 +43,13 @@ export const useNotificationsStore = defineStore('notifications', () => {
         signal: abort.signal,
       })
       if (!res.ok || !res.body) {
+        // 원인 진단용: 응답 status / content-type / body 출력
+        let body = ''
+        try { body = await res.text() } catch { /* ignore */ }
+        console.error('[SSE] connect failed',
+          'status=', res.status,
+          'ctype=', res.headers.get('content-type'),
+          'body=', body)
         abort = null
         return
       }
