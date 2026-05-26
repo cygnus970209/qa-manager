@@ -11,7 +11,13 @@ import type {
 export function useQa() {
   const api = useApi()
   return {
-    list: (params?: { updateId?: number; status?: string; priority?: string; assigneeId?: number }) =>
+    list: (params?: {
+      updateId?: number
+      status?: string
+      priority?: string
+      assigneeId?: number
+      testerId?: number
+    }) =>
       api<QaItem[]>('/api/qa', { query: params }),
     get: (id: number) =>
       api<QaItem>(`/api/qa/${id}`),

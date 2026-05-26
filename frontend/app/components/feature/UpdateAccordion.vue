@@ -40,6 +40,14 @@ function onChangeQaStatus(qaId: number, e: Event) {
   const v = (e.target as HTMLSelectElement).value as QaStatusUpper
   emit('changeQaStatus', qaId, v)
 }
+
+/** QA 행 클릭 시 prev/next 컨텍스트를 sessionStorage 에 저장. */
+function rememberOrder(targetId: number) {
+  if (!import.meta.client) return
+  const ids = props.items.map((x) => x.id)
+  sessionStorage.setItem('qa:nav:list', JSON.stringify(ids))
+  sessionStorage.setItem('qa:nav:from', String(targetId))
+}
 </script>
 
 <template>
@@ -107,7 +115,7 @@ function onChangeQaStatus(qaId: number, e: Event) {
           v-for="q in items"
           :key="q.id"
           class="cursor-pointer px-4 py-3 transition hover:bg-slate-50"
-          @click="$router.push(`/qa/${q.id}`)"
+          @click="rememberOrder(q.id); $router.push(`/qa/${q.id}`)"
         >
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">

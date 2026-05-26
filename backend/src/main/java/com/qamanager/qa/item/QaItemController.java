@@ -30,8 +30,9 @@ public class QaItemController {
     public List<QaDto.Response> list(@RequestParam(required = false) Long updateId,
                                      @RequestParam(required = false) String status,
                                      @RequestParam(required = false) String priority,
-                                     @RequestParam(required = false) Long assigneeId) {
-        return qaService.list(updateId, status, priority, assigneeId);
+                                     @RequestParam(required = false) Long assigneeId,
+                                     @RequestParam(required = false) Long testerId) {
+        return qaService.list(updateId, status, priority, assigneeId, testerId);
     }
 
     @GetMapping("/{id}")

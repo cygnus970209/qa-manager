@@ -185,7 +185,7 @@ function onQaCreated(item: QaItem) {
           <div class="h-5 w-16 rounded-full bg-slate-100" />
         </div>
       </div>
-      <QAList v-else :items="qaItems" :updates="updates" />
+      <QAList v-else :items="qaItems" :updates="updates" :members="members" />
     </section>
 
     <NewProjectModal :open="projectModalOpen" @close="projectModalOpen = false" @created="onProjectCreated" />

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppDialog from '~/components/base/AppDialog.vue'
+import SearchableSelect from '~/components/base/SearchableSelect.vue'
 import type { Member, Project, ProjectUpdate, QaCreateRequest, QaItem } from '~/types/api'
 
 const props = defineProps<{
@@ -264,42 +265,51 @@ async function onSubmit() {
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <label class="block">
+        <div>
           <span class="block text-xs font-medium text-slate-600">테스터 (작성자)</span>
-          <select
-            v-model="form.testerId"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            <option :value="null">미지정</option>
-            <option v-for="m in members" :key="m.id" :value="m.id">
-              {{ m.name }}<template v-if="m.role"> · {{ m.role }}</template>
-            </option>
-          </select>
-        </label>
-        <label class="block">
+          <SearchableSelect
+            class="mt-1"
+            :model-value="form.testerId"
+            :options="members"
+            :key-fn="(m: Member) => m.id"
+            :label-fn="(m: Member) => m.name"
+            :search-fn="(m: Member) => m.role ?? ''"
+            placeholder="이름/역할로 검색"
+            empty-label="미지정"
+            clearable
+            @update:model-value="(v) => form.testerId = v as number | null"
+          />
+        </div>
+        <div>
           <span class="block text-xs font-medium text-slate-600">담당자 1</span>
-          <select
-            v-model="form.assignee1Id"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            <option :value="null">미지정</option>
-            <option v-for="m in members" :key="m.id" :value="m.id">
-              {{ m.name }}<template v-if="m.role"> · {{ m.role }}</template>
-            </option>
-          </select>
-        </label>
-        <label class="block">
+          <SearchableSelect
+            class="mt-1"
+            :model-value="form.assignee1Id"
+            :options="members"
+            :key-fn="(m: Member) => m.id"
+            :label-fn="(m: Member) => m.name"
+            :search-fn="(m: Member) => m.role ?? ''"
+            placeholder="이름/역할로 검색"
+            empty-label="미지정"
+            clearable
+            @update:model-value="(v) => form.assignee1Id = v as number | null"
+          />
+        </div>
+        <div>
           <span class="block text-xs font-medium text-slate-600">담당자 2</span>
-          <select
-            v-model="form.assignee2Id"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            <option :value="null">미지정</option>
-            <option v-for="m in members" :key="m.id" :value="m.id">
-              {{ m.name }}<template v-if="m.role"> · {{ m.role }}</template>
-            </option>
-          </select>
-        </label>
+          <SearchableSelect
+            class="mt-1"
+            :model-value="form.assignee2Id"
+            :options="members"
+            :key-fn="(m: Member) => m.id"
+            :label-fn="(m: Member) => m.name"
+            :search-fn="(m: Member) => m.role ?? ''"
+            placeholder="이름/역할로 검색"
+            empty-label="미지정"
+            clearable
+            @update:model-value="(v) => form.assignee2Id = v as number | null"
+          />
+        </div>
       </div>
 
       <div>

@@ -39,7 +39,8 @@ public class QaItemService {
     }
 
     @Transactional(readOnly = true)
-    public List<QaDto.Response> list(Long updateId, String status, String priority, Long assigneeId) {
+    public List<QaDto.Response> list(Long updateId, String status, String priority,
+                                     Long assigneeId, Long testerId) {
         Specification<QaItem> spec = Specification.unrestricted();
         if (updateId != null) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("projectUpdate").get("id"), updateId));
@@ -58,6 +59,9 @@ public class QaItemService {
                 cb.equal(root.get("assignee1").get("id"), assigneeId),
                 cb.equal(root.get("assignee2").get("id"), assigneeId)
             ));
+        }
+        if (testerId != null) {
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("tester").get("id"), testerId));
         }
         spec = spec.and((root, q, cb) -> {
             q.orderBy(cb.desc(root.get("createdAt")));

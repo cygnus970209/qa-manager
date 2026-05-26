@@ -2,22 +2,43 @@
 import { Search, Inbox } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
-import type { ProjectUpdate, QaItem } from '~/types/api'
+import SearchableSelect from '~/components/base/SearchableSelect.vue'
+import type { Member, ProjectUpdate, QaItem } from '~/types/api'
 
 const props = defineProps<{
   items: QaItem[]
   updates: ProjectUpdate[]
+  members?: Member[]
 }>()
+
+const auth = useAuthStore()
 
 const statusFilter = ref<string>('all')
 const priorityFilter = ref<string>('all')
 const updateFilter = ref<string>('all')
+const testerFilter = ref<number | null>(null)
+const assigneeFilter = ref<number | null>(null)
+const mineOnly = ref(false)
 const search = ref('')
 
 const filtered = computed(() => props.items.filter((item) => {
   if (statusFilter.value !== 'all' && item.status !== statusFilter.value) return false
   if (priorityFilter.value !== 'all' && item.priority !== priorityFilter.value) return false
   if (updateFilter.value !== 'all' && String(item.updateId) !== updateFilter.value) return false
+
+  if (testerFilter.value != null && item.tester?.id !== testerFilter.value) return false
+  if (assigneeFilter.value != null
+    && item.assignee1?.id !== assigneeFilter.value
+    && item.assignee2?.id !== assigneeFilter.value) return false
+
+  if (mineOnly.value && auth.user) {
+    const meId = auth.user.id
+    const matchMine = item.tester?.id === meId
+      || item.assignee1?.id === meId
+      || item.assignee2?.id === meId
+    if (!matchMine) return false
+  }
+
   if (search.value.trim()) {
     const s = search.value.toLowerCase()
     const names = [item.tester?.name, item.assignee1?.name, item.assignee2?.name]
@@ -33,16 +54,26 @@ const filtered = computed(() => props.items.filter((item) => {
   return true
 }))
 
+const memberOptions = computed<Member[]>(() => props.members ?? [])
+
 function findUpdate(id: number) {
   return props.updates.find((u) => u.id === id)
+}
+
+/** 상세창 prev/next 용. 현재 필터 결과의 ID 목록을 sessionStorage 에 저장. */
+function rememberOrder(targetId: number) {
+  if (!import.meta.client) return
+  const ids = filtered.value.map((x) => x.id)
+  sessionStorage.setItem('qa:nav:list', JSON.stringify(ids))
+  sessionStorage.setItem('qa:nav:from', String(targetId))
 }
 </script>
 
 <template>
   <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
     <!-- Filters -->
-    <div class="flex flex-col gap-3 border-b border-slate-100 p-4 lg:flex-row">
-      <div class="flex flex-1 flex-wrap items-center gap-2">
+    <div class="flex flex-col gap-3 border-b border-slate-100 p-4">
+      <div class="flex flex-wrap items-center gap-2">
         <div class="relative min-w-[200px] flex-1">
           <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
@@ -84,8 +115,41 @@ function findUpdate(id: number) {
           </option>
         </select>
       </div>
-      <div class="flex items-center whitespace-nowrap text-xs text-slate-400">
-        총 {{ filtered.length }}건
+
+      <!-- 멤버 필터 행 -->
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="text-slate-400">멤버:</span>
+        <div class="min-w-[180px]">
+          <SearchableSelect
+            :model-value="testerFilter"
+            :options="memberOptions"
+            :key-fn="(m: Member) => m.id"
+            :label-fn="(m: Member) => `테스터: ${m.name}`"
+            :search-fn="(m: Member) => m.role ?? ''"
+            placeholder="테스터 검색"
+            empty-label="모든 테스터"
+            clearable
+            @update:model-value="(v) => testerFilter = v as number | null"
+          />
+        </div>
+        <div class="min-w-[180px]">
+          <SearchableSelect
+            :model-value="assigneeFilter"
+            :options="memberOptions"
+            :key-fn="(m: Member) => m.id"
+            :label-fn="(m: Member) => `담당자: ${m.name}`"
+            :search-fn="(m: Member) => m.role ?? ''"
+            placeholder="담당자 검색"
+            empty-label="모든 담당자"
+            clearable
+            @update:model-value="(v) => assigneeFilter = v as number | null"
+          />
+        </div>
+        <label v-if="auth.user" class="ml-2 inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1.5">
+          <input v-model="mineOnly" type="checkbox" class="accent-emerald-500" />
+          <span class="text-slate-600">내 것만</span>
+        </label>
+        <span class="ml-auto whitespace-nowrap text-slate-400">총 {{ filtered.length }}건</span>
       </div>
     </div>
 
@@ -107,7 +171,7 @@ function findUpdate(id: number) {
             v-for="item in filtered"
             :key="item.id"
             class="cursor-pointer border-b border-slate-50 transition hover:bg-slate-50"
-            @click="$router.push(`/qa/${item.id}`)"
+            @click="rememberOrder(item.id); $router.push(`/qa/${item.id}`)"
           >
             <td class="px-4 py-3">
               <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ item.title }}</p>

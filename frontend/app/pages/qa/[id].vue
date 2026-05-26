@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft } from '@lucide/vue'
+import { ArrowLeft, ChevronLeft, ChevronRight } from '@lucide/vue'
 import QAInfoPanel from '~/components/feature/QAInfoPanel.vue'
 import QACommentSection from '~/components/feature/QACommentSection.vue'
 import QAHistoryList from '~/components/feature/QAHistoryList.vue'
@@ -44,13 +44,60 @@ async function onUpdated(next: QaItem) {
 function onRemoved() {
   router.push('/')
 }
+
+/* ─── 이전/다음 게시글 (필터/정렬 컨텍스트 유지) ───
+ * 리스트 페이지가 sessionStorage 에 저장한 'qa:nav:list' 의 ID 순서를 기준으로
+ * 현재 ID 의 앞/뒤 항목으로 이동한다. 컨텍스트가 없으면 버튼 자체를 숨긴다.
+ */
+const navIds = computed<number[]>(() => {
+  if (!import.meta.client) return []
+  const raw = sessionStorage.getItem('qa:nav:list')
+  if (!raw) return []
+  try {
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? arr.filter((n: unknown) => typeof n === 'number') : []
+  } catch { return [] }
+})
+const currentIdx = computed(() => navIds.value.indexOf(qaId.value))
+const hasPrev = computed(() => currentIdx.value > 0)
+const hasNext = computed(() => currentIdx.value >= 0 && currentIdx.value < navIds.value.length - 1)
+
+function goPrev() {
+  if (!hasPrev.value) return
+  router.push(`/qa/${navIds.value[currentIdx.value - 1]}`)
+}
+function goNext() {
+  if (!hasNext.value) return
+  router.push(`/qa/${navIds.value[currentIdx.value + 1]}`)
+}
 </script>
 
 <template>
   <section>
-    <button class="mb-3 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900" type="button" @click="router.back()">
-      <ArrowLeft class="h-3.5 w-3.5" /> 뒤로
-    </button>
+    <div class="mb-3 flex items-center justify-between">
+      <button class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900" type="button" @click="router.back()">
+        <ArrowLeft class="h-3.5 w-3.5" /> 뒤로
+      </button>
+      <div v-if="navIds.length > 0 && currentIdx >= 0" class="flex items-center gap-1 text-xs">
+        <span class="mr-1 text-slate-400 tabular-nums">{{ currentIdx + 1 }} / {{ navIds.length }}</span>
+        <button
+          type="button"
+          :disabled="!hasPrev"
+          class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+          @click="goPrev"
+        >
+          <ChevronLeft class="h-3.5 w-3.5" /> 이전
+        </button>
+        <button
+          type="button"
+          :disabled="!hasNext"
+          class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+          @click="goNext"
+        >
+          다음 <ChevronRight class="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
 
     <div v-if="loading" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div class="space-y-6 lg:col-span-2">
