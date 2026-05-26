@@ -14,6 +14,7 @@ const emit = defineEmits<{
   addQa: [updateId: number]
   edit: [update: ProjectUpdate]
   remove: [update: ProjectUpdate]
+  changeQaStatus: [qaId: number, status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED']
 }>()
 
 const open = ref(!!props.defaultOpen)
@@ -33,6 +34,11 @@ const upperStatus = computed<'IN_PROGRESS' | 'TESTING' | 'RELEASED'>(() => {
 function onChangeStatus(e: Event) {
   const v = (e.target as HTMLSelectElement).value as 'IN_PROGRESS' | 'TESTING' | 'RELEASED'
   emit('changeStatus', props.update.id, v)
+}
+
+function onChangeQaStatus(qaId: number, e: Event) {
+  const v = (e.target as HTMLSelectElement).value as 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+  emit('changeQaStatus', qaId, v)
 }
 </script>
 
@@ -109,7 +115,17 @@ function onChangeStatus(e: Event) {
               <p v-if="q.description" class="mt-0.5 line-clamp-1 text-xs text-slate-400">{{ q.description }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-2">
-              <StatusBadge :status="q.status" />
+              <select
+                :value="q.status.toUpperCase()"
+                class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                @click.stop
+                @change="onChangeQaStatus(q.id, $event)"
+              >
+                <option value="PENDING">대기중</option>
+                <option value="IN_PROGRESS">진행중</option>
+                <option value="RESOLVED">해결됨</option>
+                <option value="CLOSED">종료</option>
+              </select>
               <PriorityBadge :priority="q.priority" />
             </div>
           </div>

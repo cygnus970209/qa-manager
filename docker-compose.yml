@@ -51,6 +51,8 @@ services:
       redis:
         condition: service_healthy
     environment:
+      # Timezone
+      TZ: Asia/Seoul
       # Spring 프로필 (운영 로깅/설정 활성화)
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       # DB

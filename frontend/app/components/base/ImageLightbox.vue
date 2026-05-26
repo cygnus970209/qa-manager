@@ -1,8 +1,18 @@
 <script setup lang="ts">
-import { Minus, Plus, RotateCcw, X } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, X } from '@lucide/vue'
 
-const props = defineProps<{ src: string | null }>()
-const emit = defineEmits<{ close: [] }>()
+const props = defineProps<{
+  /** 라이트박스에서 함께 탐색 가능한 이미지 묶음. */
+  images?: string[]
+  /** 현재 표시할 이미지 인덱스. null 이면 닫힘. */
+  index?: number | null
+  /** 하위 호환: 단일 이미지만 표시하고 싶을 때. images 와 동시 사용 금지. */
+  src?: string | null
+}>()
+const emit = defineEmits<{
+  close: []
+  'update:index': [value: number]
+}>()
 
 const MIN = 0.25
 const MAX = 8
@@ -17,13 +27,40 @@ const startY = ref(0)
 const startTx = ref(0)
 const startTy = ref(0)
 
+/** images / src 둘 다 지원해서 호환. */
+const list = computed<string[]>(() => {
+  if (props.images && props.images.length > 0) return props.images
+  if (props.src) return [props.src]
+  return []
+})
+
+const currentIndex = computed<number>(() => {
+  if (props.index != null) return props.index
+  return list.value.length > 0 ? 0 : -1
+})
+
+const isOpen = computed<boolean>(() => {
+  if (props.src !== undefined) return props.src !== null
+  return props.index !== undefined && props.index !== null && list.value.length > 0
+})
+
+const currentSrc = computed<string | null>(() => {
+  if (!isOpen.value) return null
+  const i = currentIndex.value
+  if (i < 0 || i >= list.value.length) return null
+  return list.value[i]
+})
+
+const hasPrev = computed(() => list.value.length > 1 && currentIndex.value > 0)
+const hasNext = computed(() => list.value.length > 1 && currentIndex.value < list.value.length - 1)
+
 function reset() {
   scale.value = 1
   tx.value = 0
   ty.value = 0
 }
 
-watch(() => props.src, (v) => {
+watch(currentSrc, (v) => {
   if (v) reset()
 })
 
@@ -36,6 +73,15 @@ function zoomOut() {
   const next = clampScale(scale.value - STEP)
   scale.value = next
   if (next === 1) { tx.value = 0; ty.value = 0 }
+}
+
+function goPrev() {
+  if (!hasPrev.value) return
+  emit('update:index', currentIndex.value - 1)
+}
+function goNext() {
+  if (!hasNext.value) return
+  emit('update:index', currentIndex.value + 1)
 }
 
 function onWheel(e: WheelEvent) {
@@ -62,11 +108,13 @@ function onMouseMove(e: MouseEvent) {
 function onMouseUp() { dragging.value = false }
 
 function onKey(e: KeyboardEvent) {
-  if (!props.src) return
+  if (!isOpen.value) return
   if (e.key === 'Escape') emit('close')
   else if (e.key === '+' || e.key === '=') zoomIn()
   else if (e.key === '-' || e.key === '_') zoomOut()
   else if (e.key === '0') reset()
+  else if (e.key === 'ArrowLeft') goPrev()
+  else if (e.key === 'ArrowRight') goNext()
 }
 
 onMounted(() => {
@@ -88,7 +136,7 @@ function onBackdrop(e: MouseEvent) {
 <template>
   <Teleport to="body">
     <div
-      v-if="src"
+      v-if="isOpen && currentSrc"
       class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 select-none"
       @mousedown="onBackdrop"
       @wheel.passive="onWheel"
@@ -123,6 +171,10 @@ function onBackdrop(e: MouseEvent) {
         >
           <RotateCcw class="h-4 w-4" />
         </button>
+        <span v-if="list.length > 1" class="mx-1 h-4 w-px bg-white/20" />
+        <span v-if="list.length > 1" class="px-1 text-xs text-white tabular-nums">
+          {{ currentIndex + 1 }} / {{ list.length }}
+        </span>
       </div>
 
       <button
@@ -134,8 +186,28 @@ function onBackdrop(e: MouseEvent) {
         <X class="h-5 w-5" />
       </button>
 
+      <!-- 좌/우 네비 -->
+      <button
+        v-if="hasPrev"
+        type="button"
+        class="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+        aria-label="이전 이미지"
+        @click.stop="goPrev"
+      >
+        <ChevronLeft class="h-6 w-6" />
+      </button>
+      <button
+        v-if="hasNext"
+        type="button"
+        class="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+        aria-label="다음 이미지"
+        @click.stop="goNext"
+      >
+        <ChevronRight class="h-6 w-6" />
+      </button>
+
       <img
-        :src="src"
+        :src="currentSrc"
         alt="확대 이미지"
         :style="{
           transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
@@ -149,7 +221,7 @@ function onBackdrop(e: MouseEvent) {
       />
 
       <p class="absolute bottom-3 left-1/2 -translate-x-1/2 text-[11px] text-white/60">
-        휠로 확대/축소 · 드래그로 이동 · ESC 닫기 · 0 키 리셋
+        휠로 확대/축소 · 드래그로 이동 · ←/→ 이전/다음 · ESC 닫기 · 0 키 리셋
       </p>
     </div>
   </Teleport>

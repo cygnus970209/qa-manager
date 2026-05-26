@@ -21,7 +21,8 @@ const editing = ref(false)
 const saving = ref(false)
 const uploading = ref(false)
 const error = ref<string | null>(null)
-const lightboxSrc = ref<string | null>(null)
+const lightboxIndex = ref<number | null>(null)
+const lightboxImages = computed<string[]>(() => (editing.value ? form.images : props.item.images))
 
 const form = reactive({
   title: props.item.title,
@@ -149,6 +150,26 @@ async function onDelete() {
   await qaApi.remove(props.item.id)
   emit('removed')
 }
+
+function statusToUpper(s: QaItem['status']): 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' {
+  return s.toUpperCase() as 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+}
+
+/** 편집 모드 진입 없이 상태 단독 변경 (즉시 PATCH) */
+async function onQuickStatusChange(next: QaItem['status']) {
+  if (next === props.item.status) return
+  saving.value = true
+  error.value = null
+  try {
+    const updated = await qaApi.update(props.item.id, { status: statusToUpper(next) })
+    emit('updated', updated)
+    form.status = next
+  } catch (e: any) {
+    error.value = e?.data?.message ?? '상태 변경 실패'
+  } finally {
+    saving.value = false
+  }
+}
 </script>
 
 <template>
@@ -188,7 +209,19 @@ async function onDelete() {
     <!-- 메타 -->
     <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
       <span v-if="item.category" class="rounded-md bg-slate-100 px-2 py-0.5">{{ item.category }}</span>
-      <StatusBadge :status="item.status" />
+      <!-- 비편집 모드에서도 상태 즉시 변경 가능 -->
+      <select
+        v-if="!editing"
+        :value="item.status"
+        :disabled="saving"
+        class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50"
+        @change="onQuickStatusChange(($event.target as HTMLSelectElement).value as any)"
+      >
+        <option value="pending">대기중</option>
+        <option value="in_progress">진행중</option>
+        <option value="resolved">해결됨</option>
+        <option value="closed">종료</option>
+      </select>
       <PriorityBadge :priority="item.priority" />
       <span>·</span>
       <span>담당자 {{ item.assignee?.name ?? '미지정' }}</span>
@@ -258,7 +291,7 @@ async function onDelete() {
           <button
             type="button"
             class="block h-full w-full cursor-zoom-in"
-            @click="lightboxSrc = img"
+            @click="lightboxIndex = i"
           >
             <img :src="img" :alt="`image-${i}`" class="h-full w-full object-cover transition-colors hover:opacity-90" />
           </button>
@@ -282,6 +315,11 @@ async function onDelete() {
 
     <p v-if="error" class="mt-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
 
-    <ImageLightbox :src="lightboxSrc" @close="lightboxSrc = null" />
+    <ImageLightbox
+      :images="lightboxImages"
+      :index="lightboxIndex"
+      @close="lightboxIndex = null"
+      @update:index="lightboxIndex = $event"
+    />
   </article>
 </template>

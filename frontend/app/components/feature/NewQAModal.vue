@@ -8,6 +8,7 @@ const props = defineProps<{
   updates: ProjectUpdate[]
   members: Member[]
   defaultUpdateId?: number
+  defaultProjectId?: number
 }>()
 const emit = defineEmits<{ close: []; created: [item: QaItem] }>()
 
@@ -58,12 +59,18 @@ watch(() => props.open, (v) => {
   form.images = []
   error.value = null
 
+  // 우선순위: defaultUpdateId > defaultProjectId
   if (props.defaultUpdateId != null) {
     const u = props.updates.find((x) => x.id === props.defaultUpdateId)
     if (u) {
       form.projectId = u.projectId
       form.updateId = u.id
+      return
     }
+  }
+  if (props.defaultProjectId != null) {
+    form.projectId = props.defaultProjectId
+    // projectId watch 에서 filteredUpdates[0] 자동 선택됨 (최신 업데이트)
   }
 })
 

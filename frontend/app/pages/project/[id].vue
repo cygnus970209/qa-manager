@@ -87,6 +87,10 @@ async function onUpdateStatus(updateId: number, status: 'IN_PROGRESS' | 'TESTING
   const updated = await updatesApi.update(updateId, { status })
   updates.value = updates.value.map((u) => u.id === updateId ? updated : u)
 }
+async function onQaStatusChange(qaId: number, status: 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED') {
+  const updated = await qaApi.update(qaId, { status })
+  items.value = items.value.map((q) => (q.id === qaId ? updated : q))
+}
 function onAddInlineQa(updateId: number) {
   qaDefaultUpdateId.value = updateId
   qaModalOpen.value = true
@@ -237,6 +241,7 @@ async function confirmUpdateDelete() {
             @add-qa="onAddInlineQa"
             @edit="openUpdateEdit"
             @remove="openUpdateDelete"
+            @change-qa-status="onQaStatusChange"
           />
         </div>
       </section>
@@ -281,7 +286,8 @@ async function confirmUpdateDelete() {
         :projects="allProjects"
         :updates="updates"
         :members="members"
-        :default-update-id="qaDefaultUpdateId"
+        :default-project-id="project.id"
+        :default-update-id="qaDefaultUpdateId ?? updates[0]?.id"
         @close="qaModalOpen = false; qaDefaultUpdateId = undefined"
         @created="onQaCreated"
       />

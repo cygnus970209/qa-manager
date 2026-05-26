@@ -80,7 +80,12 @@ const filteredMembers = computed(() => {
 })
 
 /* ─── Lightbox ─── */
-const lightboxSrc = ref<string | null>(null)
+const lightboxImages = ref<string[]>([])
+const lightboxIndex = ref<number | null>(null)
+function openLightbox(images: string[], idx: number) {
+  lightboxImages.value = images
+  lightboxIndex.value = idx
+}
 
 /* ─── 자동 textarea 높이 ─── */
 function autoResize(el: HTMLTextAreaElement | null) {
@@ -395,7 +400,7 @@ function memberInitial(name: string) {
                   </template>
                 </p>
                 <div v-if="root.images.length > 0" class="mt-2 flex flex-wrap gap-2">
-                  <button v-for="(img, idx) in root.images" :key="img + idx" type="button" class="block cursor-zoom-in" @click="lightboxSrc = img">
+                  <button v-for="(img, idx) in root.images" :key="img + idx" type="button" class="block cursor-zoom-in" @click="openLightbox(root.images, idx)">
                     <img :src="img" alt="" class="h-16 w-16 rounded-lg border border-slate-200 object-cover transition-colors hover:border-emerald-300 md:h-20 md:w-20" />
                   </button>
                 </div>
@@ -469,7 +474,7 @@ function memberInitial(name: string) {
                   </template>
                 </p>
                 <div v-if="child.images.length > 0" class="mt-2 flex flex-wrap gap-2">
-                  <button v-for="(img, idx) in child.images" :key="img + idx" type="button" class="block cursor-zoom-in" @click="lightboxSrc = img">
+                  <button v-for="(img, idx) in child.images" :key="img + idx" type="button" class="block cursor-zoom-in" @click="openLightbox(child.images, idx)">
                     <img :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover transition-colors hover:border-emerald-300" />
                   </button>
                 </div>
@@ -611,6 +616,11 @@ function memberInitial(name: string) {
       </form>
     </div>
 
-    <ImageLightbox :src="lightboxSrc" @close="lightboxSrc = null" />
+    <ImageLightbox
+      :images="lightboxImages"
+      :index="lightboxIndex"
+      @close="lightboxIndex = null"
+      @update:index="lightboxIndex = $event"
+    />
   </section>
 </template>
