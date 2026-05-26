@@ -93,6 +93,9 @@ app:
     client-secret: ${TEAMS_CLIENT_SECRET:}
     # 발송 봇으로 사용할 user 의 AAD Object ID. oneOnOne chat 의 한쪽 멤버가 된다.
     bot-user-oid: ${TEAMS_BOT_USER_OID:}
+    # 회사 메일 도메인. username 이 이 도메인으로 끝나면 자동으로 발송 대상.
+    # 빈 값이면 (도메인 무관) 모든 멤버를 발송 시도 — 단 email 또는 username 이 email 형식이어야 함.
+    email-domain: ${TEAMS_EMAIL_DOMAIN:}
     # Graph API 호출 timeout (초).
     connect-timeout-seconds: ${TEAMS_CONNECT_TIMEOUT:5}
     read-timeout-seconds: ${TEAMS_READ_TIMEOUT:10}

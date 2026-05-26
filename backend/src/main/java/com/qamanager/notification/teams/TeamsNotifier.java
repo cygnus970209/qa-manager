@@ -20,9 +20,9 @@ import java.util.Map;
  *
  * 정책:
  * - 메인 트랜잭션과 분리 (@Async + 새 트랜잭션). Teams 실패가 DB/SSE 알림에 영향 없도록.
- * - 발송 불가능 (설정 없음 / email 없음 / 사용자 토글 off) 이면 silent skip.
+ * - 발송 불가능 (설정 없음 / email 없음 / 도메인 불일치 / 사용자 토글 off) 이면 SKIPPED 로그만 남기고 종료.
  * - chat id 는 DB 에 캐시. 처음 발송 시 생성.
- * - 모든 예외는 잡아서 로그만. 재시도 큐는 없음 (단순화). 필요시 추후 추가.
+ * - 모든 결과 (SENT/SKIPPED/FAILED) 는 teams_send_log 에 비동기 적재.
  */
 @Component
 public class TeamsNotifier {
@@ -30,15 +30,20 @@ public class TeamsNotifier {
     private static final Logger log = LoggerFactory.getLogger(TeamsNotifier.class);
 
     private final TeamsGraphClient client;
+    private final TeamsProperties props;
     private final TeamMemberRepository memberRepository;
+    private final TeamsSendLogService logService;
     private final String linkBaseUrl;
 
     public TeamsNotifier(TeamsGraphClient client,
+                         TeamsProperties props,
                          TeamMemberRepository memberRepository,
+                         TeamsSendLogService logService,
                          @Value("${app.cors.allowed-origins:}") String allowedOrigins) {
         this.client = client;
+        this.props = props;
         this.memberRepository = memberRepository;
-        // 알림 클릭 시 이동할 프론트 URL 의 base. allowed-origins 의 첫 항목을 기본값으로.
+        this.logService = logService;
         this.linkBaseUrl = firstOrigin(allowedOrigins);
     }
 
@@ -49,18 +54,43 @@ public class TeamsNotifier {
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void send(Long recipientId, NotificationPayload payload) {
-        if (!client.isUsable()) return;
-        try {
-            TeamMember recipient = memberRepository.findByIdAndDeletedAtIsNull(recipientId).orElse(null);
-            if (recipient == null) return;
-            if (!recipient.isTeamsNotifyEnabled()) return;
-            if (recipient.getEmail() == null || recipient.getEmail().isBlank()) return;
+        long start = System.currentTimeMillis();
+        if (!client.isUsable()) {
+            logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, null,
+                payload.message(), "Teams 설정 비활성화", elapsed(start));
+            return;
+        }
+        TeamMember recipient = memberRepository.findByIdAndDeletedAtIsNull(recipientId).orElse(null);
+        if (recipient == null) {
+            logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, null,
+                payload.message(), "멤버 없음", elapsed(start));
+            return;
+        }
+        if (!recipient.isTeamsNotifyEnabled()) {
+            logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, recipient.getEmail(),
+                payload.message(), "수신자 알림 토글 off", elapsed(start));
+            return;
+        }
 
+        String email = recipient.resolveEmailCandidate();
+        if (email == null) {
+            logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, null,
+                payload.message(), "email 후보 없음 (username 도 이메일 형식 아님)", elapsed(start));
+            return;
+        }
+        if (!props.matchesEmailDomain(email)) {
+            logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, email,
+                payload.message(), "도메인 불일치 (allowed=" + props.emailDomain() + ")", elapsed(start));
+            return;
+        }
+
+        try {
             String teamsUserId = recipient.getTeamsUserId();
             if (teamsUserId == null) {
-                teamsUserId = client.findUserIdByEmail(recipient.getEmail()).orElse(null);
+                teamsUserId = client.findUserIdByEmail(email).orElse(null);
                 if (teamsUserId == null) {
-                    log.info("Teams 사용자 매핑 실패: email={} (member={})", recipient.getEmail(), recipientId);
+                    logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, email,
+                        payload.message(), "AAD 사용자 없음", elapsed(start));
                     return;
                 }
                 recipient.linkTeamsUser(teamsUserId);
@@ -74,10 +104,16 @@ public class TeamsNotifier {
 
             Map<String, Object> card = buildCard(payload);
             client.sendAdaptiveCard(chatId, payload.message(), card);
+            logService.record(TeamsSendLog.STATUS_SENT, payload.type(), recipientId, email,
+                payload.message(), null, elapsed(start));
         } catch (TeamsApiException e) {
             log.warn("Teams 알림 발송 실패 (member={}): {}", recipientId, e.getMessage());
+            logService.record(TeamsSendLog.STATUS_FAILED, payload.type(), recipientId, email,
+                payload.message(), e.getMessage(), elapsed(start));
         } catch (Exception e) {
             log.error("Teams 알림 발송 중 예기치 못한 오류 (member={})", recipientId, e);
+            logService.record(TeamsSendLog.STATUS_FAILED, payload.type(), recipientId, email,
+                payload.message(), e.getClass().getSimpleName() + ": " + e.getMessage(), elapsed(start));
         }
     }
 
@@ -87,24 +123,42 @@ public class TeamsNotifier {
      */
     @Transactional
     public TestSendResult testSend(Long recipientId) {
+        long start = System.currentTimeMillis();
         TestSendResult.Builder b = TestSendResult.builder();
 
         if (!client.isUsable()) {
-            return b.fail("Teams 설정이 활성화되지 않았습니다. 환경변수(TEAMS_ENABLED, TENANT/CLIENT/SECRET, BOT_USER_OID)를 확인하세요.").build();
+            TestSendResult r = b.fail("Teams 설정이 활성화되지 않았습니다. 환경변수(TEAMS_ENABLED, TENANT/CLIENT/SECRET, BOT_USER_OID)를 확인하세요.").build();
+            logService.record(TeamsSendLog.STATUS_SKIPPED, "test", recipientId, null, null, r.errorMessage(), elapsed(start));
+            return r;
         }
         b.configOk(true);
 
         TeamMember recipient = memberRepository.findByIdAndDeletedAtIsNull(recipientId).orElse(null);
-        if (recipient == null) return b.fail("멤버를 찾을 수 없습니다 (id=" + recipientId + ").").build();
+        if (recipient == null) {
+            TestSendResult r = b.fail("멤버를 찾을 수 없습니다 (id=" + recipientId + ").").build();
+            logService.record(TeamsSendLog.STATUS_SKIPPED, "test", recipientId, null, null, r.errorMessage(), elapsed(start));
+            return r;
+        }
         b.memberName(recipient.getName());
 
-        if (recipient.getEmail() == null || recipient.getEmail().isBlank()) {
-            return b.fail("이 멤버에 email 이 등록되어 있지 않습니다. 본인 설정에서 email 을 먼저 등록하세요.").build();
+        String email = recipient.resolveEmailCandidate();
+        if (email == null) {
+            TestSendResult r = b.fail("이 멤버에 사용 가능한 email 이 없습니다. 등록된 email 또는 username 이 이메일 형식이어야 합니다.").build();
+            logService.record(TeamsSendLog.STATUS_SKIPPED, "test", recipientId, null, null, r.errorMessage(), elapsed(start));
+            return r;
         }
-        b.email(recipient.getEmail());
+        b.email(email);
+
+        if (!props.matchesEmailDomain(email)) {
+            TestSendResult r = b.fail("도메인이 허용 목록과 일치하지 않습니다. allowed=" + props.emailDomain()).build();
+            logService.record(TeamsSendLog.STATUS_SKIPPED, "test", recipientId, email, null, r.errorMessage(), elapsed(start));
+            return r;
+        }
 
         if (!recipient.isTeamsNotifyEnabled()) {
-            return b.fail("이 멤버가 Teams 알림을 비활성화했습니다.").build();
+            TestSendResult r = b.fail("이 멤버가 Teams 알림을 비활성화했습니다.").build();
+            logService.record(TeamsSendLog.STATUS_SKIPPED, "test", recipientId, email, null, r.errorMessage(), elapsed(start));
+            return r;
         }
         b.notifyEnabled(true);
 
@@ -112,15 +166,19 @@ public class TeamsNotifier {
         String teamsUserId = recipient.getTeamsUserId();
         try {
             if (teamsUserId == null) {
-                teamsUserId = client.findUserIdByEmail(recipient.getEmail()).orElse(null);
+                teamsUserId = client.findUserIdByEmail(email).orElse(null);
                 if (teamsUserId == null) {
-                    return b.fail("Azure AD 에서 사용자를 찾지 못했습니다 (email=" + recipient.getEmail() + ").").build();
+                    TestSendResult r = b.fail("Azure AD 에서 사용자를 찾지 못했습니다 (email=" + email + ").").build();
+                    logService.record(TeamsSendLog.STATUS_SKIPPED, "test", recipientId, email, null, r.errorMessage(), elapsed(start));
+                    return r;
                 }
                 recipient.linkTeamsUser(teamsUserId);
             }
             b.aadMapped(true).teamsUserId(teamsUserId);
         } catch (TeamsApiException e) {
-            return b.fail("AAD 사용자 조회 실패: " + e.getMessage()).build();
+            TestSendResult r = b.fail("AAD 사용자 조회 실패: " + e.getMessage()).build();
+            logService.record(TeamsSendLog.STATUS_FAILED, "test", recipientId, email, null, r.errorMessage(), elapsed(start));
+            return r;
         }
 
         // chat 캐시 / 생성
@@ -132,20 +190,25 @@ public class TeamsNotifier {
             }
             b.chatOk(true).chatId(chatId);
         } catch (TeamsApiException e) {
-            return b.fail("1:1 chat 생성 실패: " + e.getMessage()).build();
+            TestSendResult r = b.fail("1:1 chat 생성 실패: " + e.getMessage()).build();
+            logService.record(TeamsSendLog.STATUS_FAILED, "test", recipientId, email, null, r.errorMessage(), elapsed(start));
+            return r;
         }
 
         // 발송
+        String testMessage = "[테스트] Teams 알림이 정상적으로 연결되었습니다.";
         try {
             Map<String, Object> card = buildCard(new NotificationPayload(
-                "test",
-                "[테스트] Teams 알림이 정상적으로 연결되었습니다.",
-                null, null, null, null
+                "test", testMessage, null, null, null, null
             ));
             client.sendAdaptiveCard(chatId, "Teams 알림 테스트", card);
-            return b.sent(true).build();
+            TestSendResult r = b.sent(true).build();
+            logService.record(TeamsSendLog.STATUS_SENT, "test", recipientId, email, testMessage, null, elapsed(start));
+            return r;
         } catch (TeamsApiException e) {
-            return b.fail("메세지 발송 실패: " + e.getMessage()).build();
+            TestSendResult r = b.fail("메세지 발송 실패: " + e.getMessage()).build();
+            logService.record(TeamsSendLog.STATUS_FAILED, "test", recipientId, email, testMessage, e.getMessage(), elapsed(start));
+            return r;
         }
     }
 
@@ -206,6 +269,10 @@ public class TeamsNotifier {
             if (!t.isEmpty()) return t;
         }
         return null;
+    }
+
+    private static int elapsed(long startMs) {
+        return (int) (System.currentTimeMillis() - startMs);
     }
 
     /** Notification 에서 필요한 정보만 추려서 비동기로 넘기는 DTO. */

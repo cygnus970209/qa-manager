@@ -102,6 +102,18 @@ public class TeamMember extends BaseEntity {
         this.teamsNotifyEnabled = enabled;
     }
 
+    /**
+     * Teams 발송에 사용할 email 후보.
+     * 1) 명시적으로 등록된 email 이 있으면 우선
+     * 2) 없으면 username 이 회사 이메일로 세팅된 운영 환경 가정 → username 반환
+     * 도메인 일치 검증은 호출자가 TeamsProperties#matchesEmailDomain 으로 수행한다.
+     */
+    public String resolveEmailCandidate() {
+        if (email != null && !email.isBlank()) return email;
+        if (username != null && username.contains("@")) return username;
+        return null;
+    }
+
     public Long getId() { return id; }
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }

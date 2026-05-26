@@ -15,6 +15,7 @@ public record TeamsProperties(
     String clientId,
     String clientSecret,
     String botUserOid,
+    String emailDomain,
     int connectTimeoutSeconds,
     int readTimeoutSeconds
 ) {
@@ -24,5 +25,16 @@ public record TeamsProperties(
             && clientId != null && !clientId.isBlank()
             && clientSecret != null && !clientSecret.isBlank()
             && botUserOid != null && !botUserOid.isBlank();
+    }
+
+    /** 도메인 제약이 설정되어 있으면 해당 도메인으로 끝나는 email 만 매치. 없으면 email 형식만 검사. */
+    public boolean matchesEmailDomain(String email) {
+        if (email == null || email.isBlank()) return false;
+        int at = email.indexOf('@');
+        if (at <= 0 || at == email.length() - 1) return false;
+        if (emailDomain == null || emailDomain.isBlank()) return true;
+        String d = emailDomain.startsWith("@") ? emailDomain.substring(1) : emailDomain;
+        return email.regionMatches(true, at + 1, d, 0, d.length())
+            && email.length() - (at + 1) == d.length();
     }
 }
