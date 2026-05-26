@@ -30,17 +30,20 @@ public class TeamsNotifier {
     private static final Logger log = LoggerFactory.getLogger(TeamsNotifier.class);
 
     private final TeamsGraphClient client;
+    private final TeamsBotClient botClient;
     private final TeamsProperties props;
     private final TeamMemberRepository memberRepository;
     private final TeamsSendLogService logService;
     private final String linkBaseUrl;
 
     public TeamsNotifier(TeamsGraphClient client,
+                         TeamsBotClient botClient,
                          TeamsProperties props,
                          TeamMemberRepository memberRepository,
                          TeamsSendLogService logService,
                          @Value("${app.cors.allowed-origins:}") String allowedOrigins) {
         this.client = client;
+        this.botClient = botClient;
         this.props = props;
         this.memberRepository = memberRepository;
         this.logService = logService;
@@ -96,20 +99,22 @@ public class TeamsNotifier {
                 recipient.linkTeamsUser(teamsUserId);
             }
 
-            String chatId = recipient.getTeamsChatId();
-            if (chatId == null) {
-                chatId = client.createOneOnOneChat(teamsUserId);
-                recipient.cacheTeamsChat(chatId);
+            String conversationId = recipient.getTeamsChatId();
+            String serviceUrl = recipient.getTeamsServiceUrl();
+            if (conversationId == null) {
+                serviceUrl = props.effectiveServiceUrlDefault();
+                conversationId = botClient.createConversation(teamsUserId, serviceUrl);
+                recipient.cacheConversation(conversationId, serviceUrl);
             }
 
             Map<String, Object> card = buildCard(payload);
-            client.sendAdaptiveCard(chatId, payload.message(), card);
+            botClient.sendAdaptiveCard(serviceUrl, conversationId, payload.message(), card);
             logService.record(TeamsSendLog.STATUS_SENT, payload.type(), recipientId, email,
                 payload.message(), null, elapsed(start));
         } catch (TeamsApiException e) {
             log.warn("Teams 알림 발송 실패 (member={}): {}", recipientId, e.getMessage());
             logService.record(TeamsSendLog.STATUS_FAILED, payload.type(), recipientId, email,
-                payload.message(), e.getMessage(), elapsed(start));
+                payload.message(), failDetail(e), elapsed(start));
         } catch (Exception e) {
             log.error("Teams 알림 발송 중 예기치 못한 오류 (member={})", recipientId, e);
             logService.record(TeamsSendLog.STATUS_FAILED, payload.type(), recipientId, email,
@@ -181,16 +186,18 @@ public class TeamsNotifier {
             return r;
         }
 
-        // chat 캐시 / 생성
-        String chatId = recipient.getTeamsChatId();
+        // conversation 캐시 / 생성
+        String conversationId = recipient.getTeamsChatId();
+        String serviceUrl = recipient.getTeamsServiceUrl();
         try {
-            if (chatId == null) {
-                chatId = client.createOneOnOneChat(teamsUserId);
-                recipient.cacheTeamsChat(chatId);
+            if (conversationId == null) {
+                serviceUrl = props.effectiveServiceUrlDefault();
+                conversationId = botClient.createConversation(teamsUserId, serviceUrl);
+                recipient.cacheConversation(conversationId, serviceUrl);
             }
-            b.chatOk(true).chatId(chatId);
+            b.chatOk(true).chatId(conversationId);
         } catch (TeamsApiException e) {
-            TestSendResult r = b.fail("1:1 chat 생성 실패: " + e.getMessage()).build();
+            TestSendResult r = b.fail("conversation 생성 실패: " + failDetail(e)).build();
             logService.record(TeamsSendLog.STATUS_FAILED, "test", recipientId, email, null, r.errorMessage(), elapsed(start));
             return r;
         }
@@ -201,15 +208,23 @@ public class TeamsNotifier {
             Map<String, Object> card = buildCard(new NotificationPayload(
                 "test", testMessage, null, null, null, null
             ));
-            client.sendAdaptiveCard(chatId, "Teams 알림 테스트", card);
+            botClient.sendAdaptiveCard(serviceUrl, conversationId, "Teams 알림 테스트", card);
             TestSendResult r = b.sent(true).build();
             logService.record(TeamsSendLog.STATUS_SENT, "test", recipientId, email, testMessage, null, elapsed(start));
             return r;
         } catch (TeamsApiException e) {
-            TestSendResult r = b.fail("메세지 발송 실패: " + e.getMessage()).build();
-            logService.record(TeamsSendLog.STATUS_FAILED, "test", recipientId, email, testMessage, e.getMessage(), elapsed(start));
+            TestSendResult r = b.fail("메세지 발송 실패: " + failDetail(e)).build();
+            logService.record(TeamsSendLog.STATUS_FAILED, "test", recipientId, email, testMessage, failDetail(e), elapsed(start));
             return r;
         }
+    }
+
+    /** 봇 미설치 케이스는 운영자가 바로 이해하도록 안내 문구로 변환. */
+    private static String failDetail(TeamsApiException e) {
+        if (e.isBotNotInstalled()) {
+            return "봇이 사용자 Teams 에 설치되지 않았거나 차단됨 — 사용자가 봇 앱을 추가해야 발송됩니다. (" + e.getMessage() + ")";
+        }
+        return e.getMessage();
     }
 
     /* ─────────────── Adaptive Card ─────────────── */

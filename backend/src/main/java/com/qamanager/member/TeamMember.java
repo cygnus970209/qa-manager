@@ -46,8 +46,13 @@ public class TeamMember extends BaseEntity {
     @Column(name = "teams_user_id", length = 64)
     private String teamsUserId;
 
+    /** Bot Framework conversation id (봇과의 1:1). 최초 발송 또는 설치 이벤트 시 캐시. */
     @Column(name = "teams_chat_id", length = 128)
     private String teamsChatId;
+
+    /** Bot Connector serviceUrl. 설치 이벤트에서 캐시. 없으면 글로벌 기본값으로 발송. */
+    @Column(name = "teams_service_url", length = 255)
+    private String teamsServiceUrl;
 
     @Column(name = "teams_notify_enabled", nullable = false)
     private boolean teamsNotifyEnabled = true;
@@ -79,12 +84,13 @@ public class TeamMember extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
     }
 
-    /** email 등록/변경. 변경되면 캐시된 AAD/chat id 는 무효화. */
+    /** email 등록/변경. 변경되면 캐시된 AAD/conversation 정보는 무효화. */
     public void updateEmail(String email) {
         if (email != null && !email.equals(this.email)) {
             this.email = email;
             this.teamsUserId = null;
             this.teamsChatId = null;
+            this.teamsServiceUrl = null;
         }
     }
 
@@ -92,10 +98,15 @@ public class TeamMember extends BaseEntity {
     public void linkTeamsUser(String teamsUserId) {
         this.teamsUserId = teamsUserId;
         this.teamsChatId = null;
+        this.teamsServiceUrl = null;
     }
 
-    public void cacheTeamsChat(String chatId) {
-        this.teamsChatId = chatId;
+    /** Bot Framework conversation 캐시. conversation id 와 serviceUrl 을 함께 저장한다. */
+    public void cacheConversation(String conversationId, String serviceUrl) {
+        this.teamsChatId = conversationId;
+        if (serviceUrl != null && !serviceUrl.isBlank()) {
+            this.teamsServiceUrl = serviceUrl;
+        }
     }
 
     public void setTeamsNotifyEnabled(boolean enabled) {
@@ -123,6 +134,7 @@ public class TeamMember extends BaseEntity {
     public String getAvatarUrl() { return avatarUrl; }
     public String getTeamsUserId() { return teamsUserId; }
     public String getTeamsChatId() { return teamsChatId; }
+    public String getTeamsServiceUrl() { return teamsServiceUrl; }
     public boolean isTeamsNotifyEnabled() { return teamsNotifyEnabled; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
 }

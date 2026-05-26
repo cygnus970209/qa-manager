@@ -21,4 +21,7 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
 
     /** email 로 활성 멤버 조회 (Teams 알림 매핑 검증용). */
     Optional<TeamMember> findByEmailAndDeletedAtIsNull(String email);
+
+    /** AAD Object ID 로 활성 멤버 조회 (Bot 설치 이벤트에서 conversation 캐싱용). */
+    Optional<TeamMember> findByTeamsUserIdAndDeletedAtIsNull(String teamsUserId);
 }

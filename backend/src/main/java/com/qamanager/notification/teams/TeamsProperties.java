@@ -5,26 +5,53 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * application.yml 의 app.teams.* 매핑.
  *
- * enabled=false 또는 핵심 필드(tenant/client/secret/bot) 누락 시 발송은 no-op.
- * 봇 user OID 는 oneOnOne chat 의 한쪽 멤버로 사용되며, 발송 메세지의 from 사용자가 된다.
+ * 두 가지 자격증명을 쓴다:
+ *  - Graph 조회용 (tenantId/clientId/clientSecret): email -> AAD Object ID 변환. {@code .default} scope.
+ *  - Bot Connector 발송용 (botAppId/botAppPassword/botTenantId): Bot Framework 프로액티브 메세지 발송.
+ *
+ * enabled=false 또는 핵심 필드 누락 시 발송은 no-op.
+ * Graph API 의 chat 메세지 발송은 application permission 으로 불가하여 Bot Framework 로 전환했다.
  */
 @ConfigurationProperties(prefix = "app.teams")
 public record TeamsProperties(
     boolean enabled,
+    // ── Graph (email -> AAD Object ID 조회) ──
     String tenantId,
     String clientId,
     String clientSecret,
-    String botUserOid,
+    // ── Bot Connector (프로액티브 메세지 발송) ──
+    String botAppId,
+    String botAppPassword,
+    /** Bot Connector 토큰 발급 tenant. 멀티테넌트 봇이면 "botframework.com", 싱글테넌트면 회사 tenant id. */
+    String botTenantId,
+    /** 인바운드 activity 의 serviceUrl 이 캐시에 없을 때 쓰는 글로벌 기본값. */
+    String serviceUrlDefault,
+    // ── 공통 ──
     String emailDomain,
     int connectTimeoutSeconds,
     int readTimeoutSeconds
 ) {
     public boolean isUsable() {
         return enabled
-            && tenantId != null && !tenantId.isBlank()
-            && clientId != null && !clientId.isBlank()
-            && clientSecret != null && !clientSecret.isBlank()
-            && botUserOid != null && !botUserOid.isBlank();
+            && notBlank(tenantId)
+            && notBlank(clientId)
+            && notBlank(clientSecret)
+            && notBlank(botAppId)
+            && notBlank(botAppPassword);
+    }
+
+    /** Bot Connector 토큰 발급 tenant (미설정 시 멀티테넌트 기본값). */
+    public String effectiveBotTenantId() {
+        return notBlank(botTenantId) ? botTenantId : "botframework.com";
+    }
+
+    /** serviceUrl 글로벌 기본값 (미설정 시 public cloud). */
+    public String effectiveServiceUrlDefault() {
+        return notBlank(serviceUrlDefault) ? serviceUrlDefault : "https://smba.trafficmanager.net/teams/";
+    }
+
+    private static boolean notBlank(String s) {
+        return s != null && !s.isBlank();
     }
 
     /** 도메인 제약이 설정되어 있으면 해당 도메인으로 끝나는 email 만 매치. 없으면 email 형식만 검사. */

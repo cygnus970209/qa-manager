@@ -16,24 +16,16 @@ import org.springframework.web.client.RestClientResponseException;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Microsoft Graph API client for Teams 1:1 messaging (Application permission).
+ * Microsoft Graph API client. email -> AAD Object ID 조회 전용.
  *
- * 주요 흐름:
- *   1) {@link #findUserIdByEmail(String)}      : email -> AAD Object ID
- *   2) {@link #createOneOnOneChat(String)}     : 봇 user 와의 oneOnOne chat 생성/조회 -> chat id
- *   3) {@link #sendChatMessage(String, String)} : Adaptive Card 또는 HTML body 발송
+ * 메세지 발송은 Graph application permission 으로 불가하여 {@link TeamsBotClient} (Bot Framework) 로 옮겼다.
+ * 이 클라이언트는 client_credentials 토큰으로 사용자 디렉터리 조회만 수행한다.
  *
  * Token 은 만료 60초 전부터 갱신 (single ReentrantLock 으로 동시 호출 방지).
- *
- * 주의: chat 생성은 application permission 으로 "members[].roles = [\"owner\"]" 가 필요하며,
- *      members 는 bot user + target user 2명. tenant 외부 user 는 불가.
  */
 @Component
 @EnableConfigurationProperties(TeamsProperties.class)
@@ -98,6 +90,7 @@ public class TeamsGraphClient {
         } catch (RestClientResponseException e) {
             throw new TeamsApiException("token 발급 HTTP 오류: " + e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
         } catch (Exception e) {
+            if (e instanceof TeamsApiException te) throw te;
             throw new TeamsApiException("token 발급 실패", e);
         } finally {
             tokenLock.unlock();
@@ -126,108 +119,8 @@ public class TeamsGraphClient {
             if (status.value() == 404) return Optional.empty();
             throw new TeamsApiException("user 조회 실패 (" + email + "): " + status + " " + e.getResponseBodyAsString(), e);
         } catch (Exception e) {
-            throw new TeamsApiException("user 조회 실패 (" + email + ")", e);
-        }
-    }
-
-    /* ─────────────── Chat ─────────────── */
-
-    /**
-     * 봇 user 와 대상 user 사이의 oneOnOne chat 을 생성/조회한다.
-     * Graph 가 이미 존재하는 chat 을 반환하므로 idempotent.
-     */
-    public String createOneOnOneChat(String targetUserId) {
-        if (targetUserId == null || targetUserId.isBlank()) {
-            throw new TeamsApiException("targetUserId 가 비어있음");
-        }
-        Map<String, Object> payload = Map.of(
-            "chatType", "oneOnOne",
-            "members", List.of(
-                memberSpec(props.botUserOid()),
-                memberSpec(targetUserId)
-            )
-        );
-        try {
-            String body = http.post()
-                .uri(GRAPH_BASE + "/chats")
-                .header("Authorization", "Bearer " + acquireToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .retrieve()
-                .body(String.class);
-            JsonNode node = mapper.readTree(body);
-            String chatId = node.path("id").asText(null);
-            if (chatId == null) throw new TeamsApiException("chat 생성 응답에 id 없음: " + body);
-            return chatId;
-        } catch (RestClientResponseException e) {
-            throw new TeamsApiException("chat 생성 실패 (target=" + targetUserId + "): "
-                + e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
-        } catch (Exception e) {
-            throw new TeamsApiException("chat 생성 실패 (target=" + targetUserId + ")", e);
-        }
-    }
-
-    private Map<String, Object> memberSpec(String userId) {
-        return Map.of(
-            "@odata.type", "#microsoft.graph.aadUserConversationMember",
-            "roles", List.of("owner"),
-            "user@odata.bind", "https://graph.microsoft.com/v1.0/users('" + userId + "')"
-        );
-    }
-
-    /* ─────────────── Message ─────────────── */
-
-    /** HTML 메세지 발송. 간단한 경우 사용. */
-    public void sendChatMessage(String chatId, String html) {
-        Map<String, Object> payload = Map.of(
-            "body", Map.of("contentType", "html", "content", html)
-        );
-        postMessage(chatId, payload);
-    }
-
-    /** Adaptive Card 첨부 메세지 발송. card 는 JSON Map. */
-    public void sendAdaptiveCard(String chatId, String fallbackText, Map<String, Object> card) {
-        // Graph 에서 Adaptive Card 는 message.attachments + body 의 <attachment id> 마커로 묶는다.
-        // 주의: Map.of 는 null value 를 허용하지 않으므로 optional 필드(contentUrl/thumbnailUrl) 는 생략.
-        String attachmentId = "1";
-        try {
-            String cardJson = mapper.writeValueAsString(card);
-            Map<String, Object> attachment = new LinkedHashMap<>();
-            attachment.put("id", attachmentId);
-            attachment.put("contentType", "application/vnd.microsoft.card.adaptive");
-            attachment.put("content", cardJson);
-            if (fallbackText != null && !fallbackText.isBlank()) {
-                attachment.put("name", fallbackText);
-            }
-
-            Map<String, Object> payload = Map.of(
-                "body", Map.of(
-                    "contentType", "html",
-                    "content", "<attachment id=\"" + attachmentId + "\"></attachment>"
-                ),
-                "attachments", List.of(attachment)
-            );
-            postMessage(chatId, payload);
-        } catch (Exception e) {
             if (e instanceof TeamsApiException te) throw te;
-            throw new TeamsApiException("Adaptive Card 직렬화 실패", e);
-        }
-    }
-
-    private void postMessage(String chatId, Map<String, Object> payload) {
-        try {
-            http.post()
-                .uri(GRAPH_BASE + "/chats/" + chatId + "/messages")
-                .header("Authorization", "Bearer " + acquireToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .retrieve()
-                .toBodilessEntity();
-        } catch (RestClientResponseException e) {
-            throw new TeamsApiException("메세지 발송 실패 (chat=" + chatId + "): "
-                + e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
-        } catch (Exception e) {
-            throw new TeamsApiException("메세지 발송 실패 (chat=" + chatId + ")", e);
+            throw new TeamsApiException("user 조회 실패 (" + email + ")", e);
         }
     }
 }

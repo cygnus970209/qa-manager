@@ -44,6 +44,7 @@ public class SecurityConfig {
                     "/api/ping",
                     "/api/auth/login",
                     "/api/auth/refresh",
+                    "/api/teams/messages",   // Bot Framework 웹훅 (컨트롤러 내부 Bot JWT 검증)
                     "/actuator/health",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",

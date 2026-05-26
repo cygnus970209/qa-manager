@@ -88,15 +88,22 @@ app:
   teams:
     # 비활성화 기본값: 환경변수 누락 시 모든 발송 no-op (테스트/로컬 안전).
     enabled: ${TEAMS_ENABLED:false}
+    # ── Graph 조회용 자격증명 (email -> AAD Object ID) ──
     tenant-id: ${TEAMS_TENANT_ID:}
     client-id: ${TEAMS_CLIENT_ID:}
     client-secret: ${TEAMS_CLIENT_SECRET:}
-    # 발송 봇으로 사용할 user 의 AAD Object ID. oneOnOne chat 의 한쪽 멤버가 된다.
-    bot-user-oid: ${TEAMS_BOT_USER_OID:}
+    # ── Bot Connector 발송용 (Azure Bot 리소스의 Microsoft App ID / secret) ──
+    # 메세지는 Bot Framework 프로액티브 발송으로 보낸다. 봇이 사용자 personal scope 에 설치돼 있어야 함.
+    bot-app-id: ${TEAMS_BOT_APP_ID:}
+    bot-app-password: ${TEAMS_BOT_APP_PASSWORD:}
+    # Bot Connector 토큰 발급 tenant. 멀티테넌트 봇이면 botframework.com, 싱글테넌트면 회사 tenant id.
+    bot-tenant-id: ${TEAMS_BOT_TENANT_ID:botframework.com}
+    # 인바운드 activity 의 serviceUrl 이 캐시에 없을 때 쓰는 글로벌 기본값 (public cloud).
+    service-url-default: ${TEAMS_SERVICE_URL:https://smba.trafficmanager.net/teams/}
     # 회사 메일 도메인. username 이 이 도메인으로 끝나면 자동으로 발송 대상.
     # 빈 값이면 (도메인 무관) 모든 멤버를 발송 시도 — 단 email 또는 username 이 email 형식이어야 함.
     email-domain: ${TEAMS_EMAIL_DOMAIN:}
-    # Graph API 호출 timeout (초).
+    # Graph / Bot Connector 호출 timeout (초).
     connect-timeout-seconds: ${TEAMS_CONNECT_TIMEOUT:5}
     read-timeout-seconds: ${TEAMS_READ_TIMEOUT:10}
 
