@@ -39,6 +39,13 @@ public class NotificationController {
         return notificationService.markRead(id, CurrentUser.getIdOrThrow());
     }
 
+    @PatchMapping("/read-all")
+    public Map<String, Long> markAllRead() {
+        Long me = CurrentUser.getIdOrThrow();
+        notificationService.markAllRead(me);
+        return Map.of("unread", notificationService.unreadCount(me));
+    }
+
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream() {
         return sseRegistry.register(CurrentUser.getIdOrThrow());

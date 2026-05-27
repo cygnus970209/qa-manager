@@ -67,6 +67,13 @@ public class NotificationService {
         return NotificationDto.Response.from(n);
     }
 
+    /** 본인의 안 읽은 알림을 모두 읽음 처리. */
+    @Transactional
+    public void markAllRead(Long memberId) {
+        notificationRepository.findAllByRecipientIdAndReadFalse(memberId)
+            .forEach(Notification::markRead);
+    }
+
     /* ─────── 이벤트 → 알림 발행 ─────── */
 
     @EventListener

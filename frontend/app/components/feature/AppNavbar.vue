@@ -83,8 +83,16 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
             v-if="dropdownOpen"
             class="absolute right-0 mt-2 w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
           >
-            <div class="border-b border-slate-100 px-3 py-2 text-xs font-medium text-slate-500">
-              알림
+            <div class="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+              <span class="text-xs font-medium text-slate-500">알림</span>
+              <button
+                v-if="notifs.unreadCount > 0"
+                type="button"
+                class="text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                @click="notifs.markAllRead()"
+              >
+                모두 읽기
+              </button>
             </div>
             <ul v-if="notifs.items.length > 0" class="max-h-80 overflow-y-auto divide-y divide-slate-100">
               <li

@@ -27,6 +27,12 @@ export const useNotificationsStore = defineStore('notifications', () => {
     items.value = items.value.map((n) => n.id === id ? updated : n)
   }
 
+  async function markAllRead() {
+    const api = useApi()
+    await api('/api/notifications/read-all', { method: 'PATCH' })
+    items.value = items.value.map((n) => (n.read ? n : { ...n, read: true }))
+  }
+
   async function connect() {
     if (!import.meta.client) return
     if (abort) return // 이미 연결됨
@@ -95,5 +101,5 @@ export const useNotificationsStore = defineStore('notifications', () => {
     abort = null
   }
 
-  return { items, unreadCount, load, markRead, connect, disconnect }
+  return { items, unreadCount, load, markRead, markAllRead, connect, disconnect }
 })
