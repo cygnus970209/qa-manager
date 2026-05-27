@@ -74,6 +74,16 @@ export interface TeamsTestResult {
   sent: boolean
 }
 
+/** 본인 알림 개인화 설정 (Teams 발송에만 적용). GET/PUT /api/me/notification-settings */
+export interface NotificationSettings {
+  teamsNotifyEnabled: boolean
+  notifyQaEnabled: boolean
+  notifyCommentEnabled: boolean
+  notifyReplyEnabled: boolean
+  quietHoursStart: string | null
+  quietHoursEnd: string | null
+}
+
 export interface MemberCreateRequest {
   username: string
   password: string

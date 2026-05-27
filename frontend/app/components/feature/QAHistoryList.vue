@@ -12,6 +12,29 @@ const fieldLabels: Record<string, string> = {
   description: '설명',
   category: '카테고리',
 }
+
+// status / priority 의 oldValue·newValue 는 영어 code 로 저장되므로 표시 시 한글로 변환.
+const statusValueLabels: Record<string, string> = {
+  needs_fix: '수정필요',
+  in_progress: '진행중',
+  fix_done: '수정완료',
+  confirmed: '확인완료',
+  on_hold: '보류',
+  needs_recheck: '추가확인필요',
+}
+const priorityValueLabels: Record<string, string> = {
+  low: '낮음',
+  medium: '보통',
+  high: '높음',
+  critical: '긴급',
+}
+
+function displayValue(field: string, value: string | null | undefined): string {
+  if (value == null || value === '') return '—'
+  if (field === 'status') return statusValueLabels[value] ?? value
+  if (field === 'priority') return priorityValueLabels[value] ?? value
+  return value
+}
 </script>
 
 <template>
@@ -24,9 +47,9 @@ const fieldLabels: Record<string, string> = {
           <p class="text-slate-700">
             <span class="font-medium">{{ h.changedBy?.name ?? '시스템' }}</span>
             님이 <span class="font-medium">{{ fieldLabels[h.field] ?? h.field }}</span>을(를)
-            <span class="rounded bg-slate-100 px-1 py-0.5 text-xs">{{ h.oldValue ?? '—' }}</span>
+            <span class="rounded bg-slate-100 px-1 py-0.5 text-xs">{{ displayValue(h.field, h.oldValue) }}</span>
             →
-            <span class="rounded bg-emerald-50 px-1 py-0.5 text-xs text-emerald-700">{{ h.newValue ?? '—' }}</span>
+            <span class="rounded bg-emerald-50 px-1 py-0.5 text-xs text-emerald-700">{{ displayValue(h.field, h.newValue) }}</span>
             로 변경
           </p>
           <p class="mt-0.5 text-xs text-slate-400">{{ timeAgo(h.changedAt) }}</p>

@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +75,16 @@ public class TeamsNotifier {
         if (!recipient.isTeamsNotifyEnabled()) {
             logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, recipient.getEmail(),
                 payload.message(), "수신자 알림 토글 off", elapsed(start));
+            return;
+        }
+        if (!isTypeEnabled(recipient, payload.type())) {
+            logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, recipient.getEmail(),
+                payload.message(), "알림 종류 off (" + payload.type() + ")", elapsed(start));
+            return;
+        }
+        if (isInQuietHours(recipient)) {
+            logService.record(TeamsSendLog.STATUS_SKIPPED, payload.type(), recipientId, recipient.getEmail(),
+                payload.message(), "방해금지 시간대", elapsed(start));
             return;
         }
 
@@ -288,6 +301,36 @@ public class TeamsNotifier {
 
     private static int elapsed(long startMs) {
         return (int) (System.currentTimeMillis() - startMs);
+    }
+
+    /** 알림 종류(qa/comment/reply)별 멤버 토글. 알 수 없는 type(test 등)은 항상 허용. */
+    private static boolean isTypeEnabled(TeamMember m, String type) {
+        if (type == null) return true;
+        return switch (type) {
+            case "qa" -> m.isNotifyQaEnabled();
+            case "comment" -> m.isNotifyCommentEnabled();
+            case "reply" -> m.isNotifyReplyEnabled();
+            default -> true;
+        };
+    }
+
+    /** 현재 시각(Asia/Seoul)이 멤버의 방해금지 구간 내인지. 미설정/파싱실패는 false(발송). */
+    private static boolean isInQuietHours(TeamMember m) {
+        String s = m.getQuietHoursStart();
+        String e = m.getQuietHoursEnd();
+        if (s == null || s.isBlank() || e == null || e.isBlank()) return false;
+        try {
+            LocalTime start = LocalTime.parse(s);
+            LocalTime end = LocalTime.parse(e);
+            if (start.equals(end)) return false; // 빈 구간
+            LocalTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalTime();
+            if (start.isBefore(end)) {
+                return !now.isBefore(start) && now.isBefore(end);        // [start, end)
+            }
+            return !now.isBefore(start) || now.isBefore(end);            // 자정 넘김 (예: 22:00~08:00)
+        } catch (RuntimeException ex) {
+            return false; // 잘못된 값이면 누락 방지를 위해 발송
+        }
     }
 
     /** Notification 에서 필요한 정보만 추려서 비동기로 넘기는 DTO. */

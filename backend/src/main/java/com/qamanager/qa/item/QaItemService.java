@@ -131,9 +131,10 @@ public class QaItemService {
             q.setPriority(req.priority());
         }
 
-        // tester / assignee1 / assignee2 — 각 슬롯 독립 처리
+        // tester / assignee1 / assignee2 — 각 슬롯 독립 처리.
+        // tester 도 배정 시 알림을 보낸다 (assignee 와 동일). 이전엔 notify=false 라 테스터만 알림 누락됐음.
         handleMemberSlot(q, "tester", q.getTester(), req.testerId(), req.clearTester(),
-            diffs, changedBy, q::setTester, currentMemberId, /*notify=*/false);
+            diffs, changedBy, q::setTester, currentMemberId, /*notify=*/true);
         handleMemberSlot(q, "assignee1", q.getAssignee1(), req.assignee1Id(), req.clearAssignee1(),
             diffs, changedBy, q::setAssignee1, currentMemberId, /*notify=*/true);
         handleMemberSlot(q, "assignee2", q.getAssignee2(), req.assignee2Id(), req.clearAssignee2(),

@@ -121,6 +121,24 @@ public class MemberService {
         return teamsNotifier.testSend(memberId);
     }
 
+    /** 본인 알림 개인화 설정 조회. */
+    @Transactional(readOnly = true)
+    public MemberDto.NotificationSettings getNotificationSettings(Long id) {
+        return MemberDto.NotificationSettings.from(findOrThrow(id));
+    }
+
+    /** 본인 알림 개인화 설정 갱신. */
+    @Transactional
+    public MemberDto.NotificationSettings updateNotificationSettings(Long id, MemberDto.NotificationSettingsRequest req) {
+        TeamMember m = findOrThrow(id);
+        m.updateNotificationSettings(
+            req.teamsNotifyEnabled(), req.notifyQaEnabled(),
+            req.notifyCommentEnabled(), req.notifyReplyEnabled(),
+            req.quietHoursStart(), req.quietHoursEnd()
+        );
+        return MemberDto.NotificationSettings.from(m);
+    }
+
     private TeamMember findOrThrow(Long id) {
         return memberRepository.findByIdAndDeletedAtIsNull(id)
             .orElseThrow(() -> ApiException.notFound("멤버를 찾을 수 없습니다. id=" + id));

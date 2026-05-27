@@ -10,6 +10,7 @@ import com.qamanager.qa.comment.QaCommentService;
 import com.qamanager.qa.item.QaItem;
 import com.qamanager.qa.item.QaItemRepository;
 import com.qamanager.qa.item.QaItemService;
+import com.qamanager.qa.shared.QaStatus;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,7 +85,8 @@ public class NotificationService {
     @Transactional
     public void onQaStatusChanged(QaItemService.QaStatusChangedEvent ev) {
         // 상태 변경 → tester + assignee1 + assignee2 모두에게 (actor 제외)
-        String msg = "QA 상태 변경: " + ev.title() + " → " + ev.newStatus();
+        // ev.newStatus() 는 영어 code 이므로 한글 라벨로 변환 (알림/Teams 메세지 문구용).
+        String msg = "QA 상태 변경: " + ev.title() + " → " + QaStatus.labelOf(ev.newStatus());
         Set<Long> recipients = distinctRecipients(ev.actorMemberId(),
             ev.testerMemberId(), ev.assignee1MemberId(), ev.assignee2MemberId());
         for (Long rid : recipients) {

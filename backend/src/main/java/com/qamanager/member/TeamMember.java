@@ -55,8 +55,26 @@ public class TeamMember extends BaseEntity {
     @Column(name = "teams_service_url", length = 255)
     private String teamsServiceUrl;
 
+    /** Teams 알림 전체 on/off (마스터 스위치). */
     @Column(name = "teams_notify_enabled", nullable = false)
     private boolean teamsNotifyEnabled = true;
+
+    /** 알림 종류별 on/off (Teams 발송에만 적용). type: qa / comment / reply. */
+    @Column(name = "notify_qa_enabled", nullable = false)
+    private boolean notifyQaEnabled = true;
+
+    @Column(name = "notify_comment_enabled", nullable = false)
+    private boolean notifyCommentEnabled = true;
+
+    @Column(name = "notify_reply_enabled", nullable = false)
+    private boolean notifyReplyEnabled = true;
+
+    /** 방해금지 시간대 "HH:mm" (서버 Asia/Seoul 기준). null 이면 미설정. 구간 내 Teams 발송은 스킵. */
+    @Column(name = "quiet_hours_start", length = 5)
+    private String quietHoursStart;
+
+    @Column(name = "quiet_hours_end", length = 5)
+    private String quietHoursEnd;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -114,6 +132,17 @@ public class TeamMember extends BaseEntity {
         this.teamsNotifyEnabled = enabled;
     }
 
+    /** 알림 개인화 설정 일괄 갱신 (본인 설정 화면에서 호출). */
+    public void updateNotificationSettings(boolean teamsEnabled, boolean qa, boolean comment, boolean reply,
+                                           String quietStart, String quietEnd) {
+        this.teamsNotifyEnabled = teamsEnabled;
+        this.notifyQaEnabled = qa;
+        this.notifyCommentEnabled = comment;
+        this.notifyReplyEnabled = reply;
+        this.quietHoursStart = quietStart;
+        this.quietHoursEnd = quietEnd;
+    }
+
     /**
      * Teams 발송에 사용할 email 후보.
      * 1) 명시적으로 등록된 email 이 있으면 우선
@@ -137,5 +166,10 @@ public class TeamMember extends BaseEntity {
     public String getTeamsChatId() { return teamsChatId; }
     public String getTeamsServiceUrl() { return teamsServiceUrl; }
     public boolean isTeamsNotifyEnabled() { return teamsNotifyEnabled; }
+    public boolean isNotifyQaEnabled() { return notifyQaEnabled; }
+    public boolean isNotifyCommentEnabled() { return notifyCommentEnabled; }
+    public boolean isNotifyReplyEnabled() { return notifyReplyEnabled; }
+    public String getQuietHoursStart() { return quietHoursStart; }
+    public String getQuietHoursEnd() { return quietHoursEnd; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
 }

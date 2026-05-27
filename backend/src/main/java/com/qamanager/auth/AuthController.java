@@ -1,6 +1,8 @@
 package com.qamanager.auth;
 
 import com.qamanager.common.ApiException;
+import com.qamanager.member.MemberDto;
+import com.qamanager.member.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -9,6 +11,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,13 +23,16 @@ public class AuthController {
     private final AuthService authService;
     private final AuthCookieUtil cookieUtil;
     private final TokenBlacklistService blacklist;
+    private final MemberService memberService;
 
     public AuthController(AuthService authService,
                           AuthCookieUtil cookieUtil,
-                          TokenBlacklistService blacklist) {
+                          TokenBlacklistService blacklist,
+                          MemberService memberService) {
         this.authService = authService;
         this.cookieUtil = cookieUtil;
         this.blacklist = blacklist;
+        this.memberService = memberService;
     }
 
     @PostMapping("/auth/login")
@@ -73,5 +79,16 @@ public class AuthController {
     public ResponseEntity<Void> changeMyPassword(@RequestBody @Valid AuthDto.ChangeMyPasswordRequest req) {
         authService.changeMyPassword(CurrentUser.getIdOrThrow(), req);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me/notification-settings")
+    public MemberDto.NotificationSettings getMyNotificationSettings() {
+        return memberService.getNotificationSettings(CurrentUser.getIdOrThrow());
+    }
+
+    @PutMapping("/me/notification-settings")
+    public MemberDto.NotificationSettings updateMyNotificationSettings(
+            @RequestBody @Valid MemberDto.NotificationSettingsRequest req) {
+        return memberService.updateNotificationSettings(CurrentUser.getIdOrThrow(), req);
     }
 }

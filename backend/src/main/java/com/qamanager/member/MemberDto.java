@@ -3,6 +3,7 @@ package com.qamanager.member;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class MemberDto {
@@ -53,5 +54,37 @@ public class MemberDto {
     /** Teams 알림 토글. */
     public record TeamsNotifyRequest(
         @NotNull Boolean enabled
+    ) {}
+
+    /** 본인 알림 개인화 설정 (Teams 발송에만 적용). */
+    public record NotificationSettings(
+        boolean teamsNotifyEnabled,
+        boolean notifyQaEnabled,
+        boolean notifyCommentEnabled,
+        boolean notifyReplyEnabled,
+        String quietHoursStart,
+        String quietHoursEnd
+    ) {
+        public static NotificationSettings from(TeamMember m) {
+            return new NotificationSettings(
+                m.isTeamsNotifyEnabled(),
+                m.isNotifyQaEnabled(),
+                m.isNotifyCommentEnabled(),
+                m.isNotifyReplyEnabled(),
+                m.getQuietHoursStart(),
+                m.getQuietHoursEnd()
+            );
+        }
+    }
+
+    private static final String HHMM = "^([01]?\\d|2[0-3]):[0-5]\\d$";
+
+    public record NotificationSettingsRequest(
+        @NotNull Boolean teamsNotifyEnabled,
+        @NotNull Boolean notifyQaEnabled,
+        @NotNull Boolean notifyCommentEnabled,
+        @NotNull Boolean notifyReplyEnabled,
+        @Pattern(regexp = HHMM, message = "시간 형식은 HH:mm 이어야 합니다.") String quietHoursStart,
+        @Pattern(regexp = HHMM, message = "시간 형식은 HH:mm 이어야 합니다.") String quietHoursEnd
     ) {}
 }
