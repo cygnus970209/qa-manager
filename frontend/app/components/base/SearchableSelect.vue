@@ -7,8 +7,8 @@ import { Check, ChevronDown, X } from '@lucide/vue'
  * - ↑/↓ 로 이동, Enter 로 선택, Esc 로 닫기
  * - clearable 이면 X 버튼으로 미선택 가능
  *
- * 옵션은 임의 타입 T 의 배열로 받고, `keyFn` / `labelFn` 으로 식별/표시한다.
- * 값(modelValue) 은 keyFn 결과의 타입.
+ * 드롭다운 패널은 Teleport(body) + fixed 로 띄워서 모달/overflow-hidden 컨테이너 안에서도
+ * 잘리지 않는다. 화면 아래 공간이 부족하면 위로 펼친다.
  */
 const props = defineProps<{
   modelValue: string | number | null
@@ -32,7 +32,10 @@ const open = ref(false)
 const query = ref('')
 const highlighted = ref(0)
 const rootEl = ref<HTMLElement | null>(null)
+const triggerEl = ref<HTMLButtonElement | null>(null)
+const panelEl = ref<HTMLElement | null>(null)
 const inputEl = ref<HTMLInputElement | null>(null)
+const panelStyle = ref<Record<string, string>>({})
 
 const selected = computed<T | null>(() => {
   if (props.modelValue == null) return null
@@ -55,12 +58,43 @@ const filtered = computed<T[]>(() => {
 
 watch(filtered, () => { highlighted.value = 0 })
 
+/** 트리거 위치를 측정해 패널을 화면 좌표(fixed)에 배치. 아래 공간이 부족하면 위로. */
+function updatePosition() {
+  const el = triggerEl.value
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  const gap = 4
+  const maxPanel = 288
+  const below = window.innerHeight - r.bottom - gap
+  const above = r.top - gap
+  const openUp = below < Math.min(maxPanel, 220) && above > below
+  const maxHeight = Math.max(140, Math.min(maxPanel, openUp ? above : below))
+  panelStyle.value = openUp
+    ? {
+        position: 'fixed',
+        left: `${r.left}px`,
+        width: `${r.width}px`,
+        bottom: `${window.innerHeight - r.top + gap}px`,
+        maxHeight: `${maxHeight}px`,
+      }
+    : {
+        position: 'fixed',
+        left: `${r.left}px`,
+        width: `${r.width}px`,
+        top: `${r.bottom + gap}px`,
+        maxHeight: `${maxHeight}px`,
+      }
+}
+
 function openDropdown() {
   if (props.disabled) return
   open.value = true
   query.value = ''
   highlighted.value = 0
-  nextTick(() => inputEl.value?.focus())
+  nextTick(() => {
+    updatePosition()
+    inputEl.value?.focus()
+  })
 }
 
 function close() {
@@ -97,18 +131,36 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
+// 열려 있는 동안 스크롤/리사이즈 시 위치 추적 (capture 로 모달 내부 스크롤 컨테이너도 포함)
+watch(open, (v) => {
+  if (v) {
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+  } else {
+    window.removeEventListener('scroll', updatePosition, true)
+    window.removeEventListener('resize', updatePosition)
+  }
+})
+
 function onDocClick(e: MouseEvent) {
   if (!open.value) return
-  if (rootEl.value && rootEl.value.contains(e.target as Node)) return
+  const t = e.target as Node
+  if (rootEl.value?.contains(t)) return
+  if (panelEl.value?.contains(t)) return // teleport 된 패널 내부 클릭은 유지
   close()
 }
 onMounted(() => document.addEventListener('mousedown', onDocClick))
-onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onDocClick)
+  window.removeEventListener('scroll', updatePosition, true)
+  window.removeEventListener('resize', updatePosition)
+})
 </script>
 
 <template>
   <div ref="rootEl" class="relative">
     <button
+      ref="triggerEl"
       type="button"
       :disabled="disabled"
       class="flex w-full items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-1.5 text-left text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-50"
@@ -129,36 +181,40 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
       </span>
     </button>
 
-    <div
-      v-if="open"
-      class="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg"
-    >
-      <input
-        ref="inputEl"
-        v-model="query"
-        type="text"
-        :placeholder="placeholder ?? '검색...'"
-        class="w-full border-b border-slate-100 px-3 py-2 text-xs focus:outline-none"
-        @keydown="onKey"
-      />
-      <ul class="max-h-60 overflow-y-auto py-1">
-        <li v-if="filtered.length === 0" class="px-3 py-2 text-xs text-slate-400">결과 없음</li>
-        <li v-for="(o, i) in filtered" :key="String(keyFn(o))">
-          <button
-            type="button"
-            :class="[
-              'flex w-full items-center justify-between px-3 py-1.5 text-left text-xs transition-colors',
-              i === highlighted ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50',
-              modelValue === keyFn(o) ? 'font-medium' : '',
-            ]"
-            @mousedown.prevent="selectOption(o)"
-            @mouseenter="highlighted = i"
-          >
-            <span class="truncate">{{ labelFn(o) }}</span>
-            <Check v-if="modelValue === keyFn(o)" class="h-3 w-3 text-emerald-500" />
-          </button>
-        </li>
-      </ul>
-    </div>
+    <Teleport to="body">
+      <div
+        v-if="open"
+        ref="panelEl"
+        :style="panelStyle"
+        class="z-[100] flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg"
+      >
+        <input
+          ref="inputEl"
+          v-model="query"
+          type="text"
+          :placeholder="placeholder ?? '검색...'"
+          class="w-full shrink-0 border-b border-slate-100 px-3 py-2 text-xs focus:outline-none"
+          @keydown="onKey"
+        />
+        <ul class="flex-1 overflow-y-auto py-1">
+          <li v-if="filtered.length === 0" class="px-3 py-2 text-xs text-slate-400">결과 없음</li>
+          <li v-for="(o, i) in filtered" :key="String(keyFn(o))">
+            <button
+              type="button"
+              :class="[
+                'flex w-full items-center justify-between px-3 py-1.5 text-left text-xs transition-colors',
+                i === highlighted ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50',
+                modelValue === keyFn(o) ? 'font-medium' : '',
+              ]"
+              @mousedown.prevent="selectOption(o)"
+              @mouseenter="highlighted = i"
+            >
+              <span class="truncate">{{ labelFn(o) }}</span>
+              <Check v-if="modelValue === keyFn(o)" class="h-3 w-3 text-emerald-500" />
+            </button>
+          </li>
+        </ul>
+      </div>
+    </Teleport>
   </div>
 </template>
