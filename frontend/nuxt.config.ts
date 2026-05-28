@@ -22,6 +22,9 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        // 검색엔진/봇 인덱싱 차단 (내부 도구라 공개 노출 불필요)
+        { name: 'robots', content: 'noindex, nofollow, noarchive, nosnippet, noimageindex' },
+        { name: 'googlebot', content: 'noindex, nofollow, noarchive, nosnippet, noimageindex' },
       ],
     },
   },
@@ -42,7 +45,9 @@ export default defineNuxtConfig({
       headers: {
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Referrer-Policy': 'no-referrer',
+        // robots meta 보다 강력 — 응답 헤더 단계에서 검색엔진 차단 (HTML 외 자원에도 적용)
+        'X-Robots-Tag': 'noindex, nofollow, noarchive, nosnippet, noimageindex',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
         'Content-Security-Policy': [
           "default-src 'self'",
