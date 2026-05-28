@@ -19,9 +19,9 @@ services:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
       - db-data:/var/lib/mysql
-    # 운영 호스트에서 DB 포트를 노출하지 않는다.
-    # 로컬 디버깅이 필요하면 docker-compose.override.yml 에서 ports 추가:
-    #   ports: ["127.0.0.1:3306:3306"]
+    # DB 포트 외부 노출 — 회사 고정 IP만 호스트 방화벽/보안그룹에서 3306 허용할 것.
+    ports:
+      - "3306:3306"
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s

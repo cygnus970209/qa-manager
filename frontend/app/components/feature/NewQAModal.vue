@@ -226,7 +226,7 @@ async function onSubmit() {
           v-model="form.description"
           rows="3"
           maxlength="4000"
-          placeholder="설명을 입력하세요 (이미지 붙여넣기 가능)"
+          placeholder="설명을 입력하세요 (이미지 붙여넣기 하려면 여기 누르고 붙여넣기 하세요)"
           class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           @paste="onPaste"
         />
