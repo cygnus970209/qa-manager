@@ -88,12 +88,16 @@ function updatePosition() {
 
 function openDropdown() {
   if (props.disabled) return
-  open.value = true
   query.value = ''
   highlighted.value = 0
+  // 먼저 트리거 기준으로 panelStyle 을 fixed 좌표로 계산한 뒤 open.
+  // 안 그러면 첫 렌더에서 panel 이 body 끝에 static 으로 잠깐 붙어 페이지가 늘어나며 스크롤이 튄다.
+  updatePosition()
+  open.value = true
   nextTick(() => {
     updatePosition()
-    inputEl.value?.focus()
+    // preventScroll 없이 focus 하면 일부 브라우저가 패널 위치로 스크롤하려고 함.
+    inputEl.value?.focus({ preventScroll: true })
   })
 }
 
