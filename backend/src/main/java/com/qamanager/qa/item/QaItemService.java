@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class QaItemService {
@@ -141,6 +143,20 @@ public class QaItemService {
             diffs, changedBy, q::setAssignee2, currentMemberId, /*notify=*/true);
 
         if (req.images() != null) {
+            List<String> oldUrls = q.getImages().stream().map(QaItemImage::getImageUrl).toList();
+            List<String> newUrls = req.images();
+            Set<String> oldSet = new HashSet<>(oldUrls);
+            Set<String> newSet = new HashSet<>(newUrls);
+            for (String url : oldUrls) {
+                if (!newSet.contains(url)) {
+                    diffs.add(new QaHistory(q, "image_removed", truncate(url), null, changedBy));
+                }
+            }
+            for (String url : newUrls) {
+                if (!oldSet.contains(url)) {
+                    diffs.add(new QaHistory(q, "image_added", null, truncate(url), changedBy));
+                }
+            }
             q.replaceImages(req.images());
         }
         if (!diffs.isEmpty()) historyRepository.saveAll(diffs);

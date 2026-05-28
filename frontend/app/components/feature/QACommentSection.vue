@@ -45,6 +45,7 @@ const tree = computed(() => {
 /* ─── 새 댓글 ─── */
 const newContent = ref('')
 const newImages = ref<string[]>([])
+const newMentionIds = ref<Set<number>>(new Set())
 const newRef = ref<HTMLTextAreaElement | null>(null)
 const submitting = ref(false)
 const uploading = ref(false)
@@ -63,6 +64,7 @@ const deletingId = ref<number | null>(null)
 const replyToId = ref<number | null>(null)
 const replyContent = ref('')
 const replyImages = ref<string[]>([])
+const replyMentionIds = ref<Set<number>>(new Set())
 const replyRef = ref<HTMLTextAreaElement | null>(null)
 
 /* ─── 반응 picker ─── */
@@ -153,12 +155,15 @@ async function submitNew() {
   submitting.value = true
   error.value = null
   try {
+    const mentionedMemberIds = aliveMentionIds(newContent.value, newMentionIds.value)
     await qaApi.createComment(props.qaItemId, {
       content: newContent.value.trim(),
       images: newImages.value.length > 0 ? newImages.value : undefined,
+      mentionedMemberIds: mentionedMemberIds.length > 0 ? mentionedMemberIds : undefined,
     })
     newContent.value = ''
     newImages.value = []
+    newMentionIds.value = new Set()
     await refresh()
   } catch (e: any) {
     error.value = e?.data?.message ?? '댓글 등록 실패'
@@ -194,21 +199,25 @@ function startReply(id: number) {
   replyToId.value = id
   replyContent.value = ''
   replyImages.value = []
+  replyMentionIds.value = new Set()
   nextTick(() => replyRef.value?.focus())
 }
 function cancelReply() {
   replyToId.value = null
   replyContent.value = ''
   replyImages.value = []
+  replyMentionIds.value = new Set()
 }
 async function submitReply() {
   if (replyToId.value === null) return
   if (!replyContent.value.trim() && replyImages.value.length === 0) return
   if (replyContent.value.length > MAX_LEN) return
+  const mentionedMemberIds = aliveMentionIds(replyContent.value, replyMentionIds.value)
   await qaApi.createComment(props.qaItemId, {
     parentId: replyToId.value,
     content: replyContent.value.trim(),
     images: replyImages.value.length > 0 ? replyImages.value : undefined,
+    mentionedMemberIds: mentionedMemberIds.length > 0 ? mentionedMemberIds : undefined,
   })
   cancelReply()
   await refresh()
@@ -254,7 +263,7 @@ function checkMention(el: HTMLTextAreaElement, mode: 'new' | 'edit' | 'reply') {
   showMention.value = true
   mentionIdx.value = 0
 }
-function insertMention(name: string) {
+function insertMention(member: Member) {
   const el =
     mentionMode.value === 'edit' ? editRef.value
     : mentionMode.value === 'reply' ? replyRef.value
@@ -267,23 +276,41 @@ function insertMention(name: string) {
   if (lastAt === -1) return
   const beforeAt = value.slice(0, lastAt)
   const afterCursor = value.slice(cursor)
-  const next = `${beforeAt}@${name} ${afterCursor}`
+  const next = `${beforeAt}@${member.name} ${afterCursor}`
   if (mentionMode.value === 'edit') editContent.value = next
-  else if (mentionMode.value === 'reply') replyContent.value = next
-  else newContent.value = next
+  else if (mentionMode.value === 'reply') {
+    replyContent.value = next
+    replyMentionIds.value.add(member.id)
+  }
+  else {
+    newContent.value = next
+    newMentionIds.value.add(member.id)
+  }
   showMention.value = false
   nextTick(() => {
-    const pos = beforeAt.length + name.length + 2
+    const pos = beforeAt.length + member.name.length + 2
     el.setSelectionRange(pos, pos)
     el.focus()
   })
+}
+
+/** pick 한 멤버 중 본문에 `@이름`이 살아있는 id 만 반환. 사용자가 텍스트를 지운 경우 자동 제외. */
+function aliveMentionIds(content: string, picked: Set<number>): number[] {
+  if (picked.size === 0) return []
+  const result: number[] = []
+  for (const id of picked) {
+    const m = props.members.find((x) => x.id === id)
+    if (!m) continue
+    if (content.includes(`@${m.name}`)) result.push(id)
+  }
+  return result
 }
 function onMentionKey(e: KeyboardEvent) {
   if (!showMention.value) return
   const list = filteredMembers.value
   if (e.key === 'Escape') { showMention.value = false; e.preventDefault() }
   else if (e.key === 'Enter') {
-    if (list.length > 0) { insertMention(list[mentionIdx.value].name); e.preventDefault() }
+    if (list.length > 0) { insertMention(list[mentionIdx.value]); e.preventDefault() }
   }
   else if (e.key === 'ArrowDown') {
     mentionIdx.value = Math.min(mentionIdx.value + 1, list.length - 1)
@@ -361,7 +388,7 @@ function memberInitial(name: string) {
                   />
                   <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" class="absolute left-0 right-auto top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
-                      <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m.name)">
+                      <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                         <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
                         <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
                         <div class="min-w-0 flex-1">
@@ -516,7 +543,7 @@ function memberInitial(name: string) {
                   />
                   <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" class="absolute left-0 top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
-                      <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m.name)">
+                      <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                         <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
                         <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
                         <div class="min-w-0 flex-1">
@@ -575,7 +602,7 @@ function memberInitial(name: string) {
               />
               <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" class="absolute left-0 top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                 <li v-for="(m, i) in filteredMembers" :key="m.id">
-                  <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m.name)">
+                  <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                     <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
                     <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
                     <div class="min-w-0 flex-1">

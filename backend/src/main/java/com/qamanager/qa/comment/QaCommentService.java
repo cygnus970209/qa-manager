@@ -10,9 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class QaCommentService {
@@ -73,6 +76,8 @@ public class QaCommentService {
         QaComment saved = commentRepository.save(c);
 
         Long projectId = item.getProjectUpdate().getProject().getId();
+        Set<Long> excludeForMention = new HashSet<>();
+        excludeForMention.add(currentMemberId);
         if (parent == null) {
             // 새 루트 코멘트 → tester + assignee1 + assignee2 모두에게 알림 (조건 2)
             events.publishEvent(new QaCommentCreatedEvent(
@@ -82,6 +87,9 @@ public class QaCommentService {
                 item.getAssignee1() == null ? null : item.getAssignee1().getId(),
                 item.getAssignee2() == null ? null : item.getAssignee2().getId()
             ));
+            if (item.getTester()    != null) excludeForMention.add(item.getTester().getId());
+            if (item.getAssignee1() != null) excludeForMention.add(item.getAssignee1().getId());
+            if (item.getAssignee2() != null) excludeForMention.add(item.getAssignee2().getId());
         } else {
             // 답글 → 부모 코멘트 작성자에게 알림 (조건 3)
             Long parentAuthorId = parent.getAuthor().getId();
@@ -89,6 +97,24 @@ public class QaCommentService {
                 saved.getId(), parent.getId(), item.getId(), projectId, item.getTitle(),
                 currentMemberId, parentAuthorId
             ));
+            excludeForMention.add(parentAuthorId);
+        }
+
+        // @멘션 알림 — 프론트가 보내준 mentionedMemberIds 사용 (ID 기반). 자동완성 pick 한 멤버만 알림.
+        // 기존 comment/reply 알림 수신자와 작성자 본인은 제외해 중복 방지.
+        if (req.mentionedMemberIds() != null) {
+            Set<Long> sent = new LinkedHashSet<>();
+            for (Long mentionedId : req.mentionedMemberIds()) {
+                if (mentionedId == null) continue;
+                if (excludeForMention.contains(mentionedId)) continue;
+                if (!sent.add(mentionedId)) continue; // 중복 제거
+                // 존재하는 활성 멤버인지 검증 (잘못된 id 무시)
+                if (memberRepository.findByIdAndDeletedAtIsNull(mentionedId).isEmpty()) continue;
+                events.publishEvent(new QaCommentMentionedEvent(
+                    saved.getId(), item.getId(), projectId, item.getTitle(),
+                    currentMemberId, mentionedId
+                ));
+            }
         }
         return toResponse(saved, null);
     }
@@ -153,6 +179,11 @@ public class QaCommentService {
     public record QaCommentRepliedEvent(Long commentId, Long parentCommentId, Long qaItemId,
                                         Long projectId, String qaTitle,
                                         Long actorMemberId, Long parentAuthorMemberId) {}
+
+    /** 코멘트 본문에 @멘션 된 멤버에게 발행. 멤버 1명당 1건. */
+    public record QaCommentMentionedEvent(Long commentId, Long qaItemId, Long projectId,
+                                          String qaTitle,
+                                          Long actorMemberId, Long mentionedMemberId) {}
 
     private CommentDto.Response toResponse(QaComment c, Map<String, List<Long>> reactions) {
         CommentDto.AuthorSummary author = new CommentDto.AuthorSummary(

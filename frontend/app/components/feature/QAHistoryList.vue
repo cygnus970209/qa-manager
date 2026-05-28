@@ -7,10 +7,14 @@ defineProps<{ entries: QaHistoryEntry[] }>()
 const fieldLabels: Record<string, string> = {
   status: '상태',
   priority: '우선순위',
-  assignee: '담당자',
+  tester: '테스터',
+  assignee1: '담당자1',
+  assignee2: '담당자2',
   title: '제목',
   description: '설명',
   category: '카테고리',
+  image_added: '이미지',
+  image_removed: '이미지',
 }
 
 // status / priority 의 oldValue·newValue 는 영어 code 로 저장되므로 표시 시 한글로 변환.
@@ -44,7 +48,21 @@ function displayValue(field: string, value: string | null | undefined): string {
       <li v-for="h in entries" :key="h.id" class="flex gap-3">
         <div class="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
         <div class="flex-1 text-sm">
-          <p class="text-slate-700">
+          <p v-if="h.field === 'image_added'" class="text-slate-700">
+            <span class="font-medium">{{ h.changedBy?.name ?? '시스템' }}</span>
+            님이 이미지를 추가
+            <a v-if="h.newValue" :href="h.newValue" target="_blank" rel="noopener noreferrer" class="ml-1 inline-block align-middle">
+              <img :src="h.newValue" alt="추가된 이미지" class="h-10 w-10 rounded border border-slate-200 object-cover" />
+            </a>
+          </p>
+          <p v-else-if="h.field === 'image_removed'" class="text-slate-700">
+            <span class="font-medium">{{ h.changedBy?.name ?? '시스템' }}</span>
+            님이 이미지를 삭제
+            <a v-if="h.oldValue" :href="h.oldValue" target="_blank" rel="noopener noreferrer" class="ml-1 inline-block align-middle">
+              <img :src="h.oldValue" alt="삭제된 이미지" class="h-10 w-10 rounded border border-slate-200 object-cover opacity-60 grayscale" />
+            </a>
+          </p>
+          <p v-else class="text-slate-700">
             <span class="font-medium">{{ h.changedBy?.name ?? '시스템' }}</span>
             님이 <span class="font-medium">{{ fieldLabels[h.field] ?? h.field }}</span>을(를)
             <span class="rounded bg-slate-100 px-1 py-0.5 text-xs">{{ displayValue(h.field, h.oldValue) }}</span>

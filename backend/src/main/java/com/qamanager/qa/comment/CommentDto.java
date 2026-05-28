@@ -26,7 +26,9 @@ public class CommentDto {
     public record CreateRequest(
         Long parentId,
         @NotBlank String content,
-        List<@Size(max = 800) String> images
+        List<@Size(max = 800) String> images,
+        /** 본문에서 @멘션된 멤버 id (프론트 자동완성에서 pick 한 ID만 누적). 알림 발송 대상. */
+        List<Long> mentionedMemberIds
     ) {}
 
     public record UpdateRequest(

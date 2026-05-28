@@ -131,6 +131,15 @@ public class NotificationService {
         publishOne(ev.parentAuthorMemberId(), ev.actorMemberId(), "reply", msg, ev.projectId(), ev.qaItemId());
     }
 
+    /** 조건 4: 코멘트 본문에 @멘션 됐을 때. 발행 측에서 actor/기존 수신자 이미 제외. */
+    @EventListener
+    @Transactional
+    public void onQaCommentMentioned(QaCommentService.QaCommentMentionedEvent ev) {
+        if (ev.mentionedMemberId() == null) return;
+        String msg = "코멘트에서 언급되었습니다: " + ev.qaTitle();
+        publishOne(ev.mentionedMemberId(), ev.actorMemberId(), "mention", msg, ev.projectId(), ev.qaItemId());
+    }
+
     /** actor 본인 제외 + null 제외 + 중복 제거. 삽입 순서 유지 (LinkedHashSet). package-private for test. */
     Set<Long> distinctRecipients(Long actorId, Long... candidates) {
         Set<Long> set = new LinkedHashSet<>();

@@ -235,6 +235,8 @@ export interface CommentCreateRequest {
   parentId?: number
   content: string
   images?: string[]
+  /** @멘션된 멤버 id (자동완성에서 pick 한 항목만 누적). 알림 발송 대상. */
+  mentionedMemberIds?: number[]
 }
 
 export interface CommentUpdateRequest {
