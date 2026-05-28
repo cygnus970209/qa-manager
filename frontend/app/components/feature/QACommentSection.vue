@@ -79,6 +79,15 @@ const mentionIdx = ref(0)
 /** 드롭다운을 입력박스 위로 띄울지. 아래 공간이 부족하면 true. */
 const mentionAbove = ref(false)
 const MENTION_DROPDOWN_HEIGHT = 192 // max-h-48 = 12rem
+
+/** mentionIdx 가 변하면 현재 열린 멘션 ul 의 활성 항목을 보이는 위치로 스크롤. */
+watch(mentionIdx, () => {
+  if (!showMention.value) return
+  nextTick(() => {
+    const active = document.querySelector('[data-mention-active="true"]')
+    active?.scrollIntoView({ block: 'nearest' })
+  })
+})
 const filteredMembers = computed(() => {
   const q = mentionQuery.value.toLowerCase()
   return props.members.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 8)
@@ -102,11 +111,23 @@ watch(newContent, () => autoResize(newRef.value))
 watch(editContent, () => autoResize(editRef.value))
 watch(replyContent, () => autoResize(replyRef.value))
 
-/* ─── 바깥 클릭으로 반응 picker 닫기 ─── */
+/* ─── 바깥 클릭으로 반응 picker / 멘션 드롭다운 닫기 ─── */
 function onDocClick(e: MouseEvent) {
-  if (reactionPickerId.value === null) return
-  if (pickerRef.value && pickerRef.value.contains(e.target as Node)) return
-  reactionPickerId.value = null
+  const t = e.target as Node
+  // 반응 picker
+  if (reactionPickerId.value !== null && !(pickerRef.value && pickerRef.value.contains(t))) {
+    reactionPickerId.value = null
+  }
+  // 멘션 드롭다운 — textarea 와 드롭다운 ul 내부 클릭은 유지, 그 외는 닫는다.
+  if (showMention.value) {
+    const inTextarea = !!(
+      newRef.value?.contains(t)
+      || editRef.value?.contains(t)
+      || replyRef.value?.contains(t)
+    )
+    const inList = !!document.querySelector('[data-mention-list="true"]')?.contains(t)
+    if (!inTextarea && !inList) showMention.value = false
+  }
 }
 onMounted(() => document.addEventListener('mousedown', onDocClick))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
@@ -394,9 +415,9 @@ function memberInitial(name: string) {
                     @keydown="onMentionKey"
                     @paste="onPaste($event, 'edit')"
                   />
-                  <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" :class="['absolute left-0 right-auto z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                  <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 right-auto z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
-                      <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
+                      <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                         <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
                         <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
                         <div class="min-w-0 flex-1">
@@ -549,9 +570,9 @@ function memberInitial(name: string) {
                     @keydown="onMentionKey"
                     @paste="onPaste($event, 'reply')"
                   />
-                  <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                  <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
-                      <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
+                      <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                         <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
                         <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
                         <div class="min-w-0 flex-1">
@@ -608,9 +629,9 @@ function memberInitial(name: string) {
                 @keydown="onMentionKey"
                 @paste="onPaste($event, 'new')"
               />
-              <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+              <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                 <li v-for="(m, i) in filteredMembers" :key="m.id">
-                  <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
+                  <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                     <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
                     <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
                     <div class="min-w-0 flex-1">
