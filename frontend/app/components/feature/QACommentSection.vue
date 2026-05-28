@@ -76,6 +76,9 @@ const showMention = ref(false)
 const mentionQuery = ref('')
 const mentionMode = ref<'new' | 'edit' | 'reply'>('new')
 const mentionIdx = ref(0)
+/** 드롭다운을 입력박스 위로 띄울지. 아래 공간이 부족하면 true. */
+const mentionAbove = ref(false)
+const MENTION_DROPDOWN_HEIGHT = 192 // max-h-48 = 12rem
 const filteredMembers = computed(() => {
   const q = mentionQuery.value.toLowerCase()
   return props.members.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 8)
@@ -262,6 +265,11 @@ function checkMention(el: HTMLTextAreaElement, mode: 'new' | 'edit' | 'reply') {
   mentionMode.value = mode
   showMention.value = true
   mentionIdx.value = 0
+  // 아래 공간이 부족하면 위로 띄운다 (SearchableSelect 와 동일 패턴)
+  const rect = el.getBoundingClientRect()
+  const spaceBelow = window.innerHeight - rect.bottom
+  const spaceAbove = rect.top
+  mentionAbove.value = spaceBelow < MENTION_DROPDOWN_HEIGHT && spaceAbove > spaceBelow
 }
 function insertMention(member: Member) {
   const el =
@@ -343,7 +351,7 @@ function memberInitial(name: string) {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+  <section class="rounded-xl border border-slate-200 bg-white">
     <header class="border-b border-slate-100 p-4 md:p-5">
       <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-700">
         <MessageSquare class="h-4 w-4" /> 코멘트
@@ -386,7 +394,7 @@ function memberInitial(name: string) {
                     @keydown="onMentionKey"
                     @paste="onPaste($event, 'edit')"
                   />
-                  <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" class="absolute left-0 right-auto top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                  <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" :class="['absolute left-0 right-auto z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
                       <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                         <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
@@ -541,7 +549,7 @@ function memberInitial(name: string) {
                     @keydown="onMentionKey"
                     @paste="onPaste($event, 'reply')"
                   />
-                  <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" class="absolute left-0 top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                  <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
                       <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                         <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
@@ -600,7 +608,7 @@ function memberInitial(name: string) {
                 @keydown="onMentionKey"
                 @paste="onPaste($event, 'new')"
               />
-              <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" class="absolute left-0 top-full z-20 mt-1 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+              <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                 <li v-for="(m, i) in filteredMembers" :key="m.id">
                   <button type="button" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
                     <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
