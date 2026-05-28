@@ -182,6 +182,39 @@ async function onQuickStatusChange(next: QaItem['status']) {
     saving.value = false
   }
 }
+
+/** 편집 모드 진입 없이 담당자(tester/assignee1/assignee2) 단독 변경 (즉시 PATCH) */
+async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', id: number | null) {
+  const currentId =
+    slot === 'tester' ? (props.item.tester?.id ?? null)
+    : slot === 'assignee1' ? (props.item.assignee1?.id ?? null)
+    : (props.item.assignee2?.id ?? null)
+  if (currentId === id) return
+  saving.value = true
+  error.value = null
+  try {
+    const body: QaPatchRequest = {}
+    if (slot === 'tester') {
+      if (id == null) body.clearTester = true
+      else body.testerId = id
+    } else if (slot === 'assignee1') {
+      if (id == null) body.clearAssignee1 = true
+      else body.assignee1Id = id
+    } else {
+      if (id == null) body.clearAssignee2 = true
+      else body.assignee2Id = id
+    }
+    const updated = await qaApi.update(props.item.id, body)
+    emit('updated', updated)
+    if (slot === 'tester') form.testerId = id
+    else if (slot === 'assignee1') form.assignee1Id = id
+    else form.assignee2Id = id
+  } catch (e: any) {
+    error.value = e?.data?.message ?? '담당자 변경 실패'
+  } finally {
+    saving.value = false
+  }
+}
 </script>
 
 <template>
@@ -238,15 +271,68 @@ async function onQuickStatusChange(next: QaItem['status']) {
       </select>
       <PriorityBadge :priority="item.priority" />
       <span>·</span>
-      <span>테스터 {{ item.tester?.name ?? '미지정' }}</span>
-      <span>·</span>
-      <span>
-        담당자
-        <template v-if="item.assignee1 || item.assignee2">
-          {{ [item.assignee1?.name, item.assignee2?.name].filter(Boolean).join(', ') }}
-        </template>
-        <template v-else>미지정</template>
-      </span>
+      <!-- 비편집 모드에서 담당자도 즉시 변경 가능 (상태와 동일한 패턴) -->
+      <template v-if="!editing">
+        <div class="inline-flex items-center gap-1">
+          <span class="text-slate-400">테스터</span>
+          <SearchableSelect
+            class="w-32"
+            :model-value="item.tester?.id ?? null"
+            :options="members"
+            :key-fn="(m: Member) => m.id"
+            :label-fn="(m: Member) => m.name"
+            :search-fn="(m: Member) => m.role ?? ''"
+            placeholder="검색"
+            empty-label="미지정"
+            clearable
+            :disabled="saving"
+            @update:model-value="(v) => onQuickMemberChange('tester', v as number | null)"
+          />
+        </div>
+        <div class="inline-flex items-center gap-1">
+          <span class="text-slate-400">담당자1</span>
+          <SearchableSelect
+            class="w-32"
+            :model-value="item.assignee1?.id ?? null"
+            :options="members"
+            :key-fn="(m: Member) => m.id"
+            :label-fn="(m: Member) => m.name"
+            :search-fn="(m: Member) => m.role ?? ''"
+            placeholder="검색"
+            empty-label="미지정"
+            clearable
+            :disabled="saving"
+            @update:model-value="(v) => onQuickMemberChange('assignee1', v as number | null)"
+          />
+        </div>
+        <div class="inline-flex items-center gap-1">
+          <span class="text-slate-400">담당자2</span>
+          <SearchableSelect
+            class="w-32"
+            :model-value="item.assignee2?.id ?? null"
+            :options="members"
+            :key-fn="(m: Member) => m.id"
+            :label-fn="(m: Member) => m.name"
+            :search-fn="(m: Member) => m.role ?? ''"
+            placeholder="검색"
+            empty-label="미지정"
+            clearable
+            :disabled="saving"
+            @update:model-value="(v) => onQuickMemberChange('assignee2', v as number | null)"
+          />
+        </div>
+      </template>
+      <template v-else>
+        <span>테스터 {{ item.tester?.name ?? '미지정' }}</span>
+        <span>·</span>
+        <span>
+          담당자
+          <template v-if="item.assignee1 || item.assignee2">
+            {{ [item.assignee1?.name, item.assignee2?.name].filter(Boolean).join(', ') }}
+          </template>
+          <template v-else>미지정</template>
+        </span>
+      </template>
       <span>·</span>
       <span>생성 {{ item.createdAt?.slice(0, 10) }}</span>
       <span>수정 {{ item.updatedAt?.slice(0, 10) }}</span>

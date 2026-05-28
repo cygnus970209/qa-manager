@@ -5,6 +5,7 @@ import {
   Bug,
   Edit3,
   Folder,
+  KeyRound,
   Loader2,
   Send,
   Settings,
@@ -186,6 +187,16 @@ async function confirmDelete() {
   members.value = members.value.filter((x) => x.id !== deleteTarget.value!.id)
   deleteOpen.value = false
   deleteTarget.value = null
+}
+
+async function resetPassword(m: Member) {
+  if (!window.confirm(`${m.name}(${m.username})의 비밀번호를 "1234"로 초기화할까요?`)) return
+  try {
+    await membersApi.resetPassword(m.id)
+    window.alert(`${m.name}의 비밀번호가 "1234"로 초기화되었습니다.`)
+  } catch (e: unknown) {
+    window.alert(e instanceof Error ? e.message : '비밀번호 초기화 실패')
+  }
 }
 </script>
 
@@ -450,6 +461,14 @@ async function confirmDelete() {
                     @click="runTeamsTest(m)"
                   >
                     <Send class="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-500"
+                    title="비밀번호 1234로 초기화"
+                    @click="resetPassword(m)"
+                  >
+                    <KeyRound class="h-4 w-4" />
                   </button>
                   <button
                     type="button"

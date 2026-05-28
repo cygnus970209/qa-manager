@@ -108,6 +108,13 @@ public class MemberService {
         return MemberDto.Response.from(m);
     }
 
+    /** 관리자용 비밀번호 초기화 (초기값 "1234"). 본인 변경은 AuthService 의 별도 API 사용. */
+    @Transactional
+    public void resetPassword(Long id) {
+        TeamMember m = findOrThrow(id);
+        m.changePassword(passwordEncoder.encode("1234"));
+    }
+
     /** Teams 알림 on/off. */
     @Transactional
     public MemberDto.Response updateTeamsNotify(Long id, boolean enabled) {

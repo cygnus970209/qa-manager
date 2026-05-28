@@ -22,5 +22,7 @@ export function useMembers() {
       api<Member>(`/api/members/${id}/teams-notify`, { method: 'PUT', body: { enabled } }),
     teamsTest: (id: number) =>
       api<TeamsTestResult>(`/api/members/${id}/teams-test`, { method: 'POST' }),
+    resetPassword: (id: number) =>
+      api(`/api/members/${id}/reset-password`, { method: 'POST' }),
   }
 }

@@ -56,6 +56,17 @@ public class MemberController {
     }
 
     /**
+     * 관리자용 비밀번호 초기화 — 항상 "1234" 로 설정.
+     * 로그인 필요. role 기반 권한 체크는 시스템에 admin 개념이 없어 생략 (기존 패턴 유지).
+     */
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<Void> resetPassword(@PathVariable Long id) {
+        CurrentUser.getIdOrThrow();
+        memberService.resetPassword(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * 본인의 email 등록/변경. 관리자가 다른 사용자 email 을 바꾸는 경로는 별도 정책 결정 전까진 차단.
      */
     @PutMapping("/{id}/email")
