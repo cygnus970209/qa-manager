@@ -5,12 +5,15 @@ import ProjectCard from '~/components/feature/ProjectCard.vue'
 import QAList from '~/components/feature/QAList.vue'
 import NewProjectModal from '~/components/feature/NewProjectModal.vue'
 import NewQAModal from '~/components/feature/NewQAModal.vue'
+import TeamsSetupNotice from '~/components/feature/TeamsSetupNotice.vue'
 import type { Member, Project, ProjectUpdate, QaItem } from '~/types/api'
 
 const projectsApi = useProjects()
 const updatesApi = useUpdates()
 const qaApi = useQa()
 const membersApi = useMembers()
+const auth = useAuthStore()
+const router = useRouter()
 
 const projects = ref<Project[]>([])
 const updates = ref<ProjectUpdate[]>([])
@@ -19,6 +22,7 @@ const members = ref<Member[]>([])
 const loading = ref(true)
 const projectModalOpen = ref(false)
 const qaModalOpen = ref(false)
+const teamsNoticeOpen = ref(false)
 
 async function load() {
   loading.value = true
@@ -28,9 +32,28 @@ async function load() {
     members.value = await membersApi.list()
     const lists = await Promise.all(projects.value.map((p) => updatesApi.listByProject(p.id)))
     updates.value = lists.flat()
+    maybeShowTeamsNotice()
   } finally {
     loading.value = false
   }
+}
+
+/** Teams 봇 미설정자에게 안내 팝업을 하루 1회 노출 (localStorage 날짜 기록) */
+function maybeShowTeamsNotice() {
+  const uid = auth.user?.id
+  if (!uid) return
+  const me = members.value.find((m) => m.id === uid)
+  if (!me || me.teamsLinked) return // 본인 정보 없음 또는 이미 봇 연동됨
+  const key = `teams-setup-notice:${uid}`
+  const today = new Date().toLocaleDateString('sv-SE') // 'YYYY-MM-DD' (로컬 기준)
+  if (localStorage.getItem(key) === today) return // 오늘 이미 노출함
+  localStorage.setItem(key, today)
+  teamsNoticeOpen.value = true
+}
+
+function onTeamsNoticeConfirm() {
+  teamsNoticeOpen.value = false
+  router.push('/admin?tab=settings&sub=ms-teams')
 }
 
 if (import.meta.client) {
@@ -196,6 +219,11 @@ function onQaCreated(item: QaItem) {
       :members="members"
       @close="qaModalOpen = false"
       @created="onQaCreated"
+    />
+    <TeamsSetupNotice
+      :open="teamsNoticeOpen"
+      @close="teamsNoticeOpen = false"
+      @confirm="onTeamsNoticeConfirm"
     />
   </section>
 </template>

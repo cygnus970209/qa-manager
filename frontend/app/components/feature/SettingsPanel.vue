@@ -20,7 +20,8 @@ const auth = useAuthStore()
 const api = useApi()
 const members = useMembers()
 
-const subTab = ref<SubTab>('notifications')
+const route = useRoute()
+const subTab = ref<SubTab>(route.query.sub === 'ms-teams' ? 'ms-teams' : 'notifications')
 
 const settings = reactive<NotificationSettings>({
   teamsNotifyEnabled: true,

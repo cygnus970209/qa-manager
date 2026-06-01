@@ -28,7 +28,10 @@ const updatesApi = useUpdates()
 const auth = useAuthStore()
 
 type TabKey = 'projects' | 'qa' | 'members' | 'settings'
-const activeTab = ref<TabKey>('projects')
+const route = useRoute()
+const TAB_KEYS: TabKey[] = ['projects', 'qa', 'members', 'settings']
+const initialTab = TAB_KEYS.includes(route.query.tab as TabKey) ? (route.query.tab as TabKey) : 'projects'
+const activeTab = ref<TabKey>(initialTab)
 
 const members = ref<Member[]>([])
 const projects = ref<Project[]>([])
