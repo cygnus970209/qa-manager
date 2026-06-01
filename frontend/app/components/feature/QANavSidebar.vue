@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, Inbox, X } from '@lucide/vue'
+import { Search, Inbox, X, ChevronDown } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import { applyQaFilter, saveQaFilter, type QaFilterState } from '~/utils/qaFilter'
@@ -48,6 +48,21 @@ const extra = reactive({
 const hasExtra = computed(() =>
   extra.testerId != null || extra.assigneeId != null || extra.mineOnly,
 )
+
+// 필터 접기/펴기 + 적용 중인 필터 개수(접었을 때 표시).
+const filtersOpen = ref(true)
+const activeCount = computed(() => {
+  let n = 0
+  if (search.value.trim()) n++
+  if (projectId.value !== 'all') n++
+  if (updateId.value !== 'all') n++
+  if (status.value !== 'all') n++
+  if (priority.value !== 'all') n++
+  if (extra.testerId != null) n++
+  if (extra.assigneeId != null) n++
+  if (extra.mineOnly) n++
+  return n
+})
 function clearExtra() {
   extra.testerId = null
   extra.assigneeId = null
@@ -98,7 +113,29 @@ function go(id: number) {
 <template>
   <div class="flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
     <!-- 필터 -->
-    <div class="shrink-0 space-y-2 border-b border-slate-100 p-3">
+    <div class="shrink-0 border-b border-slate-100">
+      <!-- 헤더(항상 표시): 접기 토글 + 적용 개수 + 결과 건수 -->
+      <button
+        type="button"
+        class="flex w-full items-center justify-between px-3 py-2.5"
+        :aria-expanded="filtersOpen"
+        @click="filtersOpen = !filtersOpen"
+      >
+        <span class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+          <ChevronDown :class="['h-3.5 w-3.5 transition-transform', filtersOpen ? '' : '-rotate-90']" />
+          필터
+          <span
+            v-if="activeCount > 0"
+            class="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-100 px-1 text-[10px] font-medium text-emerald-700"
+          >
+            {{ activeCount }}
+          </span>
+        </span>
+        <span class="text-[11px] text-slate-400">{{ filtered.length }}건</span>
+      </button>
+
+      <!-- 컨트롤(접힘 가능) -->
+      <div v-show="filtersOpen" class="space-y-2 px-3 pb-3">
       <div class="relative">
         <Search class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
         <input
@@ -148,17 +185,15 @@ function go(id: number) {
           <option value="low">낮음</option>
         </select>
       </div>
-      <div class="flex items-center justify-between px-0.5">
-        <button
-          v-if="hasExtra"
-          type="button"
-          class="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700"
-          @click="clearExtra"
-        >
-          <X class="h-3 w-3" /> 추가 필터 적용 중 · 전체 보기
-        </button>
-        <span v-else />
-        <span class="text-[11px] text-slate-400">{{ filtered.length }}건</span>
+        <div v-if="hasExtra" class="px-0.5">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700"
+            @click="clearExtra"
+          >
+            <X class="h-3 w-3" /> 추가 필터 적용 중 · 전체 보기
+          </button>
+        </div>
       </div>
     </div>
 
