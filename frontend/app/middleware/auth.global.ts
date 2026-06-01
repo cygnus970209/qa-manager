@@ -5,19 +5,24 @@
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore()
+  const nuxtApp = useNuxtApp()
 
-  if (!auth.initialized) {
+  // 초기 하이드레이션 중인 클라이언트에서는 인증 확정용 네트워크 호출(bootstrap)을 하지 않는다.
+  // 서버 렌더와 클라이언트 첫 렌더를 일치시켜 navbar 등의 하이드레이션 미스매치를 방지.
+  // 실제 복구(refresh)는 plugins/auth-recover.client.ts 가 마운트 직후 수행한다.
+  const hydrating = import.meta.client && nuxtApp.isHydrating
+
+  if (!auth.initialized && !hydrating) {
     await auth.bootstrap()
   }
 
   const isAuthRoute = to.path.startsWith('/auth/')
 
-  // 서버에서 access 토큰이 만료돼 아직 인증을 확정하지 못한 상태(initialized=false).
-  // refresh 쿠키가 있으면 토큰 갱신은 클라이언트(브라우저가 쿠키/Set-Cookie 자동 처리)에서
-  // 정상 동작하므로, 여기서 로그인으로 보내지 않고 하이드레이션 후 복구에 맡긴다.
-  // (qam_refresh_token: AuthCookieUtil.REFRESH_COOKIE 와 동일)
-  if (import.meta.server && !auth.initialized && !isAuthRoute) {
-    if (useCookie('qam_refresh_token').value) return
+  // 아직 인증을 확정하지 못한 상태(서버에서 access 만료 / 클라이언트 하이드레이션 중):
+  // refresh 쿠키가 있으면 토큰 갱신은 클라이언트에서 정상 동작하므로,
+  // 여기서 로그인으로 보내지 않고 복구에 맡긴다. (qam_refresh_token = AuthCookieUtil.REFRESH_COOKIE)
+  if (!auth.initialized && !isAuthRoute) {
+    if (hydrating || (import.meta.server && useCookie('qam_refresh_token').value)) return
   }
 
   if (!auth.isAuthenticated && !isAuthRoute) {

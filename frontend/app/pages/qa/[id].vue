@@ -87,11 +87,12 @@ const hasNext = computed(() => currentIdx.value >= 0 && currentIdx.value < navId
 
 function goPrev() {
   if (!hasPrev.value) return
-  router.push(`/qa/${navIds.value[currentIdx.value - 1]}`)
+  // replace: 상세 내 이동은 히스토리에 쌓지 않아 '뒤로' 가 진입 직전으로 한 번에 돌아가게 한다.
+  router.replace(`/qa/${navIds.value[currentIdx.value - 1]}`)
 }
 function goNext() {
   if (!hasNext.value) return
-  router.push(`/qa/${navIds.value[currentIdx.value + 1]}`)
+  router.replace(`/qa/${navIds.value[currentIdx.value + 1]}`)
 }
 </script>
 

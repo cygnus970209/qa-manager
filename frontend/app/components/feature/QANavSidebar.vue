@@ -67,7 +67,9 @@ function go(id: number) {
   if (id === props.currentId) return
   // 항목 간 이동 시에도 현재 필터 맥락을 유지(새로고침/직접진입 복원용).
   saveQaFilter(filterState.value)
-  router.push(`/qa/${id}`)
+  // replace 로 이동해 히스토리에 QA 항목들이 쌓이지 않게 한다.
+  // → '뒤로' 가 거쳐온 QA 수만큼이 아니라 진입 직전(목록/프로젝트)으로 한 번에 돌아간다.
+  router.replace(`/qa/${id}`)
 }
 </script>
 
