@@ -15,7 +15,7 @@ const view = computed(() => config[props.priority])
 </script>
 
 <template>
-  <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium', view.cls]">
+  <span :class="['inline-flex items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-md text-xs font-medium', view.cls]">
     <component :is="view.icon" class="h-3 w-3" />
     {{ view.label }}
   </span>

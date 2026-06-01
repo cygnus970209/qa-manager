@@ -136,12 +136,12 @@ function rememberFilter() {
       <table class="w-full text-left">
         <thead>
           <tr class="border-b border-slate-100 bg-slate-50">
-            <th class="px-5 py-3.5 text-xs font-medium text-slate-500">제목</th>
-            <th class="hidden px-5 py-3.5 text-xs font-medium text-slate-500 md:table-cell">업데이트</th>
-            <th class="px-5 py-3.5 text-xs font-medium text-slate-500">상태</th>
-            <th class="px-5 py-3.5 text-xs font-medium text-slate-500">우선순위</th>
-            <th class="hidden px-5 py-3.5 text-xs font-medium text-slate-500 sm:table-cell">담당자</th>
-            <th class="hidden px-5 py-3.5 text-xs font-medium text-slate-500 lg:table-cell">수정일</th>
+            <th class="w-full px-5 py-3.5 text-xs font-medium text-slate-500">제목</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden md:table-cell">업데이트</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500">상태</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500">우선순위</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden sm:table-cell">담당자</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden lg:table-cell">수정일</th>
           </tr>
         </thead>
         <tbody>
@@ -162,9 +162,9 @@ function rememberFilter() {
                 {{ findUpdate(item.updateId)?.version ?? '-' }}
               </span>
             </td>
-            <td class="px-5 py-4"><StatusBadge :status="item.status" /></td>
-            <td class="px-5 py-4"><PriorityBadge :priority="item.priority" /></td>
-            <td class="hidden px-5 py-4 sm:table-cell">
+            <td class="whitespace-nowrap px-5 py-4"><StatusBadge :status="item.status" /></td>
+            <td class="whitespace-nowrap px-5 py-4"><PriorityBadge :priority="item.priority" /></td>
+            <td class="hidden whitespace-nowrap px-5 py-4 sm:table-cell">
               <div class="flex flex-col gap-1 text-xs">
                 <span v-if="item.tester" class="text-slate-500">
                   T: {{ item.tester.name }}
@@ -175,7 +175,7 @@ function rememberFilter() {
                 <span v-if="!item.tester && !item.assignee1 && !item.assignee2" class="text-slate-400">미지정</span>
               </div>
             </td>
-            <td class="hidden px-5 py-4 text-xs text-slate-400 lg:table-cell">
+            <td class="hidden whitespace-nowrap px-5 py-4 text-xs text-slate-400 lg:table-cell">
               {{ item.updatedAt?.slice(0, 10) }}
             </td>
           </tr>

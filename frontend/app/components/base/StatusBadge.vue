@@ -26,7 +26,7 @@ const view = computed(() => config[props.status] ?? { label: props.status, cls: 
 </script>
 
 <template>
-  <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', view.cls]">
+  <span :class="['inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium', view.cls]">
     {{ view.label }}
   </span>
 </template>
