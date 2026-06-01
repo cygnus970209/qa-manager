@@ -42,9 +42,13 @@ function onChangeQaStatus(qaId: number, e: Event) {
   emit('changeQaStatus', qaId, v)
 }
 
-/** QA 행 클릭 시 상세 사이드바가 이 업데이트로 스코프되도록 필터를 저장. */
+/** QA 행 클릭 시 상세 사이드바가 이 프로젝트·업데이트로 스코프되도록 필터를 저장. */
 function rememberFilter() {
-  saveQaFilter({ ...emptyQaFilter(), updateId: String(props.update.id) })
+  saveQaFilter({
+    ...emptyQaFilter(),
+    projectId: String(props.update.projectId),
+    updateId: String(props.update.id),
+  })
 }
 </script>
 

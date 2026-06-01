@@ -4,6 +4,7 @@ import type { QaItem } from '~/types/api'
 export interface QaFilterState {
   status: string
   priority: string
+  projectId: string
   updateId: string
   testerId: number | null
   assigneeId: number | null
@@ -15,6 +16,7 @@ export function emptyQaFilter(): QaFilterState {
   return {
     status: 'all',
     priority: 'all',
+    projectId: 'all',
     updateId: 'all',
     testerId: null,
     assigneeId: null,
@@ -23,11 +25,23 @@ export function emptyQaFilter(): QaFilterState {
   }
 }
 
-/** items 에 필터를 적용해 반환. meId 는 '내 것만' 판정용(로그인 사용자 id). */
-export function applyQaFilter(items: QaItem[], f: QaFilterState, meId?: number | null): QaItem[] {
+/**
+ * items 에 필터를 적용해 반환.
+ * - meId: '내 것만' 판정용(로그인 사용자 id).
+ * - updateToProject: 프로젝트 필터용 updateId→projectId 매핑. 없으면 프로젝트 필터는 무시한다.
+ */
+export function applyQaFilter(
+  items: QaItem[],
+  f: QaFilterState,
+  meId?: number | null,
+  updateToProject?: Map<number, number>,
+): QaItem[] {
   return items.filter((item) => {
     if (f.status !== 'all' && item.status !== f.status) return false
     if (f.priority !== 'all' && item.priority !== f.priority) return false
+    if (f.projectId !== 'all' && updateToProject) {
+      if (String(updateToProject.get(item.updateId) ?? '') !== f.projectId) return false
+    }
     if (f.updateId !== 'all' && String(item.updateId) !== f.updateId) return false
 
     if (f.testerId != null && item.tester?.id !== f.testerId) return false

@@ -25,6 +25,7 @@ const search = ref('')
 const filterState = computed<QaFilterState>(() => ({
   status: statusFilter.value,
   priority: priorityFilter.value,
+  projectId: 'all', // 전역 목록에는 프로젝트 필터가 없음(상세 사이드바 전용 필드)
   updateId: updateFilter.value,
   testerId: testerFilter.value,
   assigneeId: assigneeFilter.value,

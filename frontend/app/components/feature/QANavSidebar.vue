@@ -3,11 +3,14 @@ import { Search, Inbox, X } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import { applyQaFilter, saveQaFilter, type QaFilterState } from '~/utils/qaFilter'
-import type { QaItem } from '~/types/api'
+import type { Project, ProjectUpdate, QaItem } from '~/types/api'
 
 const props = defineProps<{
   /** 전체 QA 목록(필터링 전). */
   items: QaItem[]
+  /** 프로젝트/업데이트 필터 옵션. */
+  projects: Project[]
+  updates: ProjectUpdate[]
   /** 현재 보고 있는 QA id (하이라이트용). */
   currentId: number
   /** 목록에서 넘어온(또는 같은-업데이트 폴백) 초기 필터. 최초 1회만 반영. */
@@ -22,43 +25,62 @@ const emit = defineEmits<{
 const auth = useAuthStore()
 const router = useRouter()
 
-// 사이드바에서 직접 조정 가능한 필터(정적 옵션이라 추가 조회 불필요).
+const updateToProject = computed(() => {
+  const m = new Map<number, number>()
+  for (const u of props.updates) m.set(u.id, u.projectId)
+  return m
+})
+
+// 사이드바에서 직접 조정 가능한 필터.
+const projectId = ref(props.initialFilter.projectId)
+const updateId = ref(props.initialFilter.updateId)
 const status = ref(props.initialFilter.status)
 const priority = ref(props.initialFilter.priority)
 const search = ref(props.initialFilter.search)
 
-// 컨트롤로 노출하지 않는 나머지 필터(테스터/담당자/업데이트/내것만)는
-// 초기값을 그대로 적용하되, '전체 보기'로 한 번에 해제할 수 있게 둔다.
+// 컨트롤로 노출하지 않는 나머지 필터(테스터/담당자/내것만)는 초기값을 그대로 적용하되,
+// '전체 보기'로 한 번에 해제할 수 있게 둔다.
 const extra = reactive({
-  updateId: props.initialFilter.updateId,
   testerId: props.initialFilter.testerId,
   assigneeId: props.initialFilter.assigneeId,
   mineOnly: props.initialFilter.mineOnly,
 })
 const hasExtra = computed(() =>
-  extra.updateId !== 'all'
-  || extra.testerId != null
-  || extra.assigneeId != null
-  || extra.mineOnly,
+  extra.testerId != null || extra.assigneeId != null || extra.mineOnly,
 )
 function clearExtra() {
-  extra.updateId = 'all'
   extra.testerId = null
   extra.assigneeId = null
   extra.mineOnly = false
 }
 
+// 업데이트 옵션은 선택된 프로젝트로 캐스케이드.
+const updateOptions = computed(() =>
+  projectId.value === 'all'
+    ? props.updates
+    : props.updates.filter((u) => String(u.projectId) === projectId.value),
+)
+// 프로젝트를 바꾸면 그 프로젝트에 속하지 않는 업데이트 선택은 해제.
+watch(projectId, (pid) => {
+  if (pid === 'all' || updateId.value === 'all') return
+  const u = props.updates.find((x) => String(x.id) === updateId.value)
+  if (!u || String(u.projectId) !== pid) updateId.value = 'all'
+})
+
 const filterState = computed<QaFilterState>(() => ({
   status: status.value,
   priority: priority.value,
+  projectId: projectId.value,
+  updateId: updateId.value,
   search: search.value,
-  updateId: extra.updateId,
   testerId: extra.testerId,
   assigneeId: extra.assigneeId,
   mineOnly: extra.mineOnly,
 }))
 
-const filtered = computed(() => applyQaFilter(props.items, filterState.value, auth.user?.id))
+const filtered = computed(() =>
+  applyQaFilter(props.items, filterState.value, auth.user?.id, updateToProject.value),
+)
 
 // 필터 결과가 바뀔 때마다 이전/다음 이동용 순서를 상위로 전달.
 watch(filtered, (list) => emit('update:order', list.map((q) => q.id)), { immediate: true })
@@ -74,9 +96,9 @@ function go(id: number) {
 </script>
 
 <template>
-  <div class="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+  <div class="flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
     <!-- 필터 -->
-    <div class="space-y-2 border-b border-slate-100 p-3">
+    <div class="shrink-0 space-y-2 border-b border-slate-100 p-3">
       <div class="relative">
         <Search class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
         <input
@@ -86,6 +108,22 @@ function go(id: number) {
           class="w-full rounded-lg border border-slate-200 py-1.5 pl-8 pr-2 text-xs focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200"
         />
       </div>
+      <select
+        v-model="projectId"
+        class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+      >
+        <option value="all">모든 프로젝트</option>
+        <option v-for="p in projects" :key="p.id" :value="String(p.id)">{{ p.name }}</option>
+      </select>
+      <select
+        v-model="updateId"
+        class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+      >
+        <option value="all">모든 업데이트</option>
+        <option v-for="u in updateOptions" :key="u.id" :value="String(u.id)">
+          {{ u.version }} - {{ u.title }}
+        </option>
+      </select>
       <div class="flex gap-2">
         <select
           v-model="status"
@@ -125,7 +163,7 @@ function go(id: number) {
     </div>
 
     <!-- 목록 -->
-    <ul class="max-h-[calc(100vh-13rem)] overflow-y-auto">
+    <ul class="min-h-0 flex-1 overflow-y-auto">
       <li v-for="item in filtered" :key="item.id">
         <button
           type="button"

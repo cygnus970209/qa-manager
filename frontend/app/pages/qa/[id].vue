@@ -5,7 +5,7 @@ import QACommentSection from '~/components/feature/QACommentSection.vue'
 import QAHistoryList from '~/components/feature/QAHistoryList.vue'
 import QANavSidebar from '~/components/feature/QANavSidebar.vue'
 import { applyQaFilter, emptyQaFilter, loadQaFilter, type QaFilterState } from '~/utils/qaFilter'
-import type { Member, QaComment, QaHistoryEntry, QaItem } from '~/types/api'
+import type { Member, Project, ProjectUpdate, QaComment, QaHistoryEntry, QaItem } from '~/types/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,6 +13,8 @@ const qaId = computed(() => Number(route.params.id))
 
 const qaApi = useQa()
 const membersApi = useMembers()
+const projectsApi = useProjects()
+const updatesApi = useUpdates()
 const auth = useAuthStore()
 
 const item = ref<QaItem | null>(null)
@@ -22,21 +24,34 @@ const members = ref<Member[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-// 사이드바(마스터-디테일)용 전체 QA 목록 + 초기 필터.
+// 사이드바(마스터-디테일)용 전체 QA 목록 + 프로젝트/업데이트 옵션 + 초기 필터.
 const allItems = ref<QaItem[]>([])
+const sideProjects = ref<Project[]>([])
+const sideUpdates = ref<ProjectUpdate[]>([])
 const initialFilter = ref<QaFilterState | null>(null)
+
+const updateToProject = computed(() => {
+  const m = new Map<number, number>()
+  for (const u of sideUpdates.value) m.set(u.id, u.projectId)
+  return m
+})
 
 /**
  * 사이드바 초기 필터 결정.
  * - 목록에서 저장된 필터가 있고, 그 결과에 현재 항목이 포함되면 그대로 사용.
- * - 아니면(직접 URL 진입 / 오래된 필터) 같은 업데이트의 QA 로 폴백.
+ * - 아니면(직접 URL 진입 / 오래된 필터) 현재 항목의 프로젝트·업데이트로 스코프해 폴백.
  */
 function resolveInitialFilter(all: QaItem[], current: QaItem): QaFilterState {
   const saved = loadQaFilter()
-  if (saved && applyQaFilter(all, saved, auth.user?.id).some((q) => q.id === current.id)) {
+  if (saved && applyQaFilter(all, saved, auth.user?.id, updateToProject.value).some((q) => q.id === current.id)) {
     return saved
   }
-  return { ...emptyQaFilter(), updateId: String(current.updateId) }
+  const pid = updateToProject.value.get(current.updateId)
+  return {
+    ...emptyQaFilter(),
+    projectId: pid != null ? String(pid) : 'all',
+    updateId: String(current.updateId),
+  }
 }
 
 async function load() {
@@ -47,9 +62,15 @@ async function load() {
     history.value = await qaApi.history(qaId.value)
     comments.value = await qaApi.listComments(qaId.value)
     members.value = await membersApi.list()
-    // 사이드바 목록은 최초 1회만 로드(이후 항목 이동 시 재요청하지 않음).
+    // 사이드바 목록/옵션은 최초 1회만 로드(이후 항목 이동 시 재요청하지 않음).
     if (allItems.value.length === 0) {
       allItems.value = await qaApi.list()
+    }
+    if (sideProjects.value.length === 0) {
+      sideProjects.value = await projectsApi.list()
+    }
+    if (sideUpdates.value.length === 0) {
+      sideUpdates.value = await updatesApi.listAll()
     }
     // 초기 필터도 최초 1회만 산출(이동/필터 조정 시 사이드바 상태를 초기화하지 않기 위함).
     if (initialFilter.value === null && item.value) {
@@ -130,6 +151,8 @@ function goNext() {
         <div v-if="allItems.length > 0 && initialFilter" class="sticky top-20">
           <QANavSidebar
             :items="allItems"
+            :projects="sideProjects"
+            :updates="sideUpdates"
             :current-id="qaId"
             :initial-filter="initialFilter"
             @update:order="navIds = $event"
