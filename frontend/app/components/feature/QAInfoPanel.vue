@@ -270,7 +270,8 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         <option value="needs_recheck">추가확인필요</option>
       </select>
       <PriorityBadge :priority="item.priority" />
-      <span>·</span>
+      <!-- 테스터/담당자는 항상 다음 줄로 분리 (flex-wrap 강제 개행) -->
+      <div class="basis-full" aria-hidden="true"></div>
       <!-- 비편집 모드에서 담당자도 즉시 변경 가능 (상태와 동일한 패턴) -->
       <template v-if="!editing">
         <div class="inline-flex items-center gap-1">
@@ -333,9 +334,6 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           <template v-else>미지정</template>
         </span>
       </template>
-      <span>·</span>
-      <span>생성 {{ item.createdAt?.slice(0, 10) }}</span>
-      <span>수정 {{ item.updatedAt?.slice(0, 10) }}</span>
     </div>
 
     <!-- 본문 -->
@@ -463,6 +461,11 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         </label>
         <p v-if="(editing ? form.images : item.images).length === 0 && !editing" class="text-xs text-slate-400">첨부 이미지 없음</p>
       </div>
+    </div>
+
+    <!-- 생성/수정 날짜 (보조 정보, 본문 하단) -->
+    <div class="mt-4 text-[11px] text-slate-400">
+      생성 {{ item.createdAt?.slice(0, 10) }} · 수정 {{ item.updatedAt?.slice(0, 10) }}
     </div>
 
     <p v-if="error" class="mt-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
