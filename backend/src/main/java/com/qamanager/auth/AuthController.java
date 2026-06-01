@@ -1,5 +1,7 @@
 package com.qamanager.auth;
 
+import com.qamanager.auth.otp.ClientIpResolver;
+import com.qamanager.auth.otp.SecurityOtpProperties;
 import com.qamanager.common.ApiException;
 import com.qamanager.member.MemberDto;
 import com.qamanager.member.MemberService;
@@ -24,23 +26,50 @@ public class AuthController {
     private final AuthCookieUtil cookieUtil;
     private final TokenBlacklistService blacklist;
     private final MemberService memberService;
+    private final ClientIpResolver clientIpResolver;
+    private final SecurityOtpProperties otpProps;
 
     public AuthController(AuthService authService,
                           AuthCookieUtil cookieUtil,
                           TokenBlacklistService blacklist,
-                          MemberService memberService) {
+                          MemberService memberService,
+                          ClientIpResolver clientIpResolver,
+                          SecurityOtpProperties otpProps) {
         this.authService = authService;
         this.cookieUtil = cookieUtil;
         this.blacklist = blacklist;
         this.memberService = memberService;
+        this.clientIpResolver = clientIpResolver;
+        this.otpProps = otpProps;
     }
 
     @PostMapping("/auth/login")
-    public AuthDto.LoginResponse login(@RequestBody @Valid AuthDto.LoginRequest req,
-                                       HttpServletResponse response) {
-        AuthDto.IssuedTokens tokens = authService.login(req);
+    public AuthDto.AuthResponse login(@RequestBody @Valid AuthDto.LoginRequest req,
+                                      HttpServletRequest request,
+                                      HttpServletResponse response) {
+        String clientIp = clientIpResolver.resolve(request, otpProps.getTrustedProxyCount());
+        AuthDto.LoginResult result = authService.login(req, clientIp);
+        if (result.otpRequired()) {
+            AuthDto.OtpChallenge c = result.challenge();
+            return AuthDto.AuthResponse.otp(c.challengeId(), c.maskedEmail(), c.expiresInSeconds());
+        }
+        AuthDto.IssuedTokens tokens = result.tokens();
         cookieUtil.writeAuthCookies(response, tokens.accessToken(), tokens.refreshToken());
-        return new AuthDto.LoginResponse(tokens.expiresInSeconds(), tokens.user());
+        return AuthDto.AuthResponse.authenticated(tokens.expiresInSeconds(), tokens.user());
+    }
+
+    @PostMapping("/auth/login/otp/verify")
+    public AuthDto.AuthResponse verifyOtp(@RequestBody @Valid AuthDto.OtpVerifyRequest req,
+                                          HttpServletResponse response) {
+        AuthDto.IssuedTokens tokens = authService.verifyOtp(req.challengeId(), req.code());
+        cookieUtil.writeAuthCookies(response, tokens.accessToken(), tokens.refreshToken());
+        return AuthDto.AuthResponse.authenticated(tokens.expiresInSeconds(), tokens.user());
+    }
+
+    @PostMapping("/auth/login/otp/resend")
+    public AuthDto.AuthResponse resendOtp(@RequestBody @Valid AuthDto.OtpResendRequest req) {
+        AuthDto.OtpChallenge c = authService.resendOtp(req.challengeId());
+        return AuthDto.AuthResponse.otp(c.challengeId(), c.maskedEmail(), c.expiresInSeconds());
     }
 
     @PostMapping("/auth/refresh")

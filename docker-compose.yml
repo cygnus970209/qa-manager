@@ -95,6 +95,18 @@ services:
       TEAMS_EMAIL_DOMAIN: ${TEAMS_EMAIL_DOMAIN:-}
       TEAMS_CONNECT_TIMEOUT: ${TEAMS_CONNECT_TIMEOUT:-5}
       TEAMS_READ_TIMEOUT: ${TEAMS_READ_TIMEOUT:-10}
+      # 로그인 보안: IP 기반 조건부 이메일 OTP (기본 비활성 — 켜기 전 신뢰 IP/SMTP 필수)
+      SECURITY_IP_OTP_ENABLED: ${SECURITY_IP_OTP_ENABLED:-false}
+      # 신뢰 IP/CIDR (콤마 구분). 비우면 전원 OTP 대상이 되므로 활성화 시 반드시 사무실 IP 주입.
+      SECURITY_TRUSTED_CIDRS: ${SECURITY_TRUSTED_CIDRS:-}
+      # 신뢰 프록시 hop 수 (nginx 1단=1). X-Forwarded-For 위조 방지 판정 기준.
+      SECURITY_TRUSTED_PROXY_COUNT: ${SECURITY_TRUSTED_PROXY_COUNT:-1}
+      SECURITY_OTP_MAIL_FROM: ${SECURITY_OTP_MAIL_FROM:-QA Manager <no-reply@intocns.com>}
+      # SMTP (OTP 메일 발송)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
     ports:
       - "8357:8080"
     healthcheck:

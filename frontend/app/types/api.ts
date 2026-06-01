@@ -30,6 +30,30 @@ export interface LoginResponse {
   user: Me
 }
 
+/**
+ * 로그인/OTP 검증 통합 응답. (null 필드는 직렬화에서 제외됨)
+ * - 인증 완료: authenticated=true, expiresInSeconds, user
+ * - OTP 필요: authenticated=false, otpRequired=true, challengeId, maskedEmail, otpExpiresInSeconds
+ */
+export interface AuthResponse {
+  authenticated: boolean
+  otpRequired?: boolean
+  expiresInSeconds?: number
+  user?: Me
+  challengeId?: string
+  maskedEmail?: string
+  otpExpiresInSeconds?: number
+}
+
+export interface OtpVerifyRequest {
+  challengeId: string
+  code: string
+}
+
+export interface OtpResendRequest {
+  challengeId: string
+}
+
 export interface Me {
   id: number
   username: string

@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
 import type {
+  AuthResponse,
   ChangeMyPasswordRequest,
   LoginRequest,
-  LoginResponse,
   Me,
+  OtpResendRequest,
+  OtpVerifyRequest,
   UpdateMeRequest,
 } from '~/types/api'
 
@@ -13,15 +15,42 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => user.value !== null)
 
+  /** 인증 응답을 처리해 인증 완료면 사용자 상태를 채운다. */
+  function applyAuth(res: AuthResponse) {
+    if (res.authenticated && res.user) {
+      user.value = res.user
+      initialized.value = true
+    }
+    return res
+  }
+
+  /** 1단계 로그인. otpRequired 면 user 는 채워지지 않고 challenge 정보가 반환된다. */
   async function login(req: LoginRequest) {
     const api = useApi()
-    const res = await api<LoginResponse>('/api/auth/login', {
+    const res = await api<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: req,
     })
-    user.value = res.user
-    initialized.value = true
-    return res
+    return applyAuth(res)
+  }
+
+  /** 2단계 OTP 검증. 성공 시 인증 완료. */
+  async function verifyOtp(req: OtpVerifyRequest) {
+    const api = useApi()
+    const res = await api<AuthResponse>('/api/auth/login/otp/verify', {
+      method: 'POST',
+      body: req,
+    })
+    return applyAuth(res)
+  }
+
+  /** OTP 재발송(쿨다운은 서버에서 429). */
+  async function resendOtp(req: OtpResendRequest) {
+    const api = useApi()
+    return await api<AuthResponse>('/api/auth/login/otp/resend', {
+      method: 'POST',
+      body: req,
+    })
   }
 
   async function fetchMe() {
@@ -72,6 +101,8 @@ export const useAuthStore = defineStore('auth', () => {
     initialized,
     isAuthenticated,
     login,
+    verifyOtp,
+    resendOtp,
     logout,
     fetchMe,
     bootstrap,

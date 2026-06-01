@@ -2,6 +2,7 @@ package com.qamanager.config;
 
 import com.qamanager.auth.JwtAuthenticationFilter;
 import com.qamanager.auth.JwtProperties;
+import com.qamanager.auth.otp.SecurityOtpProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({ JwtProperties.class, SecurityOtpProperties.class })
 public class SecurityConfig {
 
     @Value("${app.cors.allowed-origins}")
@@ -43,6 +44,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/ping",
                     "/api/auth/login",
+                    "/api/auth/login/otp/verify",
+                    "/api/auth/login/otp/resend",
                     "/api/auth/refresh",
                     "/api/teams/messages",   // Bot Framework 웹훅 (컨트롤러 내부 Bot JWT 검증)
                     "/actuator/health",

@@ -51,6 +51,19 @@ spring:
       password: ${REDIS_PASSWORD:}
       timeout: 2s
 
+  # 로그인 OTP 발송용 SMTP. 자격증명은 환경변수/시크릿으로만 주입.
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
 management:
   endpoints:
     web:
@@ -75,6 +88,22 @@ app:
     refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:14}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  security:
+    # IP 기반 조건부 이메일 OTP 로그인.
+    ip-otp:
+      # false 면 전 구간 현행 동작(즉시 토큰). 롤백 스위치.
+      enabled: ${SECURITY_IP_OTP_ENABLED:false}
+      # 이 대역에서의 로그인은 OTP 면제(CIDR, 콤마 구분). 비어있으면 "모든 IP가 OTP 대상".
+      trusted-cidrs: ${SECURITY_TRUSTED_CIDRS:}
+      # 클라이언트 IP 판정 시 신뢰하는 프록시 hop 수(nginx 1단=1). X-Forwarded-For 오른쪽에서 N번째를 채택.
+      trusted-proxy-count: ${SECURITY_TRUSTED_PROXY_COUNT:1}
+      # 발신 표시 주소.
+      mail-from: ${SECURITY_OTP_MAIL_FROM:QA Manager <no-reply@intocns.com>}
+      otp:
+        length: 6
+        ttl-seconds: 600
+        max-attempts: 5
+        resend-cooldown-seconds: 60
   cookie:
     # 운영(HTTPS)에서는 COOKIE_SECURE=true. 로컬 개발(HTTP)은 false 유지.
     secure: ${COOKIE_SECURE:false}

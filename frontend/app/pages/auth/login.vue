@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShieldCheck } from '@lucide/vue'
+import { ShieldCheck, Mail, ArrowLeft } from '@lucide/vue'
 import type { ApiErrorBody } from '~/types/api'
 
 definePageMeta({ layout: 'blank' })
@@ -8,10 +8,22 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+type Step = 'credentials' | 'otp'
+const step = ref<Step>('credentials')
+
 const username = ref('')
 const password = ref('')
 const submitting = ref(false)
 const errorMessage = ref<string | null>(null)
+
+// OTP 단계 상태
+const challengeId = ref('')
+const maskedEmail = ref('')
+const code = ref('')
+const otpError = ref<string | null>(null)
+const remainingAttempts = ref<number | null>(null)
+const resendCooldown = ref(0)
+let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
 function safeRedirect(raw: string | undefined): string {
   if (!raw) return '/'
@@ -22,18 +34,99 @@ function safeRedirect(raw: string | undefined): string {
   return raw
 }
 
-async function onSubmit() {
+function goAfterLogin() {
+  router.push(safeRedirect(route.query.redirect as string | undefined))
+}
+
+function startCooldown(seconds: number) {
+  resendCooldown.value = seconds
+  if (cooldownTimer) clearInterval(cooldownTimer)
+  cooldownTimer = setInterval(() => {
+    resendCooldown.value -= 1
+    if (resendCooldown.value <= 0 && cooldownTimer) {
+      clearInterval(cooldownTimer)
+      cooldownTimer = null
+    }
+  }, 1000)
+}
+
+onBeforeUnmount(() => {
+  if (cooldownTimer) clearInterval(cooldownTimer)
+})
+
+async function onSubmitCredentials() {
   errorMessage.value = null
   submitting.value = true
   try {
-    await auth.login({ username: username.value, password: password.value })
-    router.push(safeRedirect(route.query.redirect as string | undefined))
+    const res = await auth.login({ username: username.value, password: password.value })
+    if (res.otpRequired) {
+      // 2단계 진입
+      challengeId.value = res.challengeId ?? ''
+      maskedEmail.value = res.maskedEmail ?? ''
+      code.value = ''
+      otpError.value = null
+      remainingAttempts.value = null
+      step.value = 'otp'
+      startCooldown(60)
+    } else {
+      goAfterLogin()
+    }
   } catch (e: any) {
     const body = e?.data as ApiErrorBody | undefined
     errorMessage.value = body?.message ?? '로그인에 실패했습니다.'
   } finally {
     submitting.value = false
   }
+}
+
+async function onVerifyOtp() {
+  otpError.value = null
+  submitting.value = true
+  try {
+    await auth.verifyOtp({ challengeId: challengeId.value, code: code.value })
+    goAfterLogin()
+  } catch (e: any) {
+    const body = e?.data as ApiErrorBody | undefined
+    if (body?.code === 'OTP_INVALID') {
+      const details = body.details as { remainingAttempts?: number } | undefined
+      remainingAttempts.value = details?.remainingAttempts ?? null
+      otpError.value = body.message ?? '인증 코드가 올바르지 않습니다.'
+    } else {
+      // 세션 만료/시도 초과 → 처음부터 다시
+      otpError.value = body?.message ?? '인증에 실패했습니다. 다시 로그인해 주세요.'
+      backToCredentials()
+    }
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function onResend() {
+  if (resendCooldown.value > 0) return
+  otpError.value = null
+  try {
+    const res = await auth.resendOtp({ challengeId: challengeId.value })
+    challengeId.value = res.challengeId ?? challengeId.value
+    code.value = ''
+    remainingAttempts.value = null
+    startCooldown(60)
+  } catch (e: any) {
+    const body = e?.data as ApiErrorBody | undefined
+    if (body?.code === 'UNAUTHORIZED') {
+      otpError.value = body.message ?? '인증 세션이 만료되었습니다.'
+      backToCredentials()
+    } else {
+      otpError.value = body?.message ?? '재전송에 실패했습니다.'
+    }
+  }
+}
+
+function backToCredentials() {
+  step.value = 'credentials'
+  code.value = ''
+  challengeId.value = ''
+  if (cooldownTimer) clearInterval(cooldownTimer)
+  resendCooldown.value = 0
 }
 </script>
 
@@ -45,7 +138,8 @@ async function onSubmit() {
         <h1 class="text-lg font-semibold tracking-tight">QA Manager 로그인</h1>
       </div>
 
-      <form class="space-y-4" @submit.prevent="onSubmit">
+      <!-- 1단계: 아이디/비밀번호 -->
+      <form v-if="step === 'credentials'" class="space-y-4" @submit.prevent="onSubmitCredentials">
         <label class="block">
           <span class="block text-xs font-medium text-gray-600">아이디</span>
           <input
@@ -80,6 +174,61 @@ async function onSubmit() {
         </button>
       </form>
 
+      <!-- 2단계: 이메일 OTP -->
+      <form v-else class="space-y-4" @submit.prevent="onVerifyOtp">
+        <div class="flex items-start gap-2.5 rounded-lg bg-emerald-50 px-3.5 py-3">
+          <Mail class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          <p class="text-xs text-emerald-800">
+            보안을 위해 추가 인증이 필요합니다.<br />
+            <span class="font-semibold">{{ maskedEmail }}</span> 로 보낸 6자리 인증 코드를 입력하세요.
+          </p>
+        </div>
+
+        <label class="block">
+          <span class="block text-xs font-medium text-gray-600">인증 코드</span>
+          <input
+            v-model="code"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="000000"
+            required
+            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-center text-lg tracking-[0.4em] focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          />
+        </label>
+
+        <p v-if="otpError" class="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
+          {{ otpError }}
+          <span v-if="remainingAttempts !== null"> (남은 시도 {{ remainingAttempts }}회)</span>
+        </p>
+
+        <button
+          type="submit"
+          :disabled="submitting || code.length < 6"
+          class="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+        >
+          {{ submitting ? '확인 중…' : '인증 후 로그인' }}
+        </button>
+
+        <div class="flex items-center justify-between text-xs">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700"
+            @click="backToCredentials"
+          >
+            <ArrowLeft class="h-3.5 w-3.5" /> 처음으로
+          </button>
+          <button
+            type="button"
+            :disabled="resendCooldown > 0"
+            class="text-emerald-600 hover:text-emerald-700 disabled:text-gray-400"
+            @click="onResend"
+          >
+            {{ resendCooldown > 0 ? `재전송 (${resendCooldown}초)` : '코드 재전송' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
