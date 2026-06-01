@@ -57,8 +57,9 @@ public class AuthService {
             return AuthDto.LoginResult.authenticated(issueTokens(m));
         }
 
-        // 신뢰 IP 밖 → 이메일 OTP. 이메일 미등록자는 차단(설계 4.7-A).
-        String email = m.getEmail();
+        // 신뢰 IP 밖 → 이메일 OTP. email 우선, 없으면 username 이 이메일 형식이면 그것을 사용.
+        // 둘 다 없으면 차단(설계 4.7-A).
+        String email = m.resolveEmailCandidate();
         if (email == null || email.isBlank()) {
             throw ApiException.forbidden("이메일이 등록되지 않아 인증 코드를 보낼 수 없습니다. 관리자에게 이메일 등록을 요청하세요.");
         }
