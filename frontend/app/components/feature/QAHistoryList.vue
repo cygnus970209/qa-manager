@@ -62,14 +62,18 @@ function displayValue(field: string, value: string | null | undefined): string {
               <img :src="h.oldValue" alt="삭제된 이미지" class="h-10 w-10 rounded border border-slate-200 object-cover opacity-60 grayscale" />
             </a>
           </p>
-          <p v-else class="text-slate-700">
-            <span class="font-medium">{{ h.changedBy?.name ?? '시스템' }}</span>
-            님이 <span class="font-medium">{{ fieldLabels[h.field] ?? h.field }}</span>을(를)
-            <span class="rounded bg-slate-100 px-1 py-0.5 text-xs">{{ displayValue(h.field, h.oldValue) }}</span>
-            →
-            <span class="rounded bg-emerald-50 px-1 py-0.5 text-xs text-emerald-700">{{ displayValue(h.field, h.newValue) }}</span>
-            로 변경
-          </p>
+          <div v-else class="text-slate-700">
+            <p>
+              <span class="font-medium">{{ h.changedBy?.name ?? '시스템' }}</span>
+              님이 <span class="font-medium">{{ fieldLabels[h.field] ?? h.field }}</span>을(를)
+            </p>
+            <p class="mt-1 flex flex-wrap items-center gap-1">
+              <span class="rounded bg-slate-100 px-1 py-0.5 text-xs">{{ displayValue(h.field, h.oldValue) }}</span>
+              <span class="text-slate-400">→</span>
+              <span class="rounded bg-emerald-50 px-1 py-0.5 text-xs text-emerald-700">{{ displayValue(h.field, h.newValue) }}</span>
+              <span>로 변경</span>
+            </p>
+          </div>
           <p class="mt-0.5 text-xs text-slate-400">{{ timeAgo(h.changedAt) }}</p>
         </div>
       </li>
