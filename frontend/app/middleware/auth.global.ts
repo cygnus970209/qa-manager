@@ -12,6 +12,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isAuthRoute = to.path.startsWith('/auth/')
 
+  // 서버에서 access 토큰이 만료돼 아직 인증을 확정하지 못한 상태(initialized=false).
+  // refresh 쿠키가 있으면 토큰 갱신은 클라이언트(브라우저가 쿠키/Set-Cookie 자동 처리)에서
+  // 정상 동작하므로, 여기서 로그인으로 보내지 않고 하이드레이션 후 복구에 맡긴다.
+  // (qam_refresh_token: AuthCookieUtil.REFRESH_COOKIE 와 동일)
+  if (import.meta.server && !auth.initialized && !isAuthRoute) {
+    if (useCookie('qam_refresh_token').value) return
+  }
+
   if (!auth.isAuthenticated && !isAuthRoute) {
     return navigateTo({ path: '/auth/login', query: { redirect: to.fullPath } })
   }

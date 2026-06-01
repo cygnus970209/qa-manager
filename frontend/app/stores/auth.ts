@@ -28,10 +28,15 @@ export const useAuthStore = defineStore('auth', () => {
     const api = useApi()
     try {
       user.value = await api<Me>('/api/me')
+      initialized.value = true
     } catch {
       user.value = null
-    } finally {
-      initialized.value = true
+      // 서버에서 access 토큰 만료로 실패한 경우는 인증 상태를 확정짓지 않는다.
+      // refresh(rotation) 는 쿠키를 자동 처리하는 클라이언트에서만 안전하게 동작하므로,
+      // initialized 를 false 로 둬서 하이드레이션 직후 미들웨어 bootstrap 이 재시도하게 한다.
+      if (import.meta.client) {
+        initialized.value = true
+      }
     }
   }
 
