@@ -3,6 +3,7 @@ import { Search, Inbox } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import SearchableSelect from '~/components/base/SearchableSelect.vue'
+import { applyQaFilter, saveQaFilter, type QaFilterState } from '~/utils/qaFilter'
 import type { Member, ProjectUpdate, QaItem } from '~/types/api'
 
 const props = defineProps<{
@@ -21,38 +22,17 @@ const assigneeFilter = ref<number | null>(null)
 const mineOnly = ref(false)
 const search = ref('')
 
-const filtered = computed(() => props.items.filter((item) => {
-  if (statusFilter.value !== 'all' && item.status !== statusFilter.value) return false
-  if (priorityFilter.value !== 'all' && item.priority !== priorityFilter.value) return false
-  if (updateFilter.value !== 'all' && String(item.updateId) !== updateFilter.value) return false
-
-  if (testerFilter.value != null && item.tester?.id !== testerFilter.value) return false
-  if (assigneeFilter.value != null
-    && item.assignee1?.id !== assigneeFilter.value
-    && item.assignee2?.id !== assigneeFilter.value) return false
-
-  if (mineOnly.value && auth.user) {
-    const meId = auth.user.id
-    const matchMine = item.tester?.id === meId
-      || item.assignee1?.id === meId
-      || item.assignee2?.id === meId
-    if (!matchMine) return false
-  }
-
-  if (search.value.trim()) {
-    const s = search.value.toLowerCase()
-    const names = [item.tester?.name, item.assignee1?.name, item.assignee2?.name]
-      .filter((x): x is string => Boolean(x))
-      .join(' ')
-      .toLowerCase()
-    return (
-      item.title.toLowerCase().includes(s) ||
-      (item.description ?? '').toLowerCase().includes(s) ||
-      names.includes(s)
-    )
-  }
-  return true
+const filterState = computed<QaFilterState>(() => ({
+  status: statusFilter.value,
+  priority: priorityFilter.value,
+  updateId: updateFilter.value,
+  testerId: testerFilter.value,
+  assigneeId: assigneeFilter.value,
+  mineOnly: mineOnly.value,
+  search: search.value,
 }))
+
+const filtered = computed(() => applyQaFilter(props.items, filterState.value, auth.user?.id))
 
 const memberOptions = computed<Member[]>(() => props.members ?? [])
 
@@ -60,12 +40,9 @@ function findUpdate(id: number) {
   return props.updates.find((u) => u.id === id)
 }
 
-/** 상세창 prev/next 용. 현재 필터 결과의 ID 목록을 sessionStorage 에 저장. */
-function rememberOrder(targetId: number) {
-  if (!import.meta.client) return
-  const ids = filtered.value.map((x) => x.id)
-  sessionStorage.setItem('qa:nav:list', JSON.stringify(ids))
-  sessionStorage.setItem('qa:nav:from', String(targetId))
+/** 상세창 사이드바 용. 현재 필터 상태를 저장해 상세에서 동일한 목록을 재현한다. */
+function rememberFilter() {
+  saveQaFilter(filterState.value)
 }
 </script>
 
@@ -171,7 +148,7 @@ function rememberOrder(targetId: number) {
             v-for="item in filtered"
             :key="item.id"
             class="cursor-pointer border-b border-slate-50 transition hover:bg-slate-50"
-            @click="rememberOrder(item.id); $router.push(`/qa/${item.id}`)"
+            @click="rememberFilter(); $router.push(`/qa/${item.id}`)"
           >
             <td class="px-5 py-4">
               <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ item.title }}</p>

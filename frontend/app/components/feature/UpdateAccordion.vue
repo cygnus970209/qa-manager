@@ -2,6 +2,7 @@
 import { ChevronDown, Pencil, Plus, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
+import { emptyQaFilter, saveQaFilter } from '~/utils/qaFilter'
 import type { ProjectUpdate, QaItem, QaStatusUpper, UpdateStatus } from '~/types/api'
 
 const props = defineProps<{
@@ -41,12 +42,9 @@ function onChangeQaStatus(qaId: number, e: Event) {
   emit('changeQaStatus', qaId, v)
 }
 
-/** QA 행 클릭 시 prev/next 컨텍스트를 sessionStorage 에 저장. */
-function rememberOrder(targetId: number) {
-  if (!import.meta.client) return
-  const ids = props.items.map((x) => x.id)
-  sessionStorage.setItem('qa:nav:list', JSON.stringify(ids))
-  sessionStorage.setItem('qa:nav:from', String(targetId))
+/** QA 행 클릭 시 상세 사이드바가 이 업데이트로 스코프되도록 필터를 저장. */
+function rememberFilter() {
+  saveQaFilter({ ...emptyQaFilter(), updateId: String(props.update.id) })
 }
 </script>
 
@@ -115,7 +113,7 @@ function rememberOrder(targetId: number) {
           v-for="q in items"
           :key="q.id"
           class="cursor-pointer px-4 py-3 transition hover:bg-slate-50"
-          @click="rememberOrder(q.id); $router.push(`/qa/${q.id}`)"
+          @click="rememberFilter(); $router.push(`/qa/${q.id}`)"
         >
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
