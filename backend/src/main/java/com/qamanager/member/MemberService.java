@@ -9,7 +9,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Collator;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -33,9 +36,16 @@ public class MemberService {
         this.teamsNotifier = teamsNotifier;
     }
 
+    /** 담당자 이름 가나다순 정렬용 (한글/영문/숫자 로케일 기반 비교) */
+    private static final Comparator<MemberDto.Response> BY_NAME_KO =
+        Comparator.comparing(MemberDto.Response::name, Collator.getInstance(Locale.KOREAN));
+
     @Transactional(readOnly = true)
     public List<MemberDto.Response> list() {
-        return memberRepository.findAllByDeletedAtIsNull().stream().map(MemberDto.Response::from).toList();
+        return memberRepository.findAllByDeletedAtIsNull().stream()
+            .map(MemberDto.Response::from)
+            .sorted(BY_NAME_KO)
+            .toList();
     }
 
     @Transactional(readOnly = true)

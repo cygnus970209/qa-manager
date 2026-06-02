@@ -3,6 +3,7 @@ package com.qamanager.config;
 import com.qamanager.auth.JwtAuthenticationFilter;
 import com.qamanager.auth.JwtProperties;
 import com.qamanager.auth.otp.SecurityOtpProperties;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -40,6 +41,12 @@ public class SecurityConfig {
             .cors(c -> c.configurationSource(corsConfigurationSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // ASYNC(SSE 등 비동기 재디스패치) / ERROR(/error 포워딩) / FORWARD 는
+                // 최초 REQUEST 디스패치에서 이미 인가가 끝난 요청의 내부 재처리이므로 허용한다.
+                // (Spring Security 6/7 은 기본적으로 모든 DispatcherType 을 필터링하는데,
+                //  JwtAuthenticationFilter(OncePerRequestFilter)는 async dispatch 에서 동작하지 않아
+                //  SecurityContext 가 비어 Access Denied 가 발생함)
+                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
                     "/api/ping",
