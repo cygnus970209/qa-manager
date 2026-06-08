@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from '@lucide/vue'
+import { ArrowLeft, ChevronLeft, ChevronRight } from '@lucide/vue'
 import QAInfoPanel from '~/components/feature/QAInfoPanel.vue'
 import QACommentSection from '~/components/feature/QACommentSection.vue'
 import QAHistoryList from '~/components/feature/QAHistoryList.vue'
@@ -142,31 +142,9 @@ function goNext() {
 <template>
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <button class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900" type="button" @click="router.back()">
-          <ArrowLeft class="h-3.5 w-3.5" /> 뒤로
-        </button>
-        <!-- 좌측 목록 사이드바 토글 (lg 이상에서만 노출) -->
-        <button
-          type="button"
-          class="hidden items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 lg:inline-flex"
-          :title="leftOpen ? '목록 접기' : '목록 펼치기'"
-          @click="leftOpen = !leftOpen"
-        >
-          <component :is="leftOpen ? PanelLeftClose : PanelLeftOpen" class="h-3.5 w-3.5" />
-          목록
-        </button>
-        <!-- 우측 변경 이력 사이드바 토글 -->
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
-          :title="rightOpen ? '이력 접기' : '이력 펼치기'"
-          @click="rightOpen = !rightOpen"
-        >
-          <component :is="rightOpen ? PanelRightClose : PanelRightOpen" class="h-3.5 w-3.5" />
-          이력
-        </button>
-      </div>
+      <button class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900" type="button" @click="router.back()">
+        <ArrowLeft class="h-3.5 w-3.5" /> 뒤로
+      </button>
       <div v-if="navIds.length > 0 && currentIdx >= 0" class="flex items-center gap-1 text-xs">
         <span class="mr-1 text-slate-400 tabular-nums">{{ currentIdx + 1 }} / {{ navIds.length }}</span>
         <button
@@ -189,20 +167,42 @@ function goNext() {
     </div>
 
     <div class="flex gap-6">
-      <!-- 사이드바(마스터-디테일): lg 이상 + leftOpen 일 때만 노출. 접어도 CSS hidden 이라
+      <!-- 좌측 목록 사이드바(마스터-디테일): lg 이상에서만 노출. v-show 로 접어도
            컴포넌트는 마운트 유지 → 이전/다음 이동용 순서(@update:order)는 계속 전달된다. -->
-      <aside class="shrink-0" :class="leftOpen ? 'hidden w-72 lg:block' : 'hidden'">
-        <div v-if="allItems.length > 0 && initialFilter" class="sticky top-20">
-          <QANavSidebar
-            :items="allItems"
-            :projects="sideProjects"
-            :updates="sideUpdates"
-            :current-id="qaId"
-            :initial-filter="initialFilter"
-            @update:order="navIds = $event"
-          />
+      <aside v-show="leftOpen" class="relative hidden w-72 shrink-0 lg:block">
+        <div class="sticky top-20">
+          <!-- 박스 우측 가장자리에 붙은 접기 핸들 -->
+          <button
+            type="button"
+            title="목록 접기"
+            class="absolute -right-3 top-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
+            @click="leftOpen = false"
+          >
+            <ChevronLeft class="h-3.5 w-3.5" />
+          </button>
+          <div v-if="allItems.length > 0 && initialFilter">
+            <QANavSidebar
+              :items="allItems"
+              :projects="sideProjects"
+              :updates="sideUpdates"
+              :current-id="qaId"
+              :initial-filter="initialFilter"
+              @update:order="navIds = $event"
+            />
+          </div>
         </div>
       </aside>
+      <!-- 접힘 상태: 그 자리에 얇은 펼치기 핸들 -->
+      <button
+        v-show="!leftOpen"
+        type="button"
+        title="목록 펼치기"
+        class="sticky top-20 hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
+        @click="leftOpen = true"
+      >
+        <ChevronRight class="h-3.5 w-3.5" />
+        <span class="text-[10px] [writing-mode:vertical-rl]">목록</span>
+      </button>
 
       <div class="min-w-0 flex-1">
     <div v-if="loading" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -272,8 +272,28 @@ function goNext() {
             @refreshed="comments = $event"
           />
         </div>
-        <aside v-show="rightOpen" class="w-full shrink-0 lg:w-80">
+        <!-- 접힘 상태: 본문 우측에 얇은 펼치기 핸들 -->
+        <button
+          v-show="!rightOpen"
+          type="button"
+          title="이력 펼치기"
+          class="hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex lg:sticky lg:top-20"
+          @click="rightOpen = true"
+        >
+          <ChevronLeft class="h-3.5 w-3.5" />
+          <span class="text-[10px] [writing-mode:vertical-rl]">이력</span>
+        </button>
+        <aside v-show="rightOpen" class="relative w-full shrink-0 lg:w-80">
           <div class="lg:sticky lg:top-20">
+            <!-- 박스 좌측 가장자리에 붙은 접기 핸들 -->
+            <button
+              type="button"
+              title="이력 접기"
+              class="absolute -left-3 top-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
+              @click="rightOpen = false"
+            >
+              <ChevronRight class="h-3.5 w-3.5" />
+            </button>
             <QAHistoryList :entries="history" />
           </div>
         </aside>
