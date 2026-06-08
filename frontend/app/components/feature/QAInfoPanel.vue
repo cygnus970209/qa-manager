@@ -4,11 +4,13 @@ import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import SearchableSelect from '~/components/base/SearchableSelect.vue'
-import type { Member, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
+import type { Member, ProjectUpdate, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
 
 const props = defineProps<{
   item: QaItem
   members: Member[]
+  /** 이 QA가 이동 가능한 업데이트(버전) 목록 — 같은 프로젝트 범위. */
+  updates?: ProjectUpdate[]
 }>()
 const emit = defineEmits<{
   updated: [item: QaItem]
@@ -167,6 +169,21 @@ function statusToUpper(s: QaItem['status']): QaStatusUpper {
   return s.toUpperCase() as QaStatusUpper
 }
 
+/** 다른 업데이트(버전)로 QA 이동 (즉시 PATCH) */
+async function onMoveUpdate(updateId: number) {
+  if (updateId === props.item.updateId) return
+  saving.value = true
+  error.value = null
+  try {
+    const updated = await qaApi.update(props.item.id, { updateId })
+    emit('updated', updated)
+  } catch (e: any) {
+    error.value = e?.data?.message ?? '업데이트 이동 실패'
+  } finally {
+    saving.value = false
+  }
+}
+
 /** 편집 모드 진입 없이 상태 단독 변경 (즉시 PATCH) */
 async function onQuickStatusChange(next: QaItem['status']) {
   if (next === props.item.status) return
@@ -254,6 +271,18 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
     <!-- 메타 -->
     <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
       <span v-if="item.category" class="rounded-md bg-slate-100 px-2 py-0.5">{{ item.category }}</span>
+      <!-- 업데이트(버전) 이동: 같은 프로젝트의 다른 버전으로 즉시 이동 -->
+      <div v-if="(updates?.length ?? 0) > 0" class="inline-flex items-center gap-1">
+        <span class="text-slate-400">업데이트</span>
+        <select
+          :value="item.updateId"
+          :disabled="saving"
+          class="max-w-[180px] truncate rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50"
+          @change="onMoveUpdate(Number(($event.target as HTMLSelectElement).value))"
+        >
+          <option v-for="u in updates" :key="u.id" :value="u.id">{{ u.version }} · {{ u.title }}</option>
+        </select>
+      </div>
       <!-- 비편집 모드에서도 상태 즉시 변경 가능 -->
       <select
         v-if="!editing"

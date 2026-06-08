@@ -219,6 +219,7 @@ export interface QaCreateRequest {
 }
 
 export interface QaPatchRequest {
+  updateId?: number
   title?: string
   description?: string
   category?: string

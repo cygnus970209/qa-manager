@@ -107,6 +107,14 @@ public class QaItemService {
         TeamMember changedBy = memberRepository.findByIdAndDeletedAtIsNull(currentMemberId).orElse(null);
         List<QaHistory> diffs = new ArrayList<>();
 
+        // 다른 업데이트(버전)로 이동. 이력엔 버전 문자열을 남긴다.
+        if (req.updateId() != null && !req.updateId().equals(q.getProjectUpdate().getId())) {
+            ProjectUpdate target = updateRepository.findById(req.updateId())
+                .orElseThrow(() -> ApiException.notFound("업데이트를 찾을 수 없습니다. id=" + req.updateId()));
+            diffs.add(new QaHistory(q, "update", q.getProjectUpdate().getVersion(), target.getVersion(), changedBy));
+            q.setProjectUpdate(target);
+        }
+
         if (req.title() != null && !req.title().equals(q.getTitle())) {
             diffs.add(new QaHistory(q, "title", q.getTitle(), req.title(), changedBy));
             q.setTitle(req.title());

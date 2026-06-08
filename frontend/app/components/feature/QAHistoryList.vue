@@ -13,6 +13,7 @@ const fieldLabels: Record<string, string> = {
   title: '제목',
   description: '설명',
   category: '카테고리',
+  update: '업데이트',
   image_added: '이미지',
   image_removed: '이미지',
 }

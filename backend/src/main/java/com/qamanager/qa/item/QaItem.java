@@ -83,6 +83,7 @@ public class QaItem extends BaseEntity {
     }
 
     /** 단일 필드 setter — 변경 감지/이력 기록은 Service 레이어에서 처리 */
+    public void setProjectUpdate(ProjectUpdate projectUpdate) { this.projectUpdate = projectUpdate; }
     public void setTitle(String title) { this.title = title; }
     public void setDescription(String description) { this.description = description; }
     public void setCategory(String category) { this.category = category; }

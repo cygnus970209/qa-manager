@@ -66,6 +66,8 @@ public class QaDto {
     ) {}
 
     public record UpdateRequest(
+        /** 다른 업데이트(버전)로 이동. null 이면 '변경 없음'. */
+        Long updateId,
         @Size(max = 200) String title,
         @Size(max = 4000) String description,
         @Size(max = 50) String category,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ChevronLeft, ChevronRight } from '@lucide/vue'
+import { ArrowLeft, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from '@lucide/vue'
 import QAInfoPanel from '~/components/feature/QAInfoPanel.vue'
 import QACommentSection from '~/components/feature/QACommentSection.vue'
 import QAHistoryList from '~/components/feature/QAHistoryList.vue'
@@ -35,6 +35,28 @@ const updateToProject = computed(() => {
   for (const u of sideUpdates.value) m.set(u.id, u.projectId)
   return m
 })
+
+// 현재 QA가 이동 가능한 업데이트 목록(같은 프로젝트의 버전들). 버전 오름차순 정렬.
+const movableUpdates = computed(() => {
+  if (!item.value) return []
+  const pid = updateToProject.value.get(item.value.updateId)
+  const list = pid == null ? sideUpdates.value : sideUpdates.value.filter((u) => u.projectId === pid)
+  return [...list].sort((a, b) => a.version.localeCompare(b.version, undefined, { numeric: true }))
+})
+
+/* ─── 좌/우 사이드바 접기/펴기 (localStorage 영속) ─── */
+const LEFT_KEY = 'qa-detail-left-open'
+const RIGHT_KEY = 'qa-detail-right-open'
+const leftOpen = ref(true)
+const rightOpen = ref(true)
+onMounted(() => {
+  const l = localStorage.getItem(LEFT_KEY)
+  const r = localStorage.getItem(RIGHT_KEY)
+  if (l !== null) leftOpen.value = l === '1'
+  if (r !== null) rightOpen.value = r === '1'
+})
+watch(leftOpen, (v) => localStorage.setItem(LEFT_KEY, v ? '1' : '0'))
+watch(rightOpen, (v) => localStorage.setItem(RIGHT_KEY, v ? '1' : '0'))
 
 /**
  * 사이드바 초기 필터 결정.
@@ -120,9 +142,31 @@ function goNext() {
 <template>
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <button class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900" type="button" @click="router.back()">
-        <ArrowLeft class="h-3.5 w-3.5" /> 뒤로
-      </button>
+      <div class="flex items-center gap-2">
+        <button class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900" type="button" @click="router.back()">
+          <ArrowLeft class="h-3.5 w-3.5" /> 뒤로
+        </button>
+        <!-- 좌측 목록 사이드바 토글 (lg 이상에서만 노출) -->
+        <button
+          type="button"
+          class="hidden items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 lg:inline-flex"
+          :title="leftOpen ? '목록 접기' : '목록 펼치기'"
+          @click="leftOpen = !leftOpen"
+        >
+          <component :is="leftOpen ? PanelLeftClose : PanelLeftOpen" class="h-3.5 w-3.5" />
+          목록
+        </button>
+        <!-- 우측 변경 이력 사이드바 토글 -->
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+          :title="rightOpen ? '이력 접기' : '이력 펼치기'"
+          @click="rightOpen = !rightOpen"
+        >
+          <component :is="rightOpen ? PanelRightClose : PanelRightOpen" class="h-3.5 w-3.5" />
+          이력
+        </button>
+      </div>
       <div v-if="navIds.length > 0 && currentIdx >= 0" class="flex items-center gap-1 text-xs">
         <span class="mr-1 text-slate-400 tabular-nums">{{ currentIdx + 1 }} / {{ navIds.length }}</span>
         <button
@@ -145,9 +189,9 @@ function goNext() {
     </div>
 
     <div class="flex gap-6">
-      <!-- 사이드바(마스터-디테일): lg 이상에서만 노출. CSS hidden 이므로 모바일에서도
-           마운트되어 이전/다음 이동용 순서(@update:order)는 계속 전달된다. -->
-      <aside class="hidden w-72 shrink-0 lg:block">
+      <!-- 사이드바(마스터-디테일): lg 이상 + leftOpen 일 때만 노출. 접어도 CSS hidden 이라
+           컴포넌트는 마운트 유지 → 이전/다음 이동용 순서(@update:order)는 계속 전달된다. -->
+      <aside class="shrink-0" :class="leftOpen ? 'hidden w-72 lg:block' : 'hidden'">
         <div v-if="allItems.length > 0 && initialFilter" class="sticky top-20">
           <QANavSidebar
             :items="allItems"
@@ -218,9 +262,9 @@ function goNext() {
     </div>
     <div v-else-if="error" class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
     <template v-else-if="item">
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="space-y-6 lg:col-span-2">
-          <QAInfoPanel :item="item" :members="members" @updated="onUpdated" @removed="onRemoved" />
+      <div class="flex flex-col gap-6 lg:flex-row">
+        <div class="min-w-0 flex-1 space-y-6">
+          <QAInfoPanel :item="item" :members="members" :updates="movableUpdates" @updated="onUpdated" @removed="onRemoved" />
           <QACommentSection
             :qa-item-id="item.id"
             :comments="comments"
@@ -228,9 +272,11 @@ function goNext() {
             @refreshed="comments = $event"
           />
         </div>
-        <div>
-          <QAHistoryList :entries="history" />
-        </div>
+        <aside v-show="rightOpen" class="w-full shrink-0 lg:w-80">
+          <div class="lg:sticky lg:top-20">
+            <QAHistoryList :entries="history" />
+          </div>
+        </aside>
       </div>
     </template>
       </div>
