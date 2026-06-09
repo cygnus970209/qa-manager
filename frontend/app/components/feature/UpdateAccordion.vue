@@ -2,6 +2,7 @@
 import { ChevronDown, Pencil, Plus, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
+import ExpandableText from '~/components/base/ExpandableText.vue'
 import { emptyQaFilter, saveQaFilter } from '~/utils/qaFilter'
 import type { ProjectUpdate, QaItem, QaStatusUpper, UpdateStatus } from '~/types/api'
 
@@ -75,7 +76,7 @@ function rememberFilter() {
     </button>
 
     <div v-if="open" class="border-t border-slate-100 px-5 py-4">
-      <p v-if="update.description" class="mb-3 text-sm text-slate-500">{{ update.description }}</p>
+      <ExpandableText v-if="update.description" :text="update.description" :lines="3" class="mb-3" />
       <div class="mb-3 flex items-center gap-2">
         <select
           class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"

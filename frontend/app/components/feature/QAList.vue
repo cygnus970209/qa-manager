@@ -153,9 +153,10 @@ function rememberFilter() {
           >
             <td class="px-5 py-4">
               <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ item.title }}</p>
-              <p class="mt-1 line-clamp-1 hidden text-xs text-slate-400 sm:block">
-                {{ item.description }}
-              </p>
+              <!-- wrapper 가 hidden/block 을 담당해, 클램프(display:-webkit-box)가 sm:block 에 덮이지 않게 함 -->
+              <div class="mt-1 hidden sm:block">
+                <p class="line-clamp-2 text-xs text-slate-400">{{ item.description }}</p>
+              </div>
             </td>
             <td class="hidden px-5 py-4 md:table-cell">
               <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">

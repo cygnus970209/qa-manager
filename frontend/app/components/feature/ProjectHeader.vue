@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft, Pencil, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
+import ExpandableText from '~/components/base/ExpandableText.vue'
 import type { Project, ProjectStatus } from '~/types/api'
 
 const props = defineProps<{
@@ -47,7 +48,7 @@ function onSelectStatus(e: Event) {
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div class="min-w-0">
         <h1 class="truncate text-xl font-bold text-slate-800 md:text-2xl">{{ project.name }}</h1>
-        <p class="mt-2 max-w-3xl text-sm text-slate-500">{{ project.description }}</p>
+        <ExpandableText v-if="project.description" :text="project.description" :lines="3" class="mt-2 max-w-3xl" />
         <div class="mt-3 flex items-center gap-2 text-xs text-slate-400">
           <span>생성 {{ project.createdAt?.slice(0, 10) }}</span>
           <span>·</span>
