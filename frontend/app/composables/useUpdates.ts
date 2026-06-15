@@ -16,6 +16,8 @@ export function useUpdates() {
       api<ProjectUpdate>(`/api/projects/${projectId}/updates`, { method: 'POST', body }),
     update: (id: number, body: UpdatePatchRequest) =>
       api<ProjectUpdate>(`/api/updates/${id}`, { method: 'PATCH', body }),
+    reorder: (projectId: number, updateIds: number[]) =>
+      api<ProjectUpdate[]>(`/api/projects/${projectId}/updates/order`, { method: 'PUT', body: { updateIds } }),
     remove: (id: number) =>
       api(`/api/updates/${id}`, { method: 'DELETE' }),
   }

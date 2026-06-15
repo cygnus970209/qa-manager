@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { FileText, Clock, Loader, CheckCheck, AlertTriangle, Plus } from '@lucide/vue'
+import { FileText, Clock, Loader, CheckCheck, AlertTriangle, Plus, ArrowUpDown } from '@lucide/vue'
 import ProjectHeader from '~/components/feature/ProjectHeader.vue'
 import UpdateAccordion from '~/components/feature/UpdateAccordion.vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
 import NewUpdateModal from '~/components/feature/NewUpdateModal.vue'
+import ReorderUpdateModal from '~/components/feature/ReorderUpdateModal.vue'
 import NewProjectModal from '~/components/feature/NewProjectModal.vue'
 import NewQAModal from '~/components/feature/NewQAModal.vue'
 import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
@@ -27,6 +28,7 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 const updateModalOpen = ref(false)
+const reorderModalOpen = ref(false)
 const qaModalOpen = ref(false)
 const qaDefaultUpdateId = ref<number | undefined>()
 
@@ -97,6 +99,9 @@ function onAddInlineQa(updateId: number) {
 }
 function onUpdateCreated(u: ProjectUpdate) {
   updates.value = [u, ...updates.value]
+}
+function onUpdatesReordered(reordered: ProjectUpdate[]) {
+  updates.value = reordered
 }
 function onQaCreated(q: QaItem) {
   items.value = [q, ...items.value]
@@ -211,6 +216,14 @@ async function confirmUpdateDelete() {
           <div class="flex items-center gap-2 text-xs text-slate-400">
             <span>{{ updates.length }}개 업데이트 · {{ stats.total }}개 QA</span>
             <button
+              v-if="updates.length > 1"
+              type="button"
+              class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              @click="reorderModalOpen = true"
+            >
+              <ArrowUpDown class="h-3.5 w-3.5" /> 순서 변경
+            </button>
+            <button
               type="button"
               class="inline-flex items-center gap-1 rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600"
               @click="updateModalOpen = true"
@@ -251,6 +264,13 @@ async function confirmUpdateDelete() {
         :project-id="project.id"
         @close="updateModalOpen = false"
         @created="onUpdateCreated"
+      />
+      <ReorderUpdateModal
+        :open="reorderModalOpen"
+        :project-id="project.id"
+        :updates="updates"
+        @close="reorderModalOpen = false"
+        @reordered="onUpdatesReordered"
       />
       <NewUpdateModal
         :open="updateEditOpen"
