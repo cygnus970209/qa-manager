@@ -339,7 +339,8 @@ function onMentionKey(e: KeyboardEvent) {
   const list = filteredMembers.value
   if (e.key === 'Escape') { showMention.value = false; e.preventDefault() }
   else if (e.key === 'Enter') {
-    if (list.length > 0) { insertMention(list[mentionIdx.value]); e.preventDefault() }
+    const m = list[mentionIdx.value]
+    if (m) { insertMention(m); e.preventDefault() }
   }
   else if (e.key === 'ArrowDown') {
     mentionIdx.value = Math.min(mentionIdx.value + 1, list.length - 1)

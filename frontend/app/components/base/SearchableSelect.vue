@@ -127,7 +127,8 @@ function onKey(e: KeyboardEvent) {
     highlighted.value = Math.max(highlighted.value - 1, 0)
     e.preventDefault()
   } else if (e.key === 'Enter') {
-    if (list[highlighted.value]) selectOption(list[highlighted.value])
+    const o = list[highlighted.value]
+    if (o) selectOption(o)
     e.preventDefault()
   } else if (e.key === 'Escape') {
     close()

@@ -48,7 +48,7 @@ const currentSrc = computed<string | null>(() => {
   if (!isOpen.value) return null
   const i = currentIndex.value
   if (i < 0 || i >= list.value.length) return null
-  return list.value[i]
+  return list.value[i] ?? null
 })
 
 const hasPrev = computed(() => list.value.length > 1 && currentIndex.value > 0)

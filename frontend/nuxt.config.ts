@@ -1,9 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+// nuxt.config 는 Node 컨텍스트에서 실행된다. @types/node 미설치 환경을 위한 최소 타입 선언.
+declare const process: { env: Record<string, string | undefined> }
+
+// DEMO_BUILD=true 로 빌드하면 데모 모드(정적 SPA + localStorage mock)로 동작한다.
+//   예: cd frontend && DEMO_BUILD=true npm run generate
+const isDemoBuild = process.env.DEMO_BUILD === 'true'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
-  ssr: true,
+  // 데모는 백엔드 없이 클라이언트(localStorage)에서만 동작하므로 SSR 을 끈다.
+  ssr: !isDemoBuild,
 
   modules: [
     '@nuxtjs/tailwindcss',
@@ -33,10 +42,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: 'http://localhost:8080',
-      // 데모 모드: NUXT_PUBLIC_DEMO_MODE=true 면 전역 '데모 버전' 배너 + 로그인 계정 안내 노출.
-      demoMode: false,
-      // 데모 계정 목록. "라벨|아이디|비밀번호" 를 세미콜론(;)으로 구분 (NUXT_PUBLIC_DEMO_ACCOUNTS).
-      demoAccounts: '',
+      // 데모 모드 여부. DEMO_BUILD=true 빌드에서 켜진다(전역 '데모 버전' 배너 + localStorage mock).
+      demoMode: isDemoBuild,
     },
   },
 

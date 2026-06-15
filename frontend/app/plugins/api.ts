@@ -3,10 +3,18 @@
  * - 인증은 HttpOnly 쿠키로 자동 처리됨 (credentials: 'include')
  * - 401 응답 시 /api/auth/refresh 호출 → 실패 시 클라이언트에서 /auth/login 리다이렉트
  */
+import { createDemoApi } from '~/demo/api'
+
 type ApiFetch = typeof $fetch
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
+
+  // 데모 모드: 백엔드 없이 localStorage 기반 mock 으로 $api 를 대체한다.
+  if (config.public.demoMode === true) {
+    return { provide: { api: createDemoApi() as unknown as ApiFetch } }
+  }
+
   const apiBase = config.public.apiBase
 
   let refreshing: Promise<boolean> | null = null

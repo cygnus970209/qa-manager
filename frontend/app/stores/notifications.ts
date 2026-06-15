@@ -37,6 +37,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     if (!import.meta.client) return
     if (abort) return // 이미 연결됨
     const config = useRuntimeConfig()
+    if (config.public.demoMode === true) return // 데모 모드: 실시간(SSE) 없음
 
     abort = new AbortController()
     try {

@@ -6,10 +6,24 @@ import type { PresignRequest, PresignResponse } from '~/types/api'
  * 2) uploadUrl 로 PUT (Content-Type 정확히 맞춰야 서명 검증 성공)
  * 3) publicUrl 반환
  */
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
 export function useUpload() {
   const api = useApi()
+  const config = useRuntimeConfig()
 
   async function uploadImage(file: File, purpose: PresignRequest['purpose']): Promise<string> {
+    // 데모 모드: S3 대신 브라우저에서 data URL 로 변환해 localStorage 에 보관한다.
+    if (config.public.demoMode === true) {
+      return await fileToDataUrl(file)
+    }
     const presign = await api<PresignResponse>('/api/files/presigned', {
       method: 'POST',
       body: {
