@@ -1,0 +1,20 @@
+# 데모 전용 스택 — 백엔드/DB/Redis 없이 정적 SPA(localStorage mock)만 nginx 로 서빙한다.
+# 운영(docker-compose.yml)과 완전히 분리된 단일 컨테이너이며 .env 도 필요 없다.
+#
+# 배포:
+#   docker compose -f docker-compose.demo.yml up -d --build
+# 업데이트:
+#   git pull && docker compose -f docker-compose.demo.yml up -d --build
+# 종료:
+#   docker compose -f docker-compose.demo.yml down
+
+services:
+  demo:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.demo
+    container_name: qa-manager-demo
+    restart: unless-stopped
+    ports:
+      # 좌측이 서버 공개 포트. 80 이 쓰이는 중이면 8080:80 등으로 변경.
+      - "80:80"
