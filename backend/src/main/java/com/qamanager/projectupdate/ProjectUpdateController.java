@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,6 +40,12 @@ public class ProjectUpdateController {
                                                      @RequestBody @Valid UpdateDto.CreateRequest req) {
         UpdateDto.Response created = updateService.create(projectId, req);
         return ResponseEntity.created(URI.create("/api/updates/" + created.id())).body(created);
+    }
+
+    @PutMapping("/projects/{projectId}/updates/order")
+    public List<UpdateDto.Response> reorder(@PathVariable Long projectId,
+                                            @RequestBody @Valid UpdateDto.ReorderRequest req) {
+        return updateService.reorder(projectId, req);
     }
 
     @GetMapping("/updates/{id}")

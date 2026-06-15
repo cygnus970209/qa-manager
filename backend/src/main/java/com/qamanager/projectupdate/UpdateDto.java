@@ -1,8 +1,11 @@
 package com.qamanager.projectupdate;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.util.List;
 
 public class UpdateDto {
 
@@ -42,5 +45,10 @@ public class UpdateDto {
         @Size(max = 200) String title,
         @Size(max = 4000) String description,
         UpdateStatus status
+    ) {}
+
+    /** 프로젝트의 전체 업데이트 ID를 노출 순서(위→아래)대로 담아야 한다. */
+    public record ReorderRequest(
+        @NotEmpty List<Long> updateIds
     ) {}
 }
