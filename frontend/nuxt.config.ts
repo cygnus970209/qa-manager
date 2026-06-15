@@ -33,6 +33,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: 'http://localhost:8080',
+      // 데모 모드: NUXT_PUBLIC_DEMO_MODE=true 면 전역 '데모 버전' 배너 + 로그인 계정 안내 노출.
+      demoMode: false,
+      // 데모 계정 목록. "라벨|아이디|비밀번호" 를 세미콜론(;)으로 구분 (NUXT_PUBLIC_DEMO_ACCOUNTS).
+      demoAccounts: '',
     },
   },
 

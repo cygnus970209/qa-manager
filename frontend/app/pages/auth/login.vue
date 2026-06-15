@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ShieldCheck, Mail, ArrowLeft } from '@lucide/vue'
 import type { ApiErrorBody } from '~/types/api'
+import type { DemoAccount } from '~/composables/useDemo'
 
 definePageMeta({ layout: 'blank' })
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const { enabled: demoEnabled, accounts: demoAccounts } = useDemo()
 
 type Step = 'credentials' | 'otp'
 const step = ref<Step>('credentials')
@@ -128,6 +130,14 @@ function backToCredentials() {
   if (cooldownTimer) clearInterval(cooldownTimer)
   resendCooldown.value = 0
 }
+
+// 데모 계정 클릭 → 폼을 자동으로 채운 뒤 즉시 로그인 시도.
+function loginAs(acc: DemoAccount) {
+  if (submitting.value) return
+  username.value = acc.username
+  password.value = acc.password
+  onSubmitCredentials()
+}
 </script>
 
 <template>
@@ -173,6 +183,29 @@ function backToCredentials() {
           {{ submitting ? '로그인 중…' : '로그인' }}
         </button>
       </form>
+
+      <!-- 데모 계정 안내 (데모 모드에서만 표시) -->
+      <div
+        v-if="step === 'credentials' && demoEnabled && demoAccounts.length"
+        class="mt-6 border-t border-dashed border-gray-200 pt-4"
+      >
+        <p class="mb-2 text-xs font-medium text-gray-500">
+          데모 계정 <span class="text-gray-400">(클릭하면 바로 로그인)</span>
+        </p>
+        <ul class="space-y-1.5">
+          <li v-for="acc in demoAccounts" :key="acc.username">
+            <button
+              type="button"
+              :disabled="submitting"
+              class="flex w-full items-center justify-between gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-left hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-60"
+              @click="loginAs(acc)"
+            >
+              <span class="text-xs font-medium text-gray-700">{{ acc.label }}</span>
+              <span class="font-mono text-[11px] text-gray-500">{{ acc.username }} / {{ acc.password }}</span>
+            </button>
+          </li>
+        </ul>
+      </div>
 
       <!-- 2단계: 이메일 OTP -->
       <form v-else class="space-y-4" @submit.prevent="onVerifyOtp">
