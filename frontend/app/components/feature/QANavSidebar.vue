@@ -217,7 +217,12 @@ function go(id: number) {
               item.id === currentId ? 'text-emerald-900' : 'text-slate-700',
             ]"
           >
-            {{ item.title }}
+            <span
+              :class="[
+                'mr-1 tabular-nums',
+                item.id === currentId ? 'text-emerald-600' : 'text-slate-400',
+              ]"
+            >#{{ item.id }}</span>{{ item.title }}
           </p>
           <div class="flex items-center gap-1.5">
             <StatusBadge :status="item.status" />

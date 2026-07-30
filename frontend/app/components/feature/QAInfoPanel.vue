@@ -238,6 +238,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
   <article class="rounded-xl border border-slate-200 bg-white p-5 md:p-6">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0 flex-1">
+        <p class="mb-1 text-xs font-semibold tabular-nums text-slate-400">QA #{{ item.id }}</p>
         <input
           v-if="editing"
           v-model="form.title"
