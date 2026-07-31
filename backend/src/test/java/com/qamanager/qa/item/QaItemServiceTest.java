@@ -1,5 +1,6 @@
 package com.qamanager.qa.item;
 
+import com.qamanager.integration.github.QaGithubIssueRepository;
 import com.qamanager.member.TeamMember;
 import com.qamanager.member.TeamMemberRepository;
 import com.qamanager.project.Project;
@@ -38,6 +39,7 @@ class QaItemServiceTest {
     @Mock QaHistoryRepository historyRepository;
     @Mock ProjectUpdateRepository updateRepository;
     @Mock TeamMemberRepository memberRepository;
+    @Mock QaGithubIssueRepository githubIssueRepository;
     @Mock ApplicationEventPublisher events;
 
     @InjectMocks QaItemService service;
@@ -79,7 +81,8 @@ class QaItemServiceTest {
                 QaStatus.NEEDS_FIX,
                 null, null, null, // testerId / assignee1Id / assignee2Id 모두 null
                 QaPriority.MEDIUM,
-                List.of()
+                List.of(),
+                null              // createGithubIssue
             );
 
             service.create(req, currentUserId);
@@ -105,7 +108,7 @@ class QaItemServiceTest {
             QaDto.CreateRequest req = new QaDto.CreateRequest(
                 1L, "title", null, null, QaStatus.NEEDS_FIX,
                 explicitTesterId, null, null,
-                QaPriority.MEDIUM, List.of()
+                QaPriority.MEDIUM, List.of(), null
             );
 
             service.create(req, currentUserId);
@@ -130,7 +133,7 @@ class QaItemServiceTest {
 
             QaDto.CreateRequest req = new QaDto.CreateRequest(
                 1L, "t", null, null, QaStatus.NEEDS_FIX,
-                null, 2L, 3L, QaPriority.MEDIUM, List.of()
+                null, 2L, 3L, QaPriority.MEDIUM, List.of(), null
             );
 
             service.create(req, currentUserId);
@@ -171,6 +174,7 @@ class QaItemServiceTest {
         private QaDto.UpdateRequest reqOnlyMembers(Long testerId, Long a1Id, Long a2Id,
                                                   Boolean clearT, Boolean clearA1, Boolean clearA2) {
             return new QaDto.UpdateRequest(
+                null,              // updateId
                 null, null, null,  // title/desc/category
                 null,              // status
                 testerId, a1Id, a2Id,
@@ -234,8 +238,8 @@ class QaItemServiceTest {
         }
 
         @Test
-        @DisplayName("tester 변경은 이력 기록은 하되 알림 이벤트는 발행하지 않는다")
-        void testerChange_noNotificationEvent() {
+        @DisplayName("tester 변경도 이력 기록 + 배정 알림 이벤트를 발행한다")
+        void testerChange_publishesNotificationEvent() {
             when(existing.getTester()).thenReturn(null);
             TeamMember newTester = memberMock(5L, "새테스터");
             when(memberRepository.findByIdAndDeletedAtIsNull(5L)).thenReturn(Optional.of(newTester));
@@ -249,8 +253,11 @@ class QaItemServiceTest {
             assertThat(diffsCap.getValue()).hasSize(1);
             assertThat(diffsCap.getValue().get(0).getField()).isEqualTo("tester");
 
-            // tester 슬롯은 notify=false → assignee 변경 이벤트 안 발행
-            verify(events, never()).publishEvent(any(QaItemService.QaAssigneeChangedEvent.class));
+            // tester 슬롯도 notify=true — 이전엔 notify=false 라 테스터만 알림이 누락됐음.
+            ArgumentCaptor<QaItemService.QaAssigneeChangedEvent> evCap =
+                ArgumentCaptor.forClass(QaItemService.QaAssigneeChangedEvent.class);
+            verify(events).publishEvent(evCap.capture());
+            assertThat(evCap.getValue().assigneeMemberId()).isEqualTo(5L);
         }
 
         @Test
@@ -293,6 +300,7 @@ class QaItemServiceTest {
             when(memberRepository.findByIdAndDeletedAtIsNull(99L)).thenReturn(Optional.empty());
 
             QaDto.UpdateRequest req = new QaDto.UpdateRequest(
+                null,
                 null, null, null,
                 QaStatus.IN_PROGRESS,
                 null, null, null,

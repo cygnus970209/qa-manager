@@ -135,6 +135,14 @@ app:
     # Graph / Bot Connector 호출 timeout (초).
     connect-timeout-seconds: ${TEAMS_CONNECT_TIMEOUT:5}
     read-timeout-seconds: ${TEAMS_READ_TIMEOUT:10}
+  github:
+    # GitHub 이슈트래킹 연동. 앱 자격증명(app id/private key)은 여기 없다 —
+    # 관리자 설정의 Manifest flow 로 런타임에 생성되어 DB(github_app 테이블)에 저장된다.
+    # GHES(GitHub Enterprise Server) 사용 시에만 base url 을 바꾼다 (api 는 https://HOST/api/v3).
+    web-base-url: ${GITHUB_WEB_BASE_URL:https://github.com}
+    api-base-url: ${GITHUB_API_BASE_URL:https://api.github.com}
+    connect-timeout-seconds: ${GITHUB_CONNECT_TIMEOUT:5}
+    read-timeout-seconds: ${GITHUB_READ_TIMEOUT:10}
 
 logging:
   level:

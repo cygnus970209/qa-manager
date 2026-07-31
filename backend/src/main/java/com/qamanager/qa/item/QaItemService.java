@@ -1,6 +1,7 @@
 package com.qamanager.qa.item;
 
 import com.qamanager.common.ApiException;
+import com.qamanager.integration.github.QaGithubIssueRepository;
 import com.qamanager.member.TeamMember;
 import com.qamanager.member.TeamMemberRepository;
 import com.qamanager.projectupdate.ProjectUpdate;
@@ -26,17 +27,20 @@ public class QaItemService {
     private final QaHistoryRepository historyRepository;
     private final ProjectUpdateRepository updateRepository;
     private final TeamMemberRepository memberRepository;
+    private final QaGithubIssueRepository githubIssueRepository;
     private final ApplicationEventPublisher events;
 
     public QaItemService(QaItemRepository qaRepository,
                          QaHistoryRepository historyRepository,
                          ProjectUpdateRepository updateRepository,
                          TeamMemberRepository memberRepository,
+                         QaGithubIssueRepository githubIssueRepository,
                          ApplicationEventPublisher events) {
         this.qaRepository = qaRepository;
         this.historyRepository = historyRepository;
         this.updateRepository = updateRepository;
         this.memberRepository = memberRepository;
+        this.githubIssueRepository = githubIssueRepository;
         this.events = events;
     }
 
@@ -74,7 +78,7 @@ public class QaItemService {
 
     @Transactional(readOnly = true)
     public QaDto.Response get(Long id) {
-        return QaDto.Response.from(findOrThrow(id));
+        return QaDto.Response.from(findOrThrow(id), githubIssueOf(id));
     }
 
     @Transactional
@@ -97,7 +101,8 @@ public class QaItemService {
             saved.getTitle(), currentMemberId,
             tester == null ? null : tester.getId(),
             assignee1 == null ? null : assignee1.getId(),
-            assignee2 == null ? null : assignee2.getId()));
+            assignee2 == null ? null : assignee2.getId(),
+            Boolean.TRUE.equals(req.createGithubIssue())));
         return QaDto.Response.from(saved);
     }
 
@@ -168,7 +173,7 @@ public class QaItemService {
             q.replaceImages(req.images());
         }
         if (!diffs.isEmpty()) historyRepository.saveAll(diffs);
-        return QaDto.Response.from(q);
+        return QaDto.Response.from(q, githubIssueOf(id));
     }
 
     private interface MemberSetter { void set(TeamMember m); }
@@ -223,6 +228,12 @@ public class QaItemService {
             .orElseThrow(() -> ApiException.notFound("QA 항목을 찾을 수 없습니다. id=" + id));
     }
 
+    private QaDto.GithubIssue githubIssueOf(Long qaItemId) {
+        return githubIssueRepository.findByQaItemId(qaItemId)
+            .map(QaDto.GithubIssue::from)
+            .orElse(null);
+    }
+
     private TeamMember resolveMemberOptional(Long id) {
         if (id == null) return null;
         return resolveMemberOrThrow(id);
@@ -238,12 +249,13 @@ public class QaItemService {
         return s.length() <= 500 ? s : s.substring(0, 500);
     }
 
-    /* ─────── 이벤트 (Notification 도메인에서 구독) ─────── */
+    /* ─────── 이벤트 (Notification / GitHub 연동 도메인에서 구독) ─────── */
     public record QaCreatedEvent(Long qaItemId, Long projectId, String title,
                                  Long actorMemberId,
                                  Long testerMemberId,
                                  Long assignee1MemberId,
-                                 Long assignee2MemberId) {}
+                                 Long assignee2MemberId,
+                                 boolean createGithubIssue) {}
 
     public record QaStatusChangedEvent(Long qaItemId, Long projectId, String title,
                                        String newStatus, Long actorMemberId,

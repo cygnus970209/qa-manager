@@ -1,5 +1,6 @@
 package com.qamanager.qa.item;
 
+import com.qamanager.integration.github.QaGithubIssue;
 import com.qamanager.member.TeamMember;
 import com.qamanager.qa.shared.QaPriority;
 import com.qamanager.qa.shared.QaStatus;
@@ -17,6 +18,15 @@ public class QaDto {
         }
     }
 
+    /** 연결된 GitHub 이슈 요약 (미연결이면 응답에서 생략). */
+    public record GithubIssue(Integer issueNumber, String issueUrl, String state,
+                              String repoOwner, String repoName) {
+        public static GithubIssue from(QaGithubIssue m) {
+            return m == null ? null : new GithubIssue(
+                m.getIssueNumber(), m.getIssueUrl(), m.getState(), m.getRepoOwner(), m.getRepoName());
+        }
+    }
+
     public record Response(
         Long id,
         Long updateId,
@@ -29,10 +39,15 @@ public class QaDto {
         AssigneeSummary assignee2,
         String priority,
         List<String> images,
+        GithubIssue githubIssue,
         String createdAt,
         String updatedAt
     ) {
         public static Response from(QaItem q) {
+            return from(q, null);
+        }
+
+        public static Response from(QaItem q, GithubIssue githubIssue) {
             return new Response(
                 q.getId(),
                 q.getProjectUpdate().getId(),
@@ -45,6 +60,7 @@ public class QaDto {
                 AssigneeSummary.of(q.getAssignee2()),
                 q.getPriority().getCode(),
                 q.getImages().stream().map(QaItemImage::getImageUrl).toList(),
+                githubIssue,
                 q.getCreatedAt() != null ? q.getCreatedAt().toString() : null,
                 q.getUpdatedAt() != null ? q.getUpdatedAt().toString() : null
             );
@@ -62,7 +78,9 @@ public class QaDto {
         Long assignee1Id,
         Long assignee2Id,
         @NotNull QaPriority priority,
-        List<@Size(max = 800) String> images
+        List<@Size(max = 800) String> images,
+        /** true 면 프로젝트에 연결된 GitHub repo 에 이슈도 생성 (커밋 후 비동기). */
+        Boolean createGithubIssue
     ) {}
 
     public record UpdateRequest(

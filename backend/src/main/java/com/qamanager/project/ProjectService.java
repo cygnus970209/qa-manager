@@ -61,8 +61,18 @@ public class ProjectService {
     public ProjectDto.Response update(Long projectId, ProjectDto.UpdateRequest req, Long currentMemberId) {
         Project p = findOrThrow(projectId);
         p.update(req.name(), req.description(), req.status());
+        if (Boolean.TRUE.equals(req.clearGithubRepo())) {
+            p.clearGithubRepo();
+        } else if (req.githubInstallationId() != null
+            && notBlank(req.githubRepoOwner()) && notBlank(req.githubRepoName())) {
+            p.connectGithubRepo(req.githubInstallationId(), req.githubRepoOwner(), req.githubRepoName());
+        }
         boolean pinned = pinRepository.findByProjectIdAndMemberId(projectId, currentMemberId).isPresent();
         return ProjectDto.Response.from(p, pinned);
+    }
+
+    private static boolean notBlank(String s) {
+        return s != null && !s.isBlank();
     }
 
     @Transactional

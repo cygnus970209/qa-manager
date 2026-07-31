@@ -12,6 +12,9 @@ public class ProjectDto {
         String description,
         String status,
         boolean pinned,
+        Long githubInstallationId,
+        String githubRepoOwner,
+        String githubRepoName,
         String createdAt,
         String updatedAt
     ) {
@@ -22,6 +25,9 @@ public class ProjectDto {
                 p.getDescription(),
                 p.getStatus().getCode(),
                 pinned,
+                p.getGithubInstallationId(),
+                p.getGithubRepoOwner(),
+                p.getGithubRepoName(),
                 p.getCreatedAt() != null ? p.getCreatedAt().toString() : null,
                 p.getUpdatedAt() != null ? p.getUpdatedAt().toString() : null
             );
@@ -37,6 +43,12 @@ public class ProjectDto {
     public record UpdateRequest(
         @Size(max = 100) String name,
         @Size(max = 4000) String description,
-        ProjectStatus status
+        ProjectStatus status,
+        /** GitHub repo 연결 — 세 필드를 함께 보낸다. null 이면 '변경 없음'. */
+        Long githubInstallationId,
+        @Size(max = 100) String githubRepoOwner,
+        @Size(max = 200) String githubRepoName,
+        /** repo 연결 해제는 true. */
+        Boolean clearGithubRepo
     ) {}
 }
