@@ -17,7 +17,8 @@ import type {
 } from './types'
 import { createSeed } from './seed'
 
-const LS_KEY = 'qa-demo-state-v1'
+// v2: GitHub 연동 데모 데이터(repo/issue/commit) 추가 — 구버전 상태는 버리고 재시드한다.
+const LS_KEY = 'qa-demo-state-v2'
 
 /**
  * 데모용 인메모리 + localStorage 백엔드.
@@ -116,6 +117,9 @@ export class DemoDb {
       pinned: uid != null && p.pinnedBy.includes(uid),
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
+      githubInstallationId: p.githubInstallationId ?? null,
+      githubRepoOwner: p.githubRepoOwner ?? null,
+      githubRepoName: p.githubRepoName ?? null,
     }
   }
 
@@ -145,6 +149,7 @@ export class DemoDb {
       assignee2: this.assigneeSummary(q.assignee2Id),
       priority: q.priority,
       images: q.images,
+      githubIssue: q.githubIssue ?? null,
       createdAt: q.createdAt,
       updatedAt: q.updatedAt,
     }

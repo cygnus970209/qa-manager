@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Save, Trash2 } from '@lucide/vue'
+import { CircleDot, GitCommitHorizontal, Loader2, Save, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import SearchableSelect from '~/components/base/SearchableSelect.vue'
-import type { Member, ProjectUpdate, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
+import type { GithubCommit, Member, ProjectUpdate, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
 
 const props = defineProps<{
   item: QaItem
@@ -19,6 +19,7 @@ const emit = defineEmits<{
 
 const qaApi = useQa()
 const upload = useUpload()
+const github = useGithub()
 
 const editing = ref(false)
 const saving = ref(false)
@@ -200,6 +201,34 @@ async function onQuickStatusChange(next: QaItem['status']) {
   }
 }
 
+/* ─── GitHub 연결 커밋 (이슈가 연결된 QA 에서만 조회) ─── */
+const commits = ref<GithubCommit[]>([])
+const commitsLoading = ref(false)
+
+async function loadCommits() {
+  if (!props.item.githubIssue) {
+    commits.value = []
+    return
+  }
+  commitsLoading.value = true
+  try {
+    commits.value = await github.qaCommits(props.item.id)
+  } catch {
+    // 조회 실패 시 빈 목록으로 표시 (커밋은 보조 정보).
+    commits.value = []
+  } finally {
+    commitsLoading.value = false
+  }
+}
+onMounted(loadCommits)
+// 이전/다음 이동으로 item 이 교체될 때만 재조회 (같은 항목의 PATCH 반영에는 재요청하지 않음).
+watch(() => props.item.id, loadCommits)
+
+/** 커밋 메시지 첫 줄만 표시. */
+function commitTitle(message: string): string {
+  return message.split('\n')[0] ?? message
+}
+
 /** 편집 모드 진입 없이 담당자(tester/assignee1/assignee2) 단독 변경 (즉시 PATCH) */
 async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', id: number | null) {
   const currentId =
@@ -300,6 +329,21 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         <option value="needs_recheck">추가확인필요</option>
       </select>
       <PriorityBadge :priority="item.priority" />
+      <!-- GitHub 이슈 배지 (open=초록, closed=보라) -->
+      <a
+        v-if="item.githubIssue"
+        :href="item.githubIssue.issueUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        :title="`${item.githubIssue.repoOwner}/${item.githubIssue.repoName}`"
+        :class="[
+          'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium hover:underline',
+          item.githubIssue.state === 'open' ? 'bg-emerald-50 text-emerald-600' : 'bg-purple-50 text-purple-600',
+        ]"
+      >
+        <CircleDot class="h-3 w-3" />
+        #{{ item.githubIssue.issueNumber }} · {{ item.githubIssue.state }}
+      </a>
       <!-- 테스터/담당자는 항상 다음 줄로 분리 (flex-wrap 강제 개행) -->
       <div class="basis-full" aria-hidden="true"></div>
       <!-- 비편집 모드에서 담당자도 즉시 변경 가능 (상태와 동일한 패턴) -->
@@ -491,6 +535,35 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         </label>
         <p v-if="(editing ? form.images : item.images).length === 0 && !editing" class="text-xs text-slate-400">첨부 이미지 없음</p>
       </div>
+    </div>
+
+    <!-- GitHub 연결 커밋 (이슈가 연결된 QA 에서만) -->
+    <div v-if="item.githubIssue" class="mt-5">
+      <h2 class="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+        <GitCommitHorizontal class="h-3.5 w-3.5" /> 연결된 커밋
+      </h2>
+      <div v-if="commitsLoading" class="flex items-center gap-2 py-2 text-xs text-slate-400">
+        <Loader2 class="h-3.5 w-3.5 animate-spin" /> 커밋을 불러오는 중...
+      </div>
+      <p v-else-if="commits.length === 0" class="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400">
+        커밋 메시지에 #이슈번호를 남기면 여기에 표시됩니다
+      </p>
+      <ul v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-100">
+        <li v-for="c in commits" :key="c.sha" class="flex items-center gap-3 px-3 py-2">
+          <a
+            :href="c.htmlUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-emerald-50 hover:text-emerald-600"
+          >{{ c.shortSha }}</a>
+          <span class="min-w-0 flex-1 truncate text-sm text-slate-700" :title="c.message">{{ commitTitle(c.message) }}</span>
+          <span class="hidden shrink-0 items-center gap-1.5 text-xs text-slate-400 sm:flex">
+            <img v-if="c.avatarUrl" :src="c.avatarUrl" :alt="c.authorName ?? c.authorLogin ?? ''" class="h-4 w-4 rounded-full bg-slate-100" />
+            {{ c.authorName ?? c.authorLogin ?? '-' }}
+          </span>
+          <span class="shrink-0 text-xs tabular-nums text-slate-400">{{ c.committedAt ? c.committedAt.slice(0, 10) : '-' }}</span>
+        </li>
+      </ul>
     </div>
 
     <!-- 생성/수정 날짜 (보조 정보, 본문 하단) -->

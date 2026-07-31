@@ -30,6 +30,7 @@ const form = reactive<{
   assignee1Id: number | null
   assignee2Id: number | null
   images: string[]
+  createGithubIssue: boolean
 }>({
   projectId: null,
   updateId: null,
@@ -42,6 +43,7 @@ const form = reactive<{
   assignee1Id: null,
   assignee2Id: null,
   images: [],
+  createGithubIssue: true,
 })
 
 const submitting = ref(false)
@@ -51,6 +53,12 @@ const error = ref<string | null>(null)
 const filteredUpdates = computed(() => {
   if (form.projectId == null) return [] as ProjectUpdate[]
   return props.updates.filter((u) => u.projectId === form.projectId)
+})
+
+/** 선택된 프로젝트에 GitHub repo 가 연결돼 있으면 fullName, 아니면 null (체크박스 숨김). */
+const githubRepoFullName = computed(() => {
+  const p = props.projects.find((x) => x.id === form.projectId)
+  return p?.githubRepoOwner && p.githubRepoName ? `${p.githubRepoOwner}/${p.githubRepoName}` : null
 })
 
 watch(() => props.open, (v) => {
@@ -67,6 +75,7 @@ watch(() => props.open, (v) => {
   form.assignee1Id = null
   form.assignee2Id = null
   form.images = []
+  form.createGithubIssue = true
   error.value = null
 
   // 우선순위: defaultUpdateId > defaultProjectId
@@ -169,6 +178,8 @@ async function onSubmit() {
       assignee1Id: form.assignee1Id ?? undefined,
       assignee2Id: form.assignee2Id ?? undefined,
       images: form.images,
+      // repo 미연결 프로젝트면 필드 자체를 보내지 않는다.
+      createGithubIssue: githubRepoFullName.value && form.createGithubIssue ? true : undefined,
     })
     emit('created', created)
     emit('close')
@@ -208,6 +219,18 @@ async function onSubmit() {
           </select>
         </label>
       </div>
+
+      <label v-if="githubRepoFullName" class="flex cursor-pointer items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
+        <input
+          v-model="form.createGithubIssue"
+          type="checkbox"
+          class="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-emerald-500"
+        />
+        <span class="text-xs text-slate-600">
+          GitHub 이슈도 함께 생성
+          <span class="text-slate-400">({{ githubRepoFullName }})</span>
+        </span>
+      </label>
 
       <label class="block">
         <span class="block text-xs font-medium text-slate-600">제목</span>

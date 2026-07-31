@@ -133,6 +133,10 @@ export interface Project {
   pinned: boolean
   createdAt: string | null
   updatedAt: string | null
+  /** GitHub repo 연결 정보. non_null 직렬화라 미연결 시 필드 자체가 생략됨. */
+  githubInstallationId?: number | null
+  githubRepoOwner?: string | null
+  githubRepoName?: string | null
 }
 
 export interface ProjectCreateRequest {
@@ -145,6 +149,12 @@ export interface ProjectUpdateRequest {
   name?: string
   description?: string
   status?: 'ACTIVE' | 'COMPLETED' | 'PAUSED'
+  /** GitHub repo 연결 — 셋 다 함께 보내야 함. */
+  githubInstallationId?: number
+  githubRepoOwner?: string
+  githubRepoName?: string
+  /** GitHub repo 연결 해제. */
+  clearGithubRepo?: boolean
 }
 
 /* ─────────────── ProjectUpdate (버전) ─────────────── */
@@ -202,6 +212,8 @@ export interface QaItem {
   images: string[]
   createdAt: string | null
   updatedAt: string | null
+  /** 연결된 GitHub 이슈. non_null 직렬화라 미연결 시 필드 자체가 생략됨. */
+  githubIssue?: GithubIssueInfo | null
 }
 
 export interface QaCreateRequest {
@@ -216,6 +228,8 @@ export interface QaCreateRequest {
   assignee2Id?: number
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
   images?: string[]
+  /** true 면 프로젝트에 연결된 repo 에 GitHub 이슈를 함께 생성. */
+  createGithubIssue?: boolean
 }
 
 export interface QaPatchRequest {
@@ -287,6 +301,50 @@ export interface Notification {
   actorName: string | null
   read: boolean
   createdAt: string | null
+}
+
+/* ─────────────── GitHub ─────────────── */
+/** GET /api/github/app — GitHub App 연동 상태. */
+export interface GithubAppStatus {
+  configured: boolean
+  appSlug: string | null
+  appName: string | null
+  /** 앱 설치/repo 추가 페이지. configured=false 면 null. */
+  installUrl: string | null
+}
+
+/** POST /api/github/app/manifest — hidden form POST 로 GitHub 에 제출해야 함. */
+export interface GithubManifestResponse {
+  targetUrl: string
+  manifest: string
+}
+
+export interface GithubRepo {
+  installationId: number
+  owner: string
+  name: string
+  fullName: string
+  private: boolean
+  htmlUrl: string
+}
+
+export interface GithubIssueInfo {
+  issueNumber: number
+  issueUrl: string
+  state: 'open' | 'closed'
+  repoOwner: string
+  repoName: string
+}
+
+export interface GithubCommit {
+  sha: string
+  shortSha: string
+  message: string
+  authorName: string | null
+  authorLogin: string | null
+  avatarUrl: string | null
+  htmlUrl: string
+  committedAt: string | null
 }
 
 /* ─────────────── File / S3 ─────────────── */
