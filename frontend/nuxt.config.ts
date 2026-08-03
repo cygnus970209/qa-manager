@@ -69,7 +69,8 @@ export default defineNuxtConfig({
           "connect-src 'self' http://localhost:8080 https:",
           "frame-ancestors 'none'",
           "base-uri 'self'",
-          "form-action 'self'",
+          // GitHub App Manifest flow 는 github.com 으로 hidden form POST 가 필요하다.
+          "form-action 'self' https://github.com",
         ].join('; '),
       },
     },
