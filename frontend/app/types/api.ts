@@ -216,6 +216,35 @@ export interface QaItem {
   githubIssue?: GithubIssueInfo | null
 }
 
+/** GET /api/qa/page 응답 */
+export interface QaPage {
+  content: QaItem[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+/** 프로젝트별 QA 개수/해결(수정완료+확인완료) 개수 */
+export interface QaProjectSummary {
+  projectId: number
+  count: number
+  resolved: number
+}
+
+/** GET /api/qa/dashboard-stats 응답. mine=true 조회 시 모든 수치가 '내 작업' 기준 */
+export interface QaDashboardStats {
+  total: number
+  needsFix: number
+  inProgress: number
+  fixDone: number
+  confirmed: number
+  onHold: number
+  needsRecheck: number
+  critical: number
+  byProject: QaProjectSummary[]
+}
+
 export interface QaCreateRequest {
   updateId: number
   title: string

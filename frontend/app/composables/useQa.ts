@@ -1,5 +1,7 @@
 import type {
   QaItem,
+  QaPage,
+  QaDashboardStats,
   QaCreateRequest,
   QaPatchRequest,
   QaHistoryEntry,
@@ -19,6 +21,20 @@ export function useQa() {
       testerId?: number
     }) =>
       api<QaItem[]>('/api/qa', { query: params }),
+    /** 서버 페이징 목록. size 는 10/50/100 만 허용. */
+    page: (params?: {
+      page?: number
+      size?: number
+      updateId?: number
+      status?: string
+      priority?: string
+      assigneeId?: number
+      testerId?: number
+    }) =>
+      api<QaPage>('/api/qa/page', { query: params }),
+    /** 대시보드 수치 집계. mine=true 면 내가 테스터/담당자인 QA 만. */
+    dashboardStats: (mine = false) =>
+      api<QaDashboardStats>('/api/qa/dashboard-stats', { query: { mine } }),
     get: (id: number) =>
       api<QaItem>(`/api/qa/${id}`),
     create: (body: QaCreateRequest) =>

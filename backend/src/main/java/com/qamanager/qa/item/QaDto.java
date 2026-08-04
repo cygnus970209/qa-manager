@@ -67,6 +67,31 @@ public class QaDto {
         }
     }
 
+    /** 페이징 목록 응답. */
+    public record PageResponse(
+        List<Response> content,
+        int page,
+        int size,
+        long totalElements,
+        int totalPages
+    ) {}
+
+    /** 대시보드 수치 집계. mine 조회 시 모든 수치가 '내 작업(테스터/담당자)' 기준으로 계산된다. */
+    public record DashboardStats(
+        long total,
+        long needsFix,
+        long inProgress,
+        long fixDone,
+        long confirmed,
+        long onHold,
+        long needsRecheck,
+        long critical,
+        List<ProjectSummary> byProject
+    ) {}
+
+    /** 프로젝트별 QA 개수/해결(수정완료+확인완료) 개수. */
+    public record ProjectSummary(Long projectId, long count, long resolved) {}
+
     public record CreateRequest(
         @NotNull Long updateId,
         @NotBlank @Size(max = 200) String title,

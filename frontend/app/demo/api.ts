@@ -312,6 +312,53 @@ const ROUTES: Route[] = [
     },
   },
   {
+    method: 'GET',
+    pattern: /^\/api\/qa\/page$/,
+    handler: ({ query, db }) => {
+      const size = [10, 50, 100].includes(Number(query.size)) ? Number(query.size) : 10
+      const page = Math.max(0, Number(query.page) || 0)
+      const list = db.state.qa
+      return {
+        content: list.slice(page * size, page * size + size).map((q) => db.qaDto(q)),
+        page,
+        size,
+        totalElements: list.length,
+        totalPages: Math.ceil(list.length / size),
+      }
+    },
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/qa\/dashboard-stats$/,
+    handler: ({ query, db }) => {
+      const uid = String(query.mine) === 'true' ? requireUser(db).id : null
+      const list = uid == null
+        ? db.state.qa
+        : db.state.qa.filter((q) => q.testerId === uid || q.assignee1Id === uid || q.assignee2Id === uid)
+      const count = (s: QaStatus) => list.filter((q) => q.status === s).length
+      const byProject = new Map<number, { count: number; resolved: number }>()
+      for (const q of list) {
+        const upd = db.state.updates.find((u) => u.id === q.updateId)
+        if (!upd) continue
+        const s = byProject.get(upd.projectId) ?? { count: 0, resolved: 0 }
+        s.count += 1
+        if (q.status === 'fix_done' || q.status === 'confirmed') s.resolved += 1
+        byProject.set(upd.projectId, s)
+      }
+      return {
+        total: list.length,
+        needsFix: count('needs_fix'),
+        inProgress: count('in_progress'),
+        fixDone: count('fix_done'),
+        confirmed: count('confirmed'),
+        onHold: count('on_hold'),
+        needsRecheck: count('needs_recheck'),
+        critical: list.filter((q) => q.priority === 'critical').length,
+        byProject: [...byProject].map(([projectId, v]) => ({ projectId, ...v })),
+      }
+    },
+  },
+  {
     method: 'POST',
     pattern: /^\/api\/qa$/,
     handler: ({ body, db }) => {

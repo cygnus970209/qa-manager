@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileText, Clock, Loader, CheckCheck, AlertTriangle, Plus, ArrowUpDown } from '@lucide/vue'
+import { FileText, Wrench, Loader, Check, CheckCheck, Pause, RotateCcw, AlertTriangle, Plus, ArrowUpDown } from '@lucide/vue'
 import ProjectHeader from '~/components/feature/ProjectHeader.vue'
 import UpdateAccordion from '~/components/feature/UpdateAccordion.vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
@@ -18,6 +18,7 @@ const projectsApi = useProjects()
 const updatesApi = useUpdates()
 const qaApi = useQa()
 const membersApi = useMembers()
+const auth = useAuthStore()
 
 const project = ref<Project | null>(null)
 const updates = ref<ProjectUpdate[]>([])
@@ -62,14 +63,33 @@ async function load() {
 watch(projectId, () => { if (import.meta.client) load() })
 if (import.meta.client) onMounted(load)
 
+// '내 작업만' 체크 시 내가 테스터/담당자로 지정된 QA 만 수치에 반영한다.
+const myOnly = ref(false)
+function isMine(q: QaItem) {
+  const uid = auth.user?.id
+  return uid != null && [q.tester?.id, q.assignee1?.id, q.assignee2?.id].includes(uid)
+}
+const statsItems = computed(() => (myOnly.value ? items.value.filter(isMine) : items.value))
+
 const stats = computed(() => {
-  const t = items.value.length
-  const resolved = items.value.filter((q) => q.status === 'fix_done' || q.status === 'confirmed').length
-  const inProgress = items.value.filter((q) => q.status === 'in_progress').length
-  const pending = items.value.filter((q) => q.status === 'needs_fix').length
-  const critical = items.value.filter((q) => q.priority === 'critical').length
-  return { total: t, resolved, inProgress, pending, critical }
+  const list = statsItems.value
+  const count = (s: QaItem['status']) => list.filter((q) => q.status === s).length
+  return {
+    total: list.length,
+    needsFix: count('needs_fix'),
+    inProgress: count('in_progress'),
+    fixDone: count('fix_done'),
+    confirmed: count('confirmed'),
+    onHold: count('on_hold'),
+    needsRecheck: count('needs_recheck'),
+    critical: list.filter((q) => q.priority === 'critical').length,
+  }
 })
+
+// 프로젝트 헤더/목록 요약은 '내 작업만' 필터와 무관하게 전체 기준을 유지한다.
+const resolvedAll = computed(
+  () => items.value.filter((q) => q.status === 'fix_done' || q.status === 'confirmed').length,
+)
 
 const itemsByUpdate = computed(() => {
   const map = new Map<number, QaItem[]>()
@@ -158,8 +178,8 @@ async function confirmUpdateDelete() {
         </div>
       </div>
       <!-- Stats skeleton -->
-      <section class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-5">
-        <div v-for="i in 5" :key="i" class="h-[96px] animate-pulse rounded-xl border border-slate-200 bg-white p-5">
+      <section class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <div v-for="i in 8" :key="i" class="h-[96px] animate-pulse rounded-xl border border-slate-200 bg-white p-5">
           <div class="flex items-start justify-between">
             <div class="space-y-2">
               <div class="h-3 w-16 rounded bg-slate-200" />
@@ -190,31 +210,47 @@ async function confirmUpdateDelete() {
     <template v-else-if="project">
       <ProjectHeader
         :project="project"
-        :total-q-a="stats.total"
-        :resolved-count="stats.resolved"
+        :total-q-a="items.length"
+        :resolved-count="resolvedAll"
         :update-count="updates.length"
         @change-status="onProjectStatus"
         @edit="projectEditOpen = true"
         @remove="projectDeleteOpen = true"
       />
 
-      <section class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-5">
-        <StatsCard title="전체 QA" :value="stats.total" :icon="FileText" icon-color="text-blue-500" icon-bg="bg-blue-50" />
-        <StatsCard title="대기중" :value="stats.pending" :icon="Clock" icon-color="text-slate-500" icon-bg="bg-slate-100" />
-        <StatsCard title="진행중" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500" icon-bg="bg-blue-50" />
-        <StatsCard
-          title="완료" :value="stats.resolved" :icon="CheckCheck"
-          icon-color="text-emerald-500" icon-bg="bg-emerald-50"
-          :trend="`완료율 ${stats.total > 0 ? Math.round((stats.resolved / stats.total) * 100) : 0}%`"
-        />
-        <StatsCard title="긴급" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+      <section class="mt-6">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-slate-700">QA 현황</h2>
+          <label class="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500">
+            <input
+              v-model="myOnly"
+              type="checkbox"
+              class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
+            />
+            내 작업만
+          </label>
+        </div>
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          <StatsCard title="전체 QA" :value="stats.total" :icon="FileText" icon-color="text-blue-500" icon-bg="bg-blue-50" />
+          <StatsCard title="수정필요" :value="stats.needsFix" :icon="Wrench" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+          <StatsCard title="진행중" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500" icon-bg="bg-blue-50" />
+          <StatsCard title="수정완료" :value="stats.fixDone" :icon="Check" icon-color="text-amber-500" icon-bg="bg-amber-50" />
+          <StatsCard
+            title="확인완료" :value="stats.confirmed" :icon="CheckCheck"
+            icon-color="text-emerald-500" icon-bg="bg-emerald-50"
+            :trend="`완료율 ${stats.total > 0 ? Math.round((stats.confirmed / stats.total) * 100) : 0}%`"
+          />
+          <StatsCard title="보류" :value="stats.onHold" :icon="Pause" icon-color="text-slate-500" icon-bg="bg-slate-100" />
+          <StatsCard title="추가확인필요" :value="stats.needsRecheck" :icon="RotateCcw" icon-color="text-purple-500" icon-bg="bg-purple-50" />
+          <StatsCard title="긴급" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+        </div>
       </section>
 
       <section class="mt-6">
         <div class="mb-3 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-slate-700">업데이트별 QA 항목</h2>
           <div class="flex items-center gap-2 text-xs text-slate-400">
-            <span>{{ updates.length }}개 업데이트 · {{ stats.total }}개 QA</span>
+            <span>{{ updates.length }}개 업데이트 · {{ items.length }}개 QA</span>
             <button
               v-if="updates.length > 1"
               type="button"

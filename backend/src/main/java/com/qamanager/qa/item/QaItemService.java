@@ -10,13 +10,19 @@ import com.qamanager.qa.shared.QaPriority;
 import com.qamanager.qa.shared.QaStatus;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -47,6 +53,63 @@ public class QaItemService {
     @Transactional(readOnly = true)
     public List<QaDto.Response> list(Long updateId, String status, String priority,
                                      Long assigneeId, Long testerId) {
+        Specification<QaItem> spec = filterSpec(updateId, status, priority, assigneeId, testerId)
+            .and((root, q, cb) -> {
+                q.orderBy(cb.desc(root.get("createdAt")));
+                return cb.conjunction();
+            });
+        return qaRepository.findAll(spec).stream().map(QaDto.Response::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public QaDto.PageResponse page(Long updateId, String status, String priority,
+                                   Long assigneeId, Long testerId, int page, int size) {
+        Page<QaItem> result = qaRepository.findAll(
+            filterSpec(updateId, status, priority, assigneeId, testerId),
+            PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        return new QaDto.PageResponse(
+            result.getContent().stream().map(QaDto.Response::from).toList(),
+            result.getNumber(), result.getSize(),
+            result.getTotalElements(), result.getTotalPages());
+    }
+
+    /** 대시보드 수치 집계. memberId 지정 시 해당 멤버가 테스터/담당자인 QA 만 집계한다. */
+    @Transactional(readOnly = true)
+    public QaDto.DashboardStats dashboardStats(Long memberId) {
+        long total = 0;
+        long critical = 0;
+        Map<String, Long> byStatus = new HashMap<>();
+        Map<Long, long[]> byProject = new LinkedHashMap<>(); // projectId -> [count, resolved]
+        for (Object[] row : qaRepository.dashboardRows(memberId)) {
+            Long projectId = (Long) row[0];
+            String status = (String) row[1];
+            String priority = (String) row[2];
+            long cnt = (Long) row[3];
+            total += cnt;
+            byStatus.merge(status, cnt, Long::sum);
+            if (QaPriority.CRITICAL.getCode().equals(priority)) critical += cnt;
+            long[] p = byProject.computeIfAbsent(projectId, k -> new long[2]);
+            p[0] += cnt;
+            if (QaStatus.FIX_DONE.getCode().equals(status) || QaStatus.CONFIRMED.getCode().equals(status)) {
+                p[1] += cnt;
+            }
+        }
+        return new QaDto.DashboardStats(
+            total,
+            byStatus.getOrDefault(QaStatus.NEEDS_FIX.getCode(), 0L),
+            byStatus.getOrDefault(QaStatus.IN_PROGRESS.getCode(), 0L),
+            byStatus.getOrDefault(QaStatus.FIX_DONE.getCode(), 0L),
+            byStatus.getOrDefault(QaStatus.CONFIRMED.getCode(), 0L),
+            byStatus.getOrDefault(QaStatus.ON_HOLD.getCode(), 0L),
+            byStatus.getOrDefault(QaStatus.NEEDS_RECHECK.getCode(), 0L),
+            critical,
+            byProject.entrySet().stream()
+                .map(e -> new QaDto.ProjectSummary(e.getKey(), e.getValue()[0], e.getValue()[1]))
+                .toList());
+    }
+
+    private Specification<QaItem> filterSpec(Long updateId, String status, String priority,
+                                             Long assigneeId, Long testerId) {
         Specification<QaItem> spec = Specification.unrestricted();
         if (updateId != null) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("projectUpdate").get("id"), updateId));
@@ -69,11 +132,7 @@ public class QaItemService {
         if (testerId != null) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("tester").get("id"), testerId));
         }
-        spec = spec.and((root, q, cb) -> {
-            q.orderBy(cb.desc(root.get("createdAt")));
-            return cb.conjunction();
-        });
-        return qaRepository.findAll(spec).stream().map(QaDto.Response::from).toList();
+        return spec;
     }
 
     @Transactional(readOnly = true)

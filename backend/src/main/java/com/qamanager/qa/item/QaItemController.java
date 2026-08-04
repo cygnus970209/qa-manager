@@ -35,6 +35,25 @@ public class QaItemController {
         return qaService.list(updateId, status, priority, assigneeId, testerId);
     }
 
+    /** 페이징 목록. size 는 10/50/100 만 허용 (그 외 값은 10 으로 보정). */
+    @GetMapping("/page")
+    public QaDto.PageResponse page(@RequestParam(required = false) Long updateId,
+                                   @RequestParam(required = false) String status,
+                                   @RequestParam(required = false) String priority,
+                                   @RequestParam(required = false) Long assigneeId,
+                                   @RequestParam(required = false) Long testerId,
+                                   @RequestParam(defaultValue = "0") int page,
+                                   @RequestParam(defaultValue = "10") int size) {
+        int safeSize = (size == 10 || size == 50 || size == 100) ? size : 10;
+        return qaService.page(updateId, status, priority, assigneeId, testerId, Math.max(0, page), safeSize);
+    }
+
+    /** 대시보드 수치 집계. mine=true 면 현재 로그인 사용자가 테스터/담당자인 QA 만 집계. */
+    @GetMapping("/dashboard-stats")
+    public QaDto.DashboardStats dashboardStats(@RequestParam(defaultValue = "false") boolean mine) {
+        return qaService.dashboardStats(mine ? CurrentUser.getIdOrThrow() : null);
+    }
+
     @GetMapping("/{id}")
     public QaDto.Response get(@PathVariable Long id) {
         return qaService.get(id);

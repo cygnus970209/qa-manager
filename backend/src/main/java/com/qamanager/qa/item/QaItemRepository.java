@@ -2,6 +2,25 @@ package com.qamanager.qa.item;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 public interface QaItemRepository extends JpaRepository<QaItem, Long>, JpaSpecificationExecutor<QaItem> {
+
+    /**
+     * 대시보드 집계용 (프로젝트 × 상태 × 우선순위)별 건수.
+     * memberId 가 null 이면 전체, 지정하면 해당 멤버가 테스터/담당자인 QA 만 집계한다.
+     */
+    @Query("""
+        select u.project.id, q.status, q.priority, count(q)
+        from QaItem q join q.projectUpdate u
+        where :memberId is null
+           or q.tester.id = :memberId
+           or q.assignee1.id = :memberId
+           or q.assignee2.id = :memberId
+        group by u.project.id, q.status, q.priority
+        """)
+    List<Object[]> dashboardRows(@Param("memberId") Long memberId);
 }

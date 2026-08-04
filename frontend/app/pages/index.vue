@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { FolderPlus, Plus, FileText, Clock, Loader, CheckCheck, AlertTriangle } from '@lucide/vue'
+import { FolderPlus, Plus, FileText, Wrench, Loader, Check, CheckCheck, Pause, RotateCcw, AlertTriangle } from '@lucide/vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
 import ProjectCard from '~/components/feature/ProjectCard.vue'
 import QAList from '~/components/feature/QAList.vue'
 import NewProjectModal from '~/components/feature/NewProjectModal.vue'
 import NewQAModal from '~/components/feature/NewQAModal.vue'
 import TeamsSetupNotice from '~/components/feature/TeamsSetupNotice.vue'
-import type { Member, Project, ProjectUpdate, QaItem } from '~/types/api'
+import type { Member, Project, ProjectUpdate, QaPage, QaDashboardStats } from '~/types/api'
 
 const projectsApi = useProjects()
 const updatesApi = useUpdates()
@@ -17,18 +17,32 @@ const router = useRouter()
 
 const projects = ref<Project[]>([])
 const updates = ref<ProjectUpdate[]>([])
-const qaItems = ref<QaItem[]>([])
 const members = ref<Member[]>([])
 const loading = ref(true)
 const projectModalOpen = ref(false)
 const qaModalOpen = ref(false)
 const teamsNoticeOpen = ref(false)
 
+// QA 목록은 서버 페이징으로 가져온다 (10/50/100).
+const qaPage = ref<QaPage | null>(null)
+const pageNum = ref(0)
+const pageSize = ref(10)
+
+// 대시보드 수치는 집계 API 사용. overall 은 프로젝트 카드에도 쓰이므로 항상 전체 기준.
+const overallStats = ref<QaDashboardStats | null>(null)
+const myStats = ref<QaDashboardStats | null>(null)
+const myOnly = ref(false)
+
+async function loadQaPage() {
+  qaPage.value = await qaApi.page({ page: pageNum.value, size: pageSize.value })
+}
+
 async function load() {
   loading.value = true
   try {
     projects.value = await projectsApi.list()
-    qaItems.value = await qaApi.list()
+    overallStats.value = await qaApi.dashboardStats()
+    await loadQaPage()
     members.value = await membersApi.list()
     const lists = await Promise.all(projects.value.map((p) => updatesApi.listByProject(p.id)))
     updates.value = lists.flat()
@@ -60,29 +74,37 @@ if (import.meta.client) {
   onMounted(load)
 }
 
-const stats = computed(() => {
-  const totalQA = qaItems.value.length
-  const resolved = qaItems.value.filter((q) => q.status === 'fix_done' || q.status === 'confirmed').length
-  const inProgress = qaItems.value.filter((q) => q.status === 'in_progress').length
-  const pending = qaItems.value.filter((q) => q.status === 'needs_fix').length
-  const critical = qaItems.value.filter((q) => q.priority === 'critical').length
-  return { totalQA, resolved, inProgress, pending, critical }
+const EMPTY_STATS: QaDashboardStats = {
+  total: 0, needsFix: 0, inProgress: 0, fixDone: 0, confirmed: 0,
+  onHold: 0, needsRecheck: 0, critical: 0, byProject: [],
+}
+
+// '내 작업만' 체크 시 내가 테스터/담당자로 지정된 QA 기준 집계로 전환한다.
+const stats = computed(() => (myOnly.value ? myStats.value : overallStats.value) ?? EMPTY_STATS)
+
+// 첫 체크 때만 내 작업 집계를 가져온다.
+watch(myOnly, async (v) => {
+  if (v && !myStats.value) myStats.value = await qaApi.dashboardStats(true)
 })
 
+// 프로젝트 카드 수치는 '내 작업만' 필터와 무관하게 전체 기준을 유지한다.
 const projectQaStats = computed(() => {
-  const updIdToProject = new Map<number, number>()
-  for (const u of updates.value) updIdToProject.set(u.id, u.projectId)
   const stat = new Map<number, { count: number; resolved: number }>()
-  for (const q of qaItems.value) {
-    const pid = updIdToProject.get(q.updateId)
-    if (pid == null) continue
-    const s = stat.get(pid) ?? { count: 0, resolved: 0 }
-    s.count += 1
-    if (q.status === 'fix_done' || q.status === 'confirmed') s.resolved += 1
-    stat.set(pid, s)
+  for (const s of overallStats.value?.byProject ?? []) {
+    stat.set(s.projectId, { count: s.count, resolved: s.resolved })
   }
   return stat
 })
+
+watch(pageSize, async () => {
+  pageNum.value = 0
+  await loadQaPage()
+})
+
+async function goPage(p: number) {
+  pageNum.value = p
+  await loadQaPage()
+}
 
 async function onTogglePin(id: number) {
   await projectsApi.togglePin(id)
@@ -92,8 +114,12 @@ async function onTogglePin(id: number) {
 function onProjectCreated(p: Project) {
   projects.value.unshift(p)
 }
-function onQaCreated(item: QaItem) {
-  qaItems.value.unshift(item)
+async function onQaCreated() {
+  // 서버 페이징/집계 기준과 어긋나지 않게 재조회한다.
+  myStats.value = null
+  overallStats.value = await qaApi.dashboardStats()
+  if (myOnly.value) myStats.value = await qaApi.dashboardStats(true)
+  await loadQaPage()
 }
 </script>
 
@@ -162,40 +188,49 @@ function onQaCreated(item: QaItem) {
       </div>
     </section>
 
-    <section class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-5">
-      <template v-if="loading">
-        <div v-for="i in 5" :key="i" class="h-[96px] animate-pulse rounded-xl border border-slate-200 bg-white p-5">
-          <div class="flex items-start justify-between">
-            <div class="space-y-2">
-              <div class="h-3 w-16 rounded bg-slate-200" />
-              <div class="h-7 w-10 rounded bg-slate-200" />
-              <div class="h-3 w-14 rounded bg-slate-100" />
+    <section class="mb-6">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-slate-700">QA 현황</h2>
+        <label class="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500">
+          <input
+            v-model="myOnly"
+            type="checkbox"
+            class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
+          />
+          내 작업만
+        </label>
+      </div>
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <template v-if="loading">
+          <div v-for="i in 8" :key="i" class="h-[96px] animate-pulse rounded-xl border border-slate-200 bg-white p-5">
+            <div class="flex items-start justify-between">
+              <div class="space-y-2">
+                <div class="h-3 w-16 rounded bg-slate-200" />
+                <div class="h-7 w-10 rounded bg-slate-200" />
+                <div class="h-3 w-14 rounded bg-slate-100" />
+              </div>
+              <div class="h-10 w-10 rounded-lg bg-slate-100" />
             </div>
-            <div class="h-10 w-10 rounded-lg bg-slate-100" />
           </div>
-        </div>
-      </template>
-      <template v-else>
-        <StatsCard
-          title="전체 QA"
-          :value="stats.totalQA"
-          :icon="FileText"
-          icon-color="text-blue-500"
-          icon-bg="bg-blue-50"
-          :trend="`진행중 ${stats.inProgress}건`"
-        />
-        <StatsCard title="대기중" :value="stats.pending" :icon="Clock" icon-color="text-slate-500" icon-bg="bg-slate-100" />
-        <StatsCard title="진행중" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500" icon-bg="bg-blue-50" />
-        <StatsCard
-          title="완료"
-          :value="stats.resolved"
-          :icon="CheckCheck"
-          icon-color="text-emerald-500"
-          icon-bg="bg-emerald-50"
-          :trend="`완료율 ${stats.totalQA > 0 ? Math.round((stats.resolved / stats.totalQA) * 100) : 0}%`"
-        />
-        <StatsCard title="긴급" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500" icon-bg="bg-rose-50" />
-      </template>
+        </template>
+        <template v-else>
+          <StatsCard title="전체 QA" :value="stats.total" :icon="FileText" icon-color="text-blue-500" icon-bg="bg-blue-50" />
+          <StatsCard title="수정필요" :value="stats.needsFix" :icon="Wrench" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+          <StatsCard title="진행중" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500" icon-bg="bg-blue-50" />
+          <StatsCard title="수정완료" :value="stats.fixDone" :icon="Check" icon-color="text-amber-500" icon-bg="bg-amber-50" />
+          <StatsCard
+            title="확인완료"
+            :value="stats.confirmed"
+            :icon="CheckCheck"
+            icon-color="text-emerald-500"
+            icon-bg="bg-emerald-50"
+            :trend="`완료율 ${stats.total > 0 ? Math.round((stats.confirmed / stats.total) * 100) : 0}%`"
+          />
+          <StatsCard title="보류" :value="stats.onHold" :icon="Pause" icon-color="text-slate-500" icon-bg="bg-slate-100" />
+          <StatsCard title="추가확인필요" :value="stats.needsRecheck" :icon="RotateCcw" icon-color="text-purple-500" icon-bg="bg-purple-50" />
+          <StatsCard title="긴급" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+        </template>
+      </div>
     </section>
 
     <section>
@@ -208,7 +243,42 @@ function onQaCreated(item: QaItem) {
           <div class="h-5 w-16 rounded-full bg-slate-100" />
         </div>
       </div>
-      <QAList v-else :items="qaItems" :updates="updates" :members="members" />
+      <template v-else>
+        <QAList :items="qaPage?.content ?? []" :updates="updates" :members="members" />
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 text-xs text-slate-500">
+            <span>페이지당</span>
+            <select
+              v-model.number="pageSize"
+              class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            >
+              <option :value="10">10개</option>
+              <option :value="50">50개</option>
+              <option :value="100">100개</option>
+            </select>
+            <span v-if="qaPage">총 {{ qaPage.totalElements.toLocaleString() }}건</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              class="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              :disabled="pageNum === 0"
+              @click="goPage(pageNum - 1)"
+            >
+              이전
+            </button>
+            <span class="px-2 text-xs text-slate-500">{{ pageNum + 1 }} / {{ qaPage?.totalPages || 1 }}</span>
+            <button
+              type="button"
+              class="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              :disabled="!qaPage || pageNum >= qaPage.totalPages - 1"
+              @click="goPage(pageNum + 1)"
+            >
+              다음
+            </button>
+          </div>
+        </div>
+      </template>
     </section>
 
     <NewProjectModal :open="projectModalOpen" @close="projectModalOpen = false" @created="onProjectCreated" />
