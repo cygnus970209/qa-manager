@@ -60,4 +60,3 @@ Teams 관리 센터 → **Teams 앱 → 앱 관리 → 앱 업로드**로 zip �
 `teams_send_log`에 안내가 남습니다.
 
 > 이 봇은 `isNotificationOnly: true`(알림 전용)라서 사용자가 봇에게 보내는 메세지에는 응답하지 않습니다.
-> 
