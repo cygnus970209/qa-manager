@@ -381,6 +381,7 @@ export interface PresignRequest {
   fileName: string
   contentType: string
   purpose: 'qa_image' | 'comment_image' | 'avatar'
+  fileSize: number
 }
 
 export interface PresignResponse {

@@ -3,14 +3,16 @@ import {
   Check,
   CornerDownRight,
   Edit3,
-  Image as ImageIcon,
+  FileText,
   MessageSquare,
+  Paperclip,
   Plus,
   Reply,
   Trash2,
   X,
 } from '@lucide/vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
+import { attachmentFileName, isPdfUrl, openPdfInNewTab } from '~/utils/attachments'
 import { timeAgo } from '~/utils/format'
 import type { Member, QaComment } from '~/types/api'
 
@@ -96,9 +98,10 @@ const filteredMembers = computed(() => {
 /* ─── Lightbox ─── */
 const lightboxImages = ref<string[]>([])
 const lightboxIndex = ref<number | null>(null)
+/** 첨부 목록에서 PDF 를 제외한 이미지만 라이트박스에 넘기고, 인덱스도 그에 맞춰 변환한다. */
 function openLightbox(images: string[], idx: number) {
-  lightboxImages.value = images
-  lightboxIndex.value = idx
+  lightboxImages.value = images.filter((u) => !isPdfUrl(u))
+  lightboxIndex.value = images.slice(0, idx).filter((u) => !isPdfUrl(u)).length
 }
 
 /* ─── 자동 textarea 높이 ─── */
@@ -145,13 +148,13 @@ async function uploadFiles(files: FileList | File[] | null, target: 'new' | 'edi
   try {
     const urls: string[] = []
     for (const f of Array.from(files as Iterable<File>)) {
-      urls.push(await upload.uploadImage(f, 'comment_image'))
+      urls.push(await upload.uploadFile(f, 'comment_image'))
     }
     if (target === 'new') newImages.value.push(...urls)
     else if (target === 'edit') editImages.value.push(...urls)
     else replyImages.value.push(...urls)
   } catch (e: any) {
-    error.value = e?.message ?? '이미지 업로드 실패'
+    error.value = e?.message ?? '파일 업로드 실패'
   } finally {
     uploading.value = false
   }
@@ -431,7 +434,11 @@ function memberInitial(name: string) {
                 </div>
                 <div v-if="editImages.length > 0" class="mt-2 flex flex-wrap gap-2">
                   <div v-for="(img, idx) in editImages" :key="img + idx" class="group relative">
-                    <img :src="img" class="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
+                    <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1">
+                      <FileText class="h-5 w-5 shrink-0 text-rose-500" />
+                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                    </div>
+                    <img v-else :src="img" class="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
                     <button type="button" class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white opacity-0 transition-opacity group-hover:opacity-100" @click="editImages.splice(idx, 1)">
                       <X class="h-2.5 w-2.5" />
                     </button>
@@ -439,9 +446,9 @@ function memberInitial(name: string) {
                 </div>
                 <div class="mt-2 flex items-center gap-2">
                   <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
-                    <ImageIcon class="h-3.5 w-3.5" />
-                    <input type="file" multiple accept="image/*" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'edit'); ($event.target as HTMLInputElement).value = ''" />
-                    {{ uploading ? '업로드…' : '이미지' }}
+                    <Paperclip class="h-3.5 w-3.5" />
+                    <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'edit'); ($event.target as HTMLInputElement).value = ''" />
+                    {{ uploading ? '업로드…' : '파일' }}
                   </label>
                   <button type="button" :disabled="!editContent.trim() || editContent.length > MAX_LEN" class="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40" @click="saveEdit">저장</button>
                   <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200" @click="cancelEdit">취소</button>
@@ -457,9 +464,15 @@ function memberInitial(name: string) {
                   </template>
                 </p>
                 <div v-if="root.images.length > 0" class="mt-2 flex flex-wrap gap-2">
-                  <button v-for="(img, idx) in root.images" :key="img + idx" type="button" class="block cursor-zoom-in" @click="openLightbox(root.images, idx)">
-                    <img :src="img" alt="" class="h-16 w-16 rounded-lg border border-slate-200 object-cover transition-colors hover:border-emerald-300 md:h-20 md:w-20" />
-                  </button>
+                  <template v-for="(img, idx) in root.images" :key="img + idx">
+                    <button v-if="isPdfUrl(img)" type="button" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 transition-colors hover:border-emerald-300 md:h-20 md:w-20" @click="openPdfInNewTab(img)">
+                      <FileText class="h-5 w-5 shrink-0 text-rose-500" />
+                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                    </button>
+                    <button v-else type="button" class="block cursor-zoom-in" @click="openLightbox(root.images, idx)">
+                      <img :src="img" alt="" class="h-16 w-16 rounded-lg border border-slate-200 object-cover transition-colors hover:border-emerald-300 md:h-20 md:w-20" />
+                    </button>
+                  </template>
                 </div>
 
                 <!-- 반응 -->
@@ -531,9 +544,15 @@ function memberInitial(name: string) {
                   </template>
                 </p>
                 <div v-if="child.images.length > 0" class="mt-2 flex flex-wrap gap-2">
-                  <button v-for="(img, idx) in child.images" :key="img + idx" type="button" class="block cursor-zoom-in" @click="openLightbox(child.images, idx)">
-                    <img :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover transition-colors hover:border-emerald-300" />
-                  </button>
+                  <template v-for="(img, idx) in child.images" :key="img + idx">
+                    <button v-if="isPdfUrl(img)" type="button" :title="attachmentFileName(img)" class="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 transition-colors hover:border-emerald-300" @click="openPdfInNewTab(img)">
+                      <FileText class="h-4 w-4 shrink-0 text-rose-500" />
+                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                    </button>
+                    <button v-else type="button" class="block cursor-zoom-in" @click="openLightbox(child.images, idx)">
+                      <img :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover transition-colors hover:border-emerald-300" />
+                    </button>
+                  </template>
                 </div>
                 <div v-if="isMine(child)" class="mt-1.5 flex items-center gap-2">
                   <template v-if="deletingId === child.id">
@@ -586,7 +605,11 @@ function memberInitial(name: string) {
                 </div>
                 <div v-if="replyImages.length > 0" class="mt-2 flex flex-wrap gap-2">
                   <div v-for="(img, idx) in replyImages" :key="img + idx" class="group relative">
-                    <img :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover" />
+                    <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1">
+                      <FileText class="h-4 w-4 shrink-0 text-rose-500" />
+                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                    </div>
+                    <img v-else :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover" />
                     <button type="button" class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white opacity-0 transition-opacity group-hover:opacity-100" @click="replyImages.splice(idx, 1)">
                       <X class="h-2.5 w-2.5" />
                     </button>
@@ -594,9 +617,9 @@ function memberInitial(name: string) {
                 </div>
                 <div class="mt-2 flex items-center gap-2">
                   <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
-                    <ImageIcon class="h-3.5 w-3.5" />
-                    <input type="file" multiple accept="image/*" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'reply'); ($event.target as HTMLInputElement).value = ''" />
-                    {{ uploading ? '업로드…' : '이미지' }}
+                    <Paperclip class="h-3.5 w-3.5" />
+                    <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'reply'); ($event.target as HTMLInputElement).value = ''" />
+                    {{ uploading ? '업로드…' : '파일' }}
                   </label>
                   <button type="button" :disabled="(!replyContent.trim() && replyImages.length === 0) || replyContent.length > MAX_LEN" class="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40" @click="submitReply">답글 작성</button>
                   <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200" @click="cancelReply">취소</button>
@@ -646,7 +669,11 @@ function memberInitial(name: string) {
             </div>
             <div v-if="newImages.length > 0" class="mt-2 flex flex-wrap gap-2">
               <div v-for="(img, idx) in newImages" :key="img + idx" class="group relative">
-                <img :src="img" class="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
+                <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1">
+                  <FileText class="h-5 w-5 shrink-0 text-rose-500" />
+                  <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                </div>
+                <img v-else :src="img" class="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
                 <button type="button" class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white opacity-0 transition-opacity group-hover:opacity-100" @click="newImages.splice(idx, 1)">
                   <X class="h-2.5 w-2.5" />
                 </button>
@@ -654,9 +681,9 @@ function memberInitial(name: string) {
             </div>
             <div class="mt-2 flex items-center justify-between">
               <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
-                <ImageIcon class="h-3.5 w-3.5" />
-                <input type="file" multiple accept="image/*" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'new'); ($event.target as HTMLInputElement).value = ''" />
-                {{ uploading ? '업로드…' : '이미지 추가' }}
+                <Paperclip class="h-3.5 w-3.5" />
+                <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'new'); ($event.target as HTMLInputElement).value = ''" />
+                {{ uploading ? '업로드…' : '파일 추가' }}
               </label>
               <div class="flex items-center gap-2">
                 <span :class="['text-xs', newContent.length > MAX_LEN ? 'text-rose-500' : 'text-slate-400']">{{ newContent.length }}/{{ MAX_LEN }}</span>

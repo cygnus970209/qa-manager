@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { FileText } from '@lucide/vue'
 import AppDialog from '~/components/base/AppDialog.vue'
 import SearchableSelect from '~/components/base/SearchableSelect.vue'
+import { attachmentFileName, isPdfUrl } from '~/utils/attachments'
 import type { Member, Project, ProjectUpdate, QaCreateRequest, QaItem } from '~/types/api'
 
 const props = defineProps<{
@@ -113,7 +115,7 @@ async function uploadFiles(files: Iterable<File>) {
   error.value = null
   try {
     for (const file of files) {
-      const url = await upload.uploadImage(ensureNamed(file), 'qa_image')
+      const url = await upload.uploadFile(ensureNamed(file), 'qa_image')
       form.images.push(url)
     }
   } catch (e: any) {
@@ -336,14 +338,22 @@ async function onSubmit() {
       </div>
 
       <div>
-        <span class="block text-xs font-medium text-slate-600">이미지</span>
+        <span class="block text-xs font-medium text-slate-600">첨부 파일</span>
         <div class="mt-2 flex flex-wrap gap-2">
           <div
             v-for="(img, i) in form.images"
             :key="img"
             class="relative h-16 w-16 overflow-hidden rounded border border-slate-200"
           >
-            <img :src="img" :alt="`image-${i}`" class="h-full w-full object-cover" />
+            <div
+              v-if="isPdfUrl(img)"
+              :title="attachmentFileName(img)"
+              class="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-slate-50 px-1"
+            >
+              <FileText class="h-5 w-5 shrink-0 text-rose-500" />
+              <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+            </div>
+            <img v-else :src="img" :alt="`image-${i}`" class="h-full w-full object-cover" />
             <button
               type="button"
               class="absolute right-0 top-0 m-0.5 rounded bg-black/60 px-1 text-[10px] text-white"
@@ -351,7 +361,7 @@ async function onSubmit() {
             >×</button>
           </div>
           <label class="flex h-16 w-16 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500">
-            <input type="file" accept="image/*" multiple class="hidden" @change="onPickFile" />
+            <input type="file" accept="image/*,application/pdf" multiple class="hidden" @change="onPickFile" />
             {{ uploading ? '업로드…' : '+ 추가' }}
           </label>
         </div>

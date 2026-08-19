@@ -1,9 +1,11 @@
 import type { PresignRequest, PresignResponse } from '~/types/api'
 
+export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024
+
 /**
  * 브라우저에서 직접 S3로 PUT 업로드.
  * 1) 백엔드 /api/files/presigned 호출 → uploadUrl + publicUrl
- * 2) uploadUrl 로 PUT (Content-Type 정확히 맞춰야 서명 검증 성공)
+ * 2) uploadUrl 로 PUT (Content-Type/Content-Length 정확히 맞춰야 서명 검증 성공)
  * 3) publicUrl 반환
  */
 function fileToDataUrl(file: File): Promise<string> {
@@ -15,11 +17,25 @@ function fileToDataUrl(file: File): Promise<string> {
   })
 }
 
+function assertUploadable(file: File, purpose: PresignRequest['purpose']) {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    throw new Error(`파일 크기는 100MB 이하만 업로드할 수 있습니다: ${file.name}`)
+  }
+  const type = (file.type || '').toLowerCase()
+  const isImage = type.startsWith('image/')
+  if (purpose === 'avatar') {
+    if (!isImage) throw new Error(`이미지만 업로드할 수 있습니다: ${file.name}`)
+  } else if (!isImage && type !== 'application/pdf') {
+    throw new Error(`이미지 또는 PDF만 업로드할 수 있습니다: ${file.name}`)
+  }
+}
+
 export function useUpload() {
   const api = useApi()
   const config = useRuntimeConfig()
 
-  async function uploadImage(file: File, purpose: PresignRequest['purpose']): Promise<string> {
+  async function uploadFile(file: File, purpose: PresignRequest['purpose']): Promise<string> {
+    assertUploadable(file, purpose)
     // 데모 모드: S3 대신 브라우저에서 data URL 로 변환해 localStorage 에 보관한다.
     if (config.public.demoMode === true) {
       return await fileToDataUrl(file)
@@ -30,6 +46,7 @@ export function useUpload() {
         fileName: file.name,
         contentType: file.type || 'application/octet-stream',
         purpose,
+        fileSize: file.size,
       },
     })
     const res = await fetch(presign.uploadUrl, {
@@ -43,5 +60,5 @@ export function useUpload() {
     return presign.publicUrl
   }
 
-  return { uploadImage }
+  return { uploadFile }
 }

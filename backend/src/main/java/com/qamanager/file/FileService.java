@@ -18,6 +18,9 @@ public class FileService {
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
         "image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"
     );
+    /** 아바타를 제외한 QA/댓글 첨부에서 이미지 외에 추가로 허용하는 타입. */
+    private static final Set<String> ALLOWED_DOCUMENT_TYPES = Set.of("application/pdf");
+    private static final long MAX_FILE_SIZE_BYTES = 100L * 1024 * 1024;
 
     private final S3Properties props;
     private final S3Presigner presigner;
@@ -28,16 +31,24 @@ public class FileService {
     }
 
     public FileDto.PresignResponse presignUpload(FileDto.PresignRequest req) {
-        if (!ALLOWED_IMAGE_TYPES.contains(req.contentType().toLowerCase())) {
+        String contentType = req.contentType().toLowerCase();
+        boolean allowed = ALLOWED_IMAGE_TYPES.contains(contentType)
+            || (!"avatar".equals(req.purpose()) && ALLOWED_DOCUMENT_TYPES.contains(contentType));
+        if (!allowed) {
             throw ApiException.badRequest("허용되지 않은 contentType: " + req.contentType());
+        }
+        if (req.fileSize() > MAX_FILE_SIZE_BYTES) {
+            throw ApiException.badRequest("파일 크기는 100MB 이하만 업로드할 수 있습니다.");
         }
         String safeName = sanitize(req.fileName());
         String key = "qa-manager/" + req.purpose() + "/" + UUID.randomUUID() + "-" + safeName;
 
+        // contentLength 를 서명에 포함해 선언한 크기와 다른 PUT 은 S3 가 거부하게 한다.
         PutObjectRequest put = PutObjectRequest.builder()
             .bucket(props.bucket())
             .key(key)
             .contentType(req.contentType())
+            .contentLength(req.fileSize())
             .build();
 
         PutObjectPresignRequest presign = PutObjectPresignRequest.builder()

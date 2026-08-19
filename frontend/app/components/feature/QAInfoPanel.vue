@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { CircleDot, GitCommitHorizontal, Loader2, Save, Trash2 } from '@lucide/vue'
+import { CircleDot, FileText, GitCommitHorizontal, Loader2, Save, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import SearchableSelect from '~/components/base/SearchableSelect.vue'
+import { attachmentFileName, isPdfUrl, openPdfInNewTab } from '~/utils/attachments'
 import type { GithubCommit, Member, ProjectUpdate, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
 
 const props = defineProps<{
@@ -26,7 +27,12 @@ const saving = ref(false)
 const uploading = ref(false)
 const error = ref<string | null>(null)
 const lightboxIndex = ref<number | null>(null)
-const lightboxImages = computed<string[]>(() => (editing.value ? form.images : props.item.images))
+const attachments = computed<string[]>(() => (editing.value ? form.images : props.item.images))
+const lightboxImages = computed<string[]>(() => attachments.value.filter((u) => !isPdfUrl(u)))
+/** 전체 첨부 목록 인덱스 → 이미지만 모은 라이트박스 인덱스로 변환해 연다. */
+function openLightboxAt(i: number) {
+  lightboxIndex.value = attachments.value.slice(0, i).filter((u) => !isPdfUrl(u)).length
+}
 
 const form = reactive<{
   title: string
@@ -111,7 +117,7 @@ async function uploadFiles(files: Iterable<File>) {
   error.value = null
   try {
     for (const file of files) {
-      const url = await upload.uploadImage(ensureNamed(file), 'qa_image')
+      const url = await upload.uploadFile(ensureNamed(file), 'qa_image')
       form.images.push(url)
     }
   } catch (e: any) {
@@ -503,19 +509,30 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       </div>
     </div>
 
-    <!-- 이미지 -->
+    <!-- 첨부 파일 -->
     <div class="mt-5">
-      <h2 class="mb-2 text-xs font-medium text-slate-500">이미지</h2>
+      <h2 class="mb-2 text-xs font-medium text-slate-500">첨부 파일</h2>
       <div class="flex flex-wrap gap-2">
         <div
-          v-for="(img, i) in (editing ? form.images : item.images)"
+          v-for="(img, i) in attachments"
           :key="img + i"
           class="relative h-24 w-24 overflow-hidden rounded border border-slate-200"
         >
           <button
+            v-if="isPdfUrl(img)"
+            type="button"
+            :title="attachmentFileName(img)"
+            class="flex h-full w-full flex-col items-center justify-center gap-1 bg-slate-50 px-1.5 transition-colors hover:bg-slate-100"
+            @click="openPdfInNewTab(img)"
+          >
+            <FileText class="h-7 w-7 shrink-0 text-rose-500" />
+            <span class="w-full truncate text-center text-[10px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+          </button>
+          <button
+            v-else
             type="button"
             class="block h-full w-full cursor-zoom-in"
-            @click="lightboxIndex = i"
+            @click="openLightboxAt(i)"
           >
             <img :src="img" :alt="`image-${i}`" class="h-full w-full object-cover transition-colors hover:opacity-90" />
           </button>
@@ -530,10 +547,10 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           v-if="editing"
           class="flex h-24 w-24 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500"
         >
-          <input type="file" accept="image/*" multiple class="hidden" @change="onPickFile" />
+          <input type="file" accept="image/*,application/pdf" multiple class="hidden" @change="onPickFile" />
           {{ uploading ? '업로드…' : '+ 추가' }}
         </label>
-        <p v-if="(editing ? form.images : item.images).length === 0 && !editing" class="text-xs text-slate-400">첨부 이미지 없음</p>
+        <p v-if="attachments.length === 0 && !editing" class="text-xs text-slate-400">첨부 파일 없음</p>
       </div>
     </div>
 

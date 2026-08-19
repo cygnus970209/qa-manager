@@ -81,7 +81,7 @@ async function onSubmit() {
   try {
     let nextAvatarUrl: string | undefined
     if (avatarFile.value) {
-      nextAvatarUrl = await upload.uploadImage(avatarFile.value, 'avatar')
+      nextAvatarUrl = await upload.uploadFile(avatarFile.value, 'avatar')
     }
 
     const nameChanged = form.name.trim() !== (auth.user?.name ?? '')
