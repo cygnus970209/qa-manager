@@ -337,6 +337,18 @@ function aliveMentionIds(content: string, picked: Set<number>): number[] {
   }
   return result
 }
+/** Ctrl/Cmd+Enter → 등록. 그 외 키는 멘션 드롭다운 처리(onMentionKey)로 위임. */
+function onEditorKey(e: KeyboardEvent, target: 'new' | 'edit' | 'reply') {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.isComposing) {
+    e.preventDefault()
+    if (submitting.value || uploading.value) return
+    if (target === 'new') submitNew()
+    else if (target === 'edit') saveEdit()
+    else submitReply()
+    return
+  }
+  onMentionKey(e)
+}
 function onMentionKey(e: KeyboardEvent) {
   if (!showMention.value) return
   const list = filteredMembers.value
@@ -416,7 +428,7 @@ function memberInitial(name: string) {
                     :maxlength="MAX_LEN"
                     class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                     @input="checkMention($event.target as HTMLTextAreaElement, 'edit')"
-                    @keydown="onMentionKey"
+                    @keydown="onEditorKey($event, 'edit')"
                     @paste="onPaste($event, 'edit')"
                   />
                   <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 right-auto z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
@@ -587,7 +599,7 @@ function memberInitial(name: string) {
                     :placeholder="`${root.author.name}님에게 답글...`"
                     class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                     @input="checkMention($event.target as HTMLTextAreaElement, 'reply')"
-                    @keydown="onMentionKey"
+                    @keydown="onEditorKey($event, 'reply')"
                     @paste="onPaste($event, 'reply')"
                   />
                   <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
@@ -647,10 +659,10 @@ function memberInitial(name: string) {
                 v-model="newContent"
                 rows="2"
                 :maxlength="MAX_LEN"
-                placeholder="코멘트를 입력하세요... (@를 입력하면 멤버 멘션, 이미지 붙여넣기 가능)"
+                placeholder="코멘트를 입력하세요... (@ 멘션, 이미지 붙여넣기, Ctrl+Enter 등록)"
                 class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                 @input="checkMention($event.target as HTMLTextAreaElement, 'new')"
-                @keydown="onMentionKey"
+                @keydown="onEditorKey($event, 'new')"
                 @paste="onPaste($event, 'new')"
               />
               <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
