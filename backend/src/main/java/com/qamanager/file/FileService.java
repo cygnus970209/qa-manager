@@ -20,13 +20,14 @@ public class FileService {
     );
     /** 아바타를 제외한 QA/댓글 첨부에서 이미지 외에 추가로 허용하는 타입. */
     private static final Set<String> ALLOWED_DOCUMENT_TYPES = Set.of("application/pdf");
-    private static final long MAX_FILE_SIZE_BYTES = 100L * 1024 * 1024;
 
     private final S3Properties props;
+    private final UploadProperties uploadProps;
     private final S3Presigner presigner;
 
-    public FileService(S3Properties props, S3Presigner presigner) {
+    public FileService(S3Properties props, UploadProperties uploadProps, S3Presigner presigner) {
         this.props = props;
+        this.uploadProps = uploadProps;
         this.presigner = presigner;
     }
 
@@ -37,8 +38,8 @@ public class FileService {
         if (!allowed) {
             throw ApiException.badRequest("허용되지 않은 contentType: " + req.contentType());
         }
-        if (req.fileSize() > MAX_FILE_SIZE_BYTES) {
-            throw ApiException.badRequest("파일 크기는 100MB 이하만 업로드할 수 있습니다.");
+        if (req.fileSize() > uploadProps.maxFileSizeMb() * 1024 * 1024) {
+            throw ApiException.badRequest("파일 크기는 " + uploadProps.maxFileSizeMb() + "MB 이하만 업로드할 수 있습니다.");
         }
         String safeName = sanitize(req.fileName());
         String key = "qa-manager/" + req.purpose() + "/" + UUID.randomUUID() + "-" + safeName;

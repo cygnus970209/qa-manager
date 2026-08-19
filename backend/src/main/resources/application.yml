@@ -114,6 +114,9 @@ app:
     access-key: ${AWS_ACCESS_KEY_ID:}
     secret-key: ${AWS_SECRET_ACCESS_KEY:}
     presign-ttl-seconds: ${AWS_S3_PRESIGN_TTL_SECONDS:300}
+  upload:
+    # 첨부 파일 최대 크기 (MB). 프론트 사전 검증(NUXT_PUBLIC_UPLOAD_MAX_FILE_SIZE_MB)과 값을 맞출 것.
+    max-file-size-mb: ${UPLOAD_MAX_FILE_SIZE_MB:100}
   teams:
     # 비활성화 기본값: 환경변수 누락 시 모든 발송 no-op (테스트/로컬 안전).
     enabled: ${TEAMS_ENABLED:false}

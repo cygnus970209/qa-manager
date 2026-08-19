@@ -44,6 +44,9 @@ export default defineNuxtConfig({
       apiBase: 'http://localhost:8080',
       // 데모 모드 여부. DEMO_BUILD=true 빌드에서 켜진다(전역 '데모 버전' 배너 + localStorage mock).
       demoMode: isDemoBuild,
+      // 첨부 파일 최대 크기 (MB). NUXT_PUBLIC_UPLOAD_MAX_FILE_SIZE_MB 로 오버라이드.
+      // 백엔드 presign 검증(UPLOAD_MAX_FILE_SIZE_MB)과 값을 맞출 것.
+      uploadMaxFileSizeMb: 100,
     },
   },
 

@@ -1,7 +1,5 @@
 import type { PresignRequest, PresignResponse } from '~/types/api'
 
-export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024
-
 /**
  * 브라우저에서 직접 S3로 PUT 업로드.
  * 1) 백엔드 /api/files/presigned 호출 → uploadUrl + publicUrl
@@ -17,22 +15,23 @@ function fileToDataUrl(file: File): Promise<string> {
   })
 }
 
-function assertUploadable(file: File, purpose: PresignRequest['purpose']) {
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    throw new Error(`파일 크기는 100MB 이하만 업로드할 수 있습니다: ${file.name}`)
-  }
-  const type = (file.type || '').toLowerCase()
-  const isImage = type.startsWith('image/')
-  if (purpose === 'avatar') {
-    if (!isImage) throw new Error(`이미지만 업로드할 수 있습니다: ${file.name}`)
-  } else if (!isImage && type !== 'application/pdf') {
-    throw new Error(`이미지 또는 PDF만 업로드할 수 있습니다: ${file.name}`)
-  }
-}
-
 export function useUpload() {
   const api = useApi()
   const config = useRuntimeConfig()
+  const maxFileSizeMb = Number(config.public.uploadMaxFileSizeMb) || 100
+
+  function assertUploadable(file: File, purpose: PresignRequest['purpose']) {
+    if (file.size > maxFileSizeMb * 1024 * 1024) {
+      throw new Error(`파일 크기는 ${maxFileSizeMb}MB 이하만 업로드할 수 있습니다: ${file.name}`)
+    }
+    const type = (file.type || '').toLowerCase()
+    const isImage = type.startsWith('image/')
+    if (purpose === 'avatar') {
+      if (!isImage) throw new Error(`이미지만 업로드할 수 있습니다: ${file.name}`)
+    } else if (!isImage && type !== 'application/pdf') {
+      throw new Error(`이미지 또는 PDF만 업로드할 수 있습니다: ${file.name}`)
+    }
+  }
 
   async function uploadFile(file: File, purpose: PresignRequest['purpose']): Promise<string> {
     assertUploadable(file, purpose)
