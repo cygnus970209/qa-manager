@@ -7,6 +7,11 @@ import QANavSidebar from '~/components/feature/QANavSidebar.vue'
 import { applyQaFilter, emptyQaFilter, loadQaFilter, type QaFilterState } from '~/utils/qaFilter'
 import type { Member, Project, ProjectUpdate, QaComment, QaHistoryEntry, QaItem } from '~/types/api'
 
+// 고정 key: 항목 간 이동(/qa/1 → /qa/2)에서 페이지를 리마운트하지 않고 재사용한다.
+// (Nuxt 기본 key 는 파라미터 치환 경로라 이동마다 리마운트 → 사이드바 스크롤/목록이 초기화됨.
+//  아래 watch(qaId) + '최초 1회만 로드' 가드가 재사용 전제의 갱신 로직.)
+definePageMeta({ key: 'qa-detail' })
+
 const route = useRoute()
 const router = useRouter()
 const qaId = computed(() => Number(route.params.id))
@@ -107,6 +112,26 @@ async function load() {
 if (import.meta.client) onMounted(load)
 watch(qaId, () => { if (import.meta.client) load() })
 
+/* ─── 사이드바 수동 새로고침 ───
+ * 페이지 재사용(고정 key)으로 목록은 최초 1회만 로드되므로, 최신화는 이 버튼으로 한다. */
+const sideRefreshing = ref(false)
+async function refreshSidebar() {
+  if (sideRefreshing.value) return
+  sideRefreshing.value = true
+  try {
+    const [items, projects, updates] = await Promise.all([
+      qaApi.list(), projectsApi.list(), updatesApi.listAll(),
+    ])
+    allItems.value = items
+    sideProjects.value = projects
+    sideUpdates.value = updates
+  } catch (e) {
+    console.error('sidebar refresh failed', e)
+  } finally {
+    sideRefreshing.value = false
+  }
+}
+
 async function onUpdated(next: QaItem) {
   item.value = next
   history.value = await qaApi.history(qaId.value)
@@ -187,7 +212,9 @@ function goNext() {
               :updates="sideUpdates"
               :current-id="qaId"
               :initial-filter="initialFilter"
+              :refreshing="sideRefreshing"
               @update:order="navIds = $event"
+              @refresh="refreshSidebar"
             />
           </div>
         </div>

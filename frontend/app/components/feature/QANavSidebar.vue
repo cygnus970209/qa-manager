@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, Inbox, X, ChevronDown } from '@lucide/vue'
+import { Search, Inbox, X, ChevronDown, RefreshCw } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import { applyQaFilter, saveQaFilter, type QaFilterState } from '~/utils/qaFilter'
@@ -15,11 +15,15 @@ const props = defineProps<{
   currentId: number
   /** 목록에서 넘어온(또는 같은-업데이트 폴백) 초기 필터. 최초 1회만 반영. */
   initialFilter: QaFilterState
+  /** 수동 새로고침 진행 중 여부 (아이콘 스핀 표시). */
+  refreshing?: boolean
 }>()
 
 const emit = defineEmits<{
   /** 필터 결과의 ID 순서. 상세 페이지의 이전/다음 이동과 동기화. */
   (e: 'update:order', ids: number[]): void
+  /** 목록 수동 새로고침 요청. 데이터 재조회는 상위(상세 페이지)가 담당. */
+  (e: 'refresh'): void
 }>()
 
 const auth = useAuthStore()
@@ -108,20 +112,44 @@ function go(id: number) {
   // → '뒤로' 가 거쳐온 QA 수만큼이 아니라 진입 직전(목록/프로젝트)으로 한 번에 돌아간다.
   router.replace(`/qa/${id}`)
 }
+
+/* ─── 선택 항목 자동 스크롤 ───
+ * 목록(ul) 내부 scrollTop 만 조정한다. scrollIntoView 는 window 등 상위
+ * 스크롤 컨테이너까지 움직일 수 있어 쓰지 않는다. */
+const listRef = ref<HTMLUListElement | null>(null)
+function scrollCurrentIntoView(center = false) {
+  nextTick(() => {
+    const list = listRef.value
+    const el = list?.querySelector<HTMLElement>('[aria-current="true"]')
+    if (!list || !el) return
+    const elTop = el.offsetTop - list.offsetTop
+    const elBottom = elTop + el.offsetHeight
+    if (center) {
+      list.scrollTop = elTop - (list.clientHeight - el.offsetHeight) / 2
+    } else if (elTop < list.scrollTop) {
+      list.scrollTop = elTop
+    } else if (elBottom > list.scrollTop + list.clientHeight) {
+      list.scrollTop = elBottom - list.clientHeight
+    }
+  })
+}
+// 최초 진입: 선택 항목을 목록 중앙 근처로. 이후 이전/다음 이동: 벗어났을 때만 최소 이동.
+onMounted(() => scrollCurrentIntoView(true))
+watch(() => props.currentId, () => scrollCurrentIntoView())
 </script>
 
 <template>
   <div class="flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
     <!-- 필터 -->
     <div class="shrink-0 border-b border-slate-100">
-      <!-- 헤더(항상 표시): 접기 토글 + 적용 개수 + 결과 건수 -->
-      <button
-        type="button"
-        class="flex w-full items-center justify-between px-3 py-2.5"
-        :aria-expanded="filtersOpen"
-        @click="filtersOpen = !filtersOpen"
-      >
-        <span class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+      <!-- 헤더(항상 표시): 접기 토글 + 적용 개수 + 새로고침 + 결과 건수 -->
+      <div class="flex items-center justify-between pr-3">
+        <button
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium text-slate-600"
+          :aria-expanded="filtersOpen"
+          @click="filtersOpen = !filtersOpen"
+        >
           <ChevronDown :class="['h-3.5 w-3.5 transition-transform', filtersOpen ? '' : '-rotate-90']" />
           필터
           <span
@@ -130,9 +158,18 @@ function go(id: number) {
           >
             {{ activeCount }}
           </span>
-        </span>
-        <span class="text-[11px] text-slate-400">{{ filtered.length }}건</span>
-      </button>
+        </button>
+        <button
+          type="button"
+          title="목록 새로고침"
+          :disabled="refreshing"
+          class="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-60"
+          @click="emit('refresh')"
+        >
+          <RefreshCw :class="['h-3.5 w-3.5', refreshing ? 'animate-spin' : '']" />
+        </button>
+        <span class="ml-auto pl-2 text-[11px] text-slate-400">{{ filtered.length }}건</span>
+      </div>
 
       <!-- 컨트롤(접힘 가능) -->
       <div v-show="filtersOpen" class="space-y-2 px-3 pb-3">
@@ -198,7 +235,7 @@ function go(id: number) {
     </div>
 
     <!-- 목록 -->
-    <ul class="min-h-0 flex-1 overflow-y-auto">
+    <ul ref="listRef" class="min-h-0 flex-1 overflow-y-auto">
       <li v-for="item in filtered" :key="item.id">
         <button
           type="button"
