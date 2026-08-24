@@ -29,14 +29,17 @@ export function emptyQaFilter(): QaFilterState {
  * items 에 필터를 적용해 반환.
  * - meId: '내 것만' 판정용(로그인 사용자 id).
  * - updateToProject: 프로젝트 필터용 updateId→projectId 매핑. 없으면 프로젝트 필터는 무시한다.
+ * - excludeUpdateIds: 이 업데이트들에 속한 QA 는 제외 ('배포완료 숨기기' 토글용).
  */
 export function applyQaFilter(
   items: QaItem[],
   f: QaFilterState,
   meId?: number | null,
   updateToProject?: Map<number, number>,
+  excludeUpdateIds?: Set<number>,
 ): QaItem[] {
   return items.filter((item) => {
+    if (excludeUpdateIds?.has(item.updateId)) return false
     if (f.status !== 'all' && item.status !== f.status) return false
     if (f.priority !== 'all' && item.priority !== f.priority) return false
     if (f.projectId !== 'all' && updateToProject) {

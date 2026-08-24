@@ -65,6 +65,7 @@ const activeCount = computed(() => {
   if (extra.testerId != null) n++
   if (extra.assigneeId != null) n++
   if (extra.mineOnly) n++
+  if (hideReleased.value) n++
   return n
 })
 function clearExtra() {
@@ -73,12 +74,31 @@ function clearExtra() {
   extra.mineOnly = false
 }
 
-// 업데이트 옵션은 선택된 프로젝트로 캐스케이드.
-const updateOptions = computed(() =>
-  projectId.value === 'all'
-    ? props.updates
-    : props.updates.filter((u) => String(u.projectId) === projectId.value),
+/* '배포완료 숨기기' — QA 목록 필터와 공유하는 localStorage 영속 설정 */
+const HIDE_RELEASED_KEY = 'qa-filter-hide-released'
+const hideReleased = ref(false)
+onMounted(() => {
+  const v = localStorage.getItem(HIDE_RELEASED_KEY)
+  if (v !== null) hideReleased.value = v === '1'
+})
+const releasedUpdateIds = computed(
+  () => new Set(props.updates.filter((u) => u.status === 'released').map((u) => u.id)),
 )
+watch(hideReleased, (v) => {
+  localStorage.setItem(HIDE_RELEASED_KEY, v ? '1' : '0')
+  // 숨김을 켤 때 배포완료 업데이트가 선택돼 있으면 해제한다.
+  if (v && updateId.value !== 'all' && releasedUpdateIds.value.has(Number(updateId.value))) {
+    updateId.value = 'all'
+  }
+})
+
+// 업데이트 옵션은 선택된 프로젝트로 캐스케이드 (+ 배포완료 숨기기 반영).
+const updateOptions = computed(() => {
+  const base = projectId.value === 'all'
+    ? props.updates
+    : props.updates.filter((u) => String(u.projectId) === projectId.value)
+  return hideReleased.value ? base.filter((u) => u.status !== 'released') : base
+})
 // 프로젝트를 바꾸면 그 프로젝트에 속하지 않는 업데이트 선택은 해제.
 watch(projectId, (pid) => {
   if (pid === 'all' || updateId.value === 'all') return
@@ -98,7 +118,13 @@ const filterState = computed<QaFilterState>(() => ({
 }))
 
 const filtered = computed(() =>
-  applyQaFilter(props.items, filterState.value, auth.user?.id, updateToProject.value),
+  applyQaFilter(
+    props.items,
+    filterState.value,
+    auth.user?.id,
+    updateToProject.value,
+    hideReleased.value ? releasedUpdateIds.value : undefined,
+  ),
 )
 
 // 필터 결과가 바뀔 때마다 이전/다음 이동용 순서를 상위로 전달.
@@ -198,6 +224,14 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
           {{ u.version }} - {{ u.title }}
         </option>
       </select>
+      <label class="flex cursor-pointer select-none items-center gap-1.5 px-0.5 text-[11px] font-medium text-slate-500">
+        <input
+          v-model="hideReleased"
+          type="checkbox"
+          class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
+        />
+        배포완료 업데이트 숨기기
+      </label>
       <div class="flex gap-2">
         <select
           v-model="status"

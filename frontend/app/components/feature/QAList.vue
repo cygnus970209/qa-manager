@@ -14,6 +14,14 @@ const props = defineProps<{
 
 const auth = useAuthStore()
 
+/* '배포완료 숨기기' — 상세 사이드바와 공유하는 localStorage 영속 설정 */
+const HIDE_RELEASED_KEY = 'qa-filter-hide-released'
+const hideReleased = ref(false)
+onMounted(() => {
+  const v = localStorage.getItem(HIDE_RELEASED_KEY)
+  if (v !== null) hideReleased.value = v === '1'
+})
+
 const statusFilter = ref<string>('all')
 const priorityFilter = ref<string>('all')
 const updateFilter = ref<string>('all')
@@ -21,6 +29,20 @@ const testerFilter = ref<number | null>(null)
 const assigneeFilter = ref<number | null>(null)
 const mineOnly = ref(false)
 const search = ref('')
+
+const releasedUpdateIds = computed(
+  () => new Set(props.updates.filter((u) => u.status === 'released').map((u) => u.id)),
+)
+const updateOptions = computed(() =>
+  hideReleased.value ? props.updates.filter((u) => u.status !== 'released') : props.updates,
+)
+watch(hideReleased, (v) => {
+  localStorage.setItem(HIDE_RELEASED_KEY, v ? '1' : '0')
+  // 숨김을 켤 때 배포완료 업데이트가 선택돼 있으면 해제한다.
+  if (v && updateFilter.value !== 'all' && releasedUpdateIds.value.has(Number(updateFilter.value))) {
+    updateFilter.value = 'all'
+  }
+})
 
 const filterState = computed<QaFilterState>(() => ({
   status: statusFilter.value,
@@ -33,7 +55,13 @@ const filterState = computed<QaFilterState>(() => ({
   search: search.value,
 }))
 
-const filtered = computed(() => applyQaFilter(props.items, filterState.value, auth.user?.id))
+const filtered = computed(() => applyQaFilter(
+  props.items,
+  filterState.value,
+  auth.user?.id,
+  undefined,
+  hideReleased.value ? releasedUpdateIds.value : undefined,
+))
 
 const memberOptions = computed<Member[]>(() => props.members ?? [])
 
@@ -88,10 +116,18 @@ function rememberFilter() {
           class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
         >
           <option value="all">모든 업데이트</option>
-          <option v-for="u in updates" :key="u.id" :value="String(u.id)">
+          <option v-for="u in updateOptions" :key="u.id" :value="String(u.id)">
             {{ u.version }} - {{ u.title }}
           </option>
         </select>
+        <label class="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500">
+          <input
+            v-model="hideReleased"
+            type="checkbox"
+            class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
+          />
+          배포완료 숨기기
+        </label>
       </div>
 
       <!-- 멤버 필터 행 -->
