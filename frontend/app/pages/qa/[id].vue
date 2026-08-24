@@ -304,6 +304,7 @@ function goNext() {
             :qa-item-id="item.id"
             :comments="comments"
             :members="members"
+            :qa-items="allItems"
             @refreshed="comments = $event"
           />
         </div>

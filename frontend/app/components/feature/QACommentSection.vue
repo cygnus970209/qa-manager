@@ -15,12 +15,14 @@ import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import QaRefText from '~/components/base/QaRefText.vue'
 import { attachmentFileName, isPdfUrl, openPdfInNewTab } from '~/utils/attachments'
 import { timeAgo } from '~/utils/format'
-import type { Member, QaComment } from '~/types/api'
+import type { Member, QaComment, QaItem } from '~/types/api'
 
 const props = defineProps<{
   qaItemId: number
   comments: QaComment[]
   members: Member[]
+  /** # 태그 자동완성용 전체 QA 목록 (미전달 시 드롭다운 비활성). */
+  qaItems?: QaItem[]
 }>()
 const emit = defineEmits<{ refreshed: [comments: QaComment[]] }>()
 
@@ -96,6 +98,28 @@ const filteredMembers = computed(() => {
   return props.members.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 8)
 })
 
+/* ─── QA 태그(#) popup — 멘션과 동일한 패턴 ─── */
+const showQaTag = ref(false)
+const qaTagQuery = ref('')
+const qaTagMode = ref<'new' | 'edit' | 'reply'>('new')
+const qaTagIdx = ref(0)
+const qaTagAbove = ref(false)
+
+watch(qaTagIdx, () => {
+  if (!showQaTag.value) return
+  nextTick(() => {
+    const active = document.querySelector('[data-qa-tag-active="true"]')
+    active?.scrollIntoView({ block: 'nearest' })
+  })
+})
+const filteredQaItems = computed(() => {
+  const q = qaTagQuery.value.toLowerCase()
+  return (props.qaItems ?? [])
+    .filter((it) => it.id !== props.qaItemId)
+    .filter((it) => q === '' || String(it.id).includes(q) || it.title.toLowerCase().includes(q))
+    .slice(0, 8)
+})
+
 /* ─── Lightbox ─── */
 const lightboxImages = ref<string[]>([])
 const lightboxIndex = ref<number | null>(null)
@@ -131,6 +155,16 @@ function onDocClick(e: MouseEvent) {
     )
     const inList = !!document.querySelector('[data-mention-list="true"]')?.contains(t)
     if (!inTextarea && !inList) showMention.value = false
+  }
+  // QA 태그 드롭다운도 동일하게 닫는다.
+  if (showQaTag.value) {
+    const inTextarea = !!(
+      newRef.value?.contains(t)
+      || editRef.value?.contains(t)
+      || replyRef.value?.contains(t)
+    )
+    const inList = !!document.querySelector('[data-qa-tag-list="true"]')?.contains(t)
+    if (!inTextarea && !inList) showQaTag.value = false
   }
 }
 onMounted(() => document.addEventListener('mousedown', onDocClick))
@@ -278,23 +312,43 @@ function isMine(c: QaComment) {
   return auth.user?.id === c.author.id
 }
 
-/* ─── 멘션 ─── */
+/* ─── 멘션(@) / QA 태그(#) 트리거 감지 ─── */
 function checkMention(el: HTMLTextAreaElement, mode: 'new' | 'edit' | 'reply') {
   const cursor = el.selectionStart ?? 0
   const before = el.value.slice(0, cursor)
   const lastAt = before.lastIndexOf('@')
-  if (lastAt === -1) { showMention.value = false; return }
-  const after = before.slice(lastAt + 1)
-  if (/\s/.test(after)) { showMention.value = false; return }
-  mentionQuery.value = after
-  mentionMode.value = mode
-  showMention.value = true
-  mentionIdx.value = 0
+  const lastHash = before.lastIndexOf('#')
+
   // 아래 공간이 부족하면 위로 띄운다 (SearchableSelect 와 동일 패턴)
   const rect = el.getBoundingClientRect()
   const spaceBelow = window.innerHeight - rect.bottom
   const spaceAbove = rect.top
-  mentionAbove.value = spaceBelow < MENTION_DROPDOWN_HEIGHT && spaceAbove > spaceBelow
+  const above = spaceBelow < MENTION_DROPDOWN_HEIGHT && spaceAbove > spaceBelow
+
+  // 커서에 더 가까운 트리거 하나만 활성화한다.
+  const atQuery = lastAt > lastHash ? before.slice(lastAt + 1) : null
+  const hashQuery = lastHash > lastAt ? before.slice(lastHash + 1) : null
+
+  if (atQuery !== null && !/\s/.test(atQuery)) {
+    mentionQuery.value = atQuery
+    mentionMode.value = mode
+    showMention.value = true
+    mentionIdx.value = 0
+    mentionAbove.value = above
+    showQaTag.value = false
+    return
+  }
+  showMention.value = false
+
+  if (hashQuery !== null && !/\s/.test(hashQuery) && (props.qaItems?.length ?? 0) > 0) {
+    qaTagQuery.value = hashQuery
+    qaTagMode.value = mode
+    showQaTag.value = true
+    qaTagIdx.value = 0
+    qaTagAbove.value = above
+    return
+  }
+  showQaTag.value = false
 }
 function insertMention(member: Member) {
   const el =
@@ -327,6 +381,32 @@ function insertMention(member: Member) {
   })
 }
 
+/** # 뒤 검색어를 선택한 QA 의 `#번호 ` 로 치환. */
+function insertQaTag(q: QaItem) {
+  const el =
+    qaTagMode.value === 'edit' ? editRef.value
+    : qaTagMode.value === 'reply' ? replyRef.value
+    : newRef.value
+  if (!el) return
+  const value = el.value
+  const cursor = el.selectionStart ?? 0
+  const before = value.slice(0, cursor)
+  const lastHash = before.lastIndexOf('#')
+  if (lastHash === -1) return
+  const beforeHash = value.slice(0, lastHash)
+  const afterCursor = value.slice(cursor)
+  const next = `${beforeHash}#${q.id} ${afterCursor}`
+  if (qaTagMode.value === 'edit') editContent.value = next
+  else if (qaTagMode.value === 'reply') replyContent.value = next
+  else newContent.value = next
+  showQaTag.value = false
+  nextTick(() => {
+    const pos = beforeHash.length + String(q.id).length + 2
+    el.setSelectionRange(pos, pos)
+    el.focus()
+  })
+}
+
 /** pick 한 멤버 중 본문에 `@이름`이 살아있는 id 만 반환. 사용자가 텍스트를 지운 경우 자동 제외. */
 function aliveMentionIds(content: string, picked: Set<number>): number[] {
   if (picked.size === 0) return []
@@ -351,20 +431,38 @@ function onEditorKey(e: KeyboardEvent, target: 'new' | 'edit' | 'reply') {
   onMentionKey(e)
 }
 function onMentionKey(e: KeyboardEvent) {
-  if (!showMention.value) return
-  const list = filteredMembers.value
-  if (e.key === 'Escape') { showMention.value = false; e.preventDefault() }
-  else if (e.key === 'Enter') {
-    const m = list[mentionIdx.value]
-    if (m) { insertMention(m); e.preventDefault() }
+  if (showMention.value) {
+    const list = filteredMembers.value
+    if (e.key === 'Escape') { showMention.value = false; e.preventDefault() }
+    else if (e.key === 'Enter') {
+      const m = list[mentionIdx.value]
+      if (m) { insertMention(m); e.preventDefault() }
+    }
+    else if (e.key === 'ArrowDown') {
+      mentionIdx.value = Math.min(mentionIdx.value + 1, list.length - 1)
+      e.preventDefault()
+    }
+    else if (e.key === 'ArrowUp') {
+      mentionIdx.value = Math.max(mentionIdx.value - 1, 0)
+      e.preventDefault()
+    }
+    return
   }
-  else if (e.key === 'ArrowDown') {
-    mentionIdx.value = Math.min(mentionIdx.value + 1, list.length - 1)
-    e.preventDefault()
-  }
-  else if (e.key === 'ArrowUp') {
-    mentionIdx.value = Math.max(mentionIdx.value - 1, 0)
-    e.preventDefault()
+  if (showQaTag.value) {
+    const list = filteredQaItems.value
+    if (e.key === 'Escape') { showQaTag.value = false; e.preventDefault() }
+    else if (e.key === 'Enter') {
+      const q = list[qaTagIdx.value]
+      if (q) { insertQaTag(q); e.preventDefault() }
+    }
+    else if (e.key === 'ArrowDown') {
+      qaTagIdx.value = Math.min(qaTagIdx.value + 1, list.length - 1)
+      e.preventDefault()
+    }
+    else if (e.key === 'ArrowUp') {
+      qaTagIdx.value = Math.max(qaTagIdx.value - 1, 0)
+      e.preventDefault()
+    }
   }
 }
 
@@ -417,6 +515,15 @@ function memberInitial(name: string) {
                     @keydown="onEditorKey($event, 'edit')"
                     @paste="onPaste($event, 'edit')"
                   />
+                  <ul v-if="showQaTag && qaTagMode === 'edit' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                    <li v-for="(qi, i) in filteredQaItems" :key="qi.id">
+                      <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === qaTagIdx ? 'bg-blue-50' : '']" @click="insertQaTag(qi)">
+                        <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500">#{{ qi.id }}</span>
+                        <span class="min-w-0 flex-1 truncate text-sm text-slate-700">{{ qi.title }}</span>
+                        <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500" />
+                      </button>
+                    </li>
+                  </ul>
                   <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 right-auto z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
                       <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
@@ -584,6 +691,15 @@ function memberInitial(name: string) {
                     @keydown="onEditorKey($event, 'reply')"
                     @paste="onPaste($event, 'reply')"
                   />
+                  <ul v-if="showQaTag && qaTagMode === 'reply' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                    <li v-for="(qi, i) in filteredQaItems" :key="qi.id">
+                      <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === qaTagIdx ? 'bg-blue-50' : '']" @click="insertQaTag(qi)">
+                        <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500">#{{ qi.id }}</span>
+                        <span class="min-w-0 flex-1 truncate text-sm text-slate-700">{{ qi.title }}</span>
+                        <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500" />
+                      </button>
+                    </li>
+                  </ul>
                   <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
                       <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
@@ -641,12 +757,21 @@ function memberInitial(name: string) {
                 v-model="newContent"
                 rows="2"
                 :maxlength="MAX_LEN"
-                placeholder="코멘트를 입력하세요... (@ 멘션, 이미지 붙여넣기, Ctrl+Enter 등록)"
+                placeholder="코멘트를 입력하세요... (@ 멘션, # QA 태그, 이미지 붙여넣기, Ctrl+Enter 등록)"
                 class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                 @input="checkMention($event.target as HTMLTextAreaElement, 'new')"
                 @keydown="onEditorKey($event, 'new')"
                 @paste="onPaste($event, 'new')"
               />
+              <ul v-if="showQaTag && qaTagMode === 'new' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                <li v-for="(qi, i) in filteredQaItems" :key="qi.id">
+                  <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === qaTagIdx ? 'bg-blue-50' : '']" @click="insertQaTag(qi)">
+                    <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500">#{{ qi.id }}</span>
+                    <span class="min-w-0 flex-1 truncate text-sm text-slate-700">{{ qi.title }}</span>
+                    <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500" />
+                  </button>
+                </li>
+              </ul>
               <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                 <li v-for="(m, i) in filteredMembers" :key="m.id">
                   <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
