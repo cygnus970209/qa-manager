@@ -4,6 +4,7 @@ import QAInfoPanel from '~/components/feature/QAInfoPanel.vue'
 import QACommentSection from '~/components/feature/QACommentSection.vue'
 import QAHistoryList from '~/components/feature/QAHistoryList.vue'
 import QANavSidebar from '~/components/feature/QANavSidebar.vue'
+import NewQAModal from '~/components/feature/NewQAModal.vue'
 import { applyQaFilter, emptyQaFilter, loadQaFilter, type QaFilterState } from '~/utils/qaFilter'
 import type { Member, Project, ProjectUpdate, QaComment, QaHistoryEntry, QaItem } from '~/types/api'
 
@@ -130,6 +131,13 @@ async function refreshSidebar() {
   } finally {
     sideRefreshing.value = false
   }
+}
+
+/* ─── 상세에서 바로 새 QA 등록 ─── */
+const newQaOpen = ref(false)
+function onQaCreated(q: QaItem) {
+  // 사이드바 목록에 즉시 반영 (필터에 따라 노출 여부는 달라질 수 있음).
+  allItems.value = [q, ...allItems.value]
 }
 
 async function onUpdated(next: QaItem) {
@@ -291,7 +299,7 @@ function goNext() {
     <template v-else-if="item">
       <div class="flex flex-col gap-6 lg:flex-row">
         <div class="min-w-0 flex-1 space-y-6">
-          <QAInfoPanel :item="item" :members="members" :updates="movableUpdates" @updated="onUpdated" @removed="onRemoved" />
+          <QAInfoPanel :item="item" :members="members" :updates="movableUpdates" @updated="onUpdated" @removed="onRemoved" @add-qa="newQaOpen = true" />
           <QACommentSection
             :qa-item-id="item.id"
             :comments="comments"
@@ -325,6 +333,16 @@ function goNext() {
           </div>
         </aside>
       </div>
+
+      <NewQAModal
+        :open="newQaOpen"
+        :projects="sideProjects"
+        :updates="sideUpdates"
+        :members="members"
+        :default-update-id="item.updateId"
+        @close="newQaOpen = false"
+        @created="onQaCreated"
+      />
     </template>
       </div>
     </div>

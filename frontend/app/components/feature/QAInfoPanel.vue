@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { CircleDot, FileText, GitCommitHorizontal, Loader2, Save, Trash2 } from '@lucide/vue'
+import { CircleDot, FileText, GitCommitHorizontal, Loader2, Plus, Save, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
+import QaRefText from '~/components/base/QaRefText.vue'
 import SearchableSelect from '~/components/base/SearchableSelect.vue'
 import { attachmentFileName, isPdfUrl, openPdfInNewTab } from '~/utils/attachments'
 import type { GithubCommit, Member, ProjectUpdate, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
@@ -16,6 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   updated: [item: QaItem]
   removed: []
+  addQa: []
 }>()
 
 const qaApi = useQa()
@@ -282,6 +284,14 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         <h1 v-else class="text-xl font-bold text-slate-800 md:text-2xl">{{ item.title }}</h1>
       </div>
       <div class="flex shrink-0 items-center gap-2">
+        <button
+          v-if="!editing"
+          type="button"
+          class="inline-flex items-center gap-1 rounded-md bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600"
+          @click="emit('addQa')"
+        >
+          <Plus class="h-3.5 w-3.5" /> 새 QA
+        </button>
         <button v-if="!editing" type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = true">편집</button>
         <button v-else type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = false">취소</button>
         <button
@@ -428,7 +438,8 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         @paste="onPaste"
       />
       <p v-else class="whitespace-pre-wrap text-sm text-slate-700">
-        {{ item.description ?? '—' }}
+        <QaRefText v-if="item.description" :text="item.description" />
+        <template v-else>—</template>
       </p>
     </div>
 

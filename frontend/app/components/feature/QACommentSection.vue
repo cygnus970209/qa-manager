@@ -12,6 +12,7 @@ import {
   X,
 } from '@lucide/vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
+import QaRefText from '~/components/base/QaRefText.vue'
 import { attachmentFileName, isPdfUrl, openPdfInNewTab } from '~/utils/attachments'
 import { timeAgo } from '~/utils/format'
 import type { Member, QaComment } from '~/types/api'
@@ -367,21 +368,6 @@ function onMentionKey(e: KeyboardEvent) {
   }
 }
 
-/* ─── 멘션 본문 렌더 분해 ─── */
-type Segment = { text: string; mention: boolean }
-function renderSegments(text: string): Segment[] {
-  const re = /(@[^\s]+)/g
-  const parts = text.split(re)
-  return parts.map((p) => {
-    if (p.startsWith('@')) {
-      const name = p.slice(1)
-      const isMember = props.members.some((m) => m.name === name)
-      return { text: p, mention: isMember }
-    }
-    return { text: p, mention: false }
-  })
-}
-
 function memberInitial(name: string) {
   return name.charAt(0)
 }
@@ -471,9 +457,7 @@ function memberInitial(name: string) {
               <!-- 표시 모드 -->
               <div v-else>
                 <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
-                  <template v-for="(seg, i) in renderSegments(root.content)" :key="i">
-                    <span :class="seg.mention ? 'rounded bg-emerald-50 px-0.5 font-medium text-emerald-600' : ''">{{ seg.text }}</span>
-                  </template>
+                  <QaRefText :text="root.content" :members="members" />
                 </p>
                 <div v-if="root.images.length > 0" class="mt-2 flex flex-wrap gap-2">
                   <template v-for="(img, idx) in root.images" :key="img + idx">
@@ -551,9 +535,7 @@ function memberInitial(name: string) {
                   <span class="text-xs text-slate-400">{{ timeAgo(child.createdAt) }}</span>
                 </div>
                 <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
-                  <template v-for="(seg, i) in renderSegments(child.content)" :key="i">
-                    <span :class="seg.mention ? 'rounded bg-emerald-50 px-0.5 font-medium text-emerald-600' : ''">{{ seg.text }}</span>
-                  </template>
+                  <QaRefText :text="child.content" :members="members" />
                 </p>
                 <div v-if="child.images.length > 0" class="mt-2 flex flex-wrap gap-2">
                   <template v-for="(img, idx) in child.images" :key="img + idx">
