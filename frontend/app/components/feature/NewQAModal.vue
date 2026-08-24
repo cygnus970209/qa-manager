@@ -161,6 +161,21 @@ function removeImage(idx: number) {
   form.images.splice(idx, 1)
 }
 
+/** 사용자가 직접 입력한 내용이 있는지 (백드롭 오클릭으로 내용 날아가는 것 방지용) */
+const isDirty = computed(() =>
+  form.title.trim() !== ''
+  || form.description.trim() !== ''
+  || form.category.trim() !== ''
+  || form.images.length > 0
+  || form.assignee1Id != null
+  || form.assignee2Id != null,
+)
+
+function requestClose() {
+  if (isDirty.value && !window.confirm('작성 중인 내용이 있습니다. 닫으시겠습니까?')) return
+  emit('close')
+}
+
 async function onSubmit() {
   error.value = null
   if (form.updateId == null) {
@@ -194,7 +209,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AppDialog :open="open" title="새 QA 항목" max-width="max-w-2xl" @close="emit('close')">
+  <AppDialog :open="open" title="새 QA 항목" max-width="max-w-2xl" @close="requestClose">
     <form id="new-qa-form" class="space-y-4" @submit.prevent="onSubmit">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
@@ -371,7 +386,7 @@ async function onSubmit() {
     </form>
 
     <template #footer>
-      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="emit('close')">취소</button>
+      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="requestClose">취소</button>
       <button
         type="submit"
         form="new-qa-form"
