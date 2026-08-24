@@ -299,7 +299,7 @@ function goNext() {
     <template v-else-if="item">
       <div class="flex flex-col gap-6 lg:flex-row">
         <div class="min-w-0 flex-1 space-y-6">
-          <QAInfoPanel :item="item" :members="members" :updates="movableUpdates" @updated="onUpdated" @removed="onRemoved" @add-qa="newQaOpen = true" />
+          <QAInfoPanel :item="item" :members="members" :updates="movableUpdates" :qa-items="allItems" @updated="onUpdated" @removed="onRemoved" @add-qa="newQaOpen = true" />
           <QACommentSection
             :qa-item-id="item.id"
             :comments="comments"

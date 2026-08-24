@@ -4,6 +4,7 @@ import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import QaRefText from '~/components/base/QaRefText.vue'
+import QaTagTextarea from '~/components/base/QaTagTextarea.vue'
 import SearchableSelect from '~/components/base/SearchableSelect.vue'
 import { attachmentFileName, isPdfUrl, openPdfInNewTab } from '~/utils/attachments'
 import type { GithubCommit, Member, ProjectUpdate, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
@@ -13,6 +14,8 @@ const props = defineProps<{
   members: Member[]
   /** 이 QA가 이동 가능한 업데이트(버전) 목록 — 같은 프로젝트 범위. */
   updates?: ProjectUpdate[]
+  /** 설명 편집 시 # 태그 자동완성 후보 (미전달 시 지연 로드). */
+  qaItems?: QaItem[]
 }>()
 const emit = defineEmits<{
   updated: [item: QaItem]
@@ -430,11 +433,13 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
     <!-- 본문 -->
     <div class="mt-5">
       <h2 class="mb-2 text-xs font-medium text-slate-500">설명</h2>
-      <textarea
+      <QaTagTextarea
         v-if="editing"
         v-model="form.description"
+        :qa-items="qaItems"
+        :exclude-id="item.id"
         rows="5"
-        placeholder="설명을 입력하세요 (이미지 붙여넣기 가능)"
+        placeholder="설명을 입력하세요 (이미지 붙여넣기 가능, #번호 로 QA 태그)"
         class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         @paste="onPaste"
       />
