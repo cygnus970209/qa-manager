@@ -31,6 +31,8 @@ const segments = computed<Segment[]>(() => {
     <NuxtLink
       v-if="seg.kind === 'qaref'"
       :to="`/qa/${seg.qaId}`"
+      target="_blank"
+      rel="noopener noreferrer"
       class="rounded bg-blue-50 px-0.5 font-medium text-blue-600 hover:underline"
       @click.stop
     >{{ seg.text }}</NuxtLink>

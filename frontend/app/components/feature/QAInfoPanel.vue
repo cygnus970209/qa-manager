@@ -273,17 +273,10 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
 
 <template>
   <article class="rounded-xl border border-slate-200 bg-white p-5 md:p-6">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div class="min-w-0 flex-1">
-        <p class="mb-1 text-xs font-semibold tabular-nums text-slate-400">QA #{{ item.id }}</p>
-        <input
-          v-if="editing"
-          v-model="form.title"
-          class="w-full rounded-md border border-slate-300 px-3 py-2 text-lg font-bold focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-        />
-        <h1 v-else class="text-xl font-bold text-slate-800 md:text-2xl">{{ item.title }}</h1>
-      </div>
-      <div class="ml-auto flex shrink-0 items-center gap-2">
+    <!-- 상단: QA 번호(좌) + 액션 버튼(우). 제목은 아랫줄에서 전체 폭 사용 → 긴 제목에도 안 깨진다. -->
+    <div class="mb-2 flex items-center justify-between gap-3">
+      <p class="text-xs font-semibold tabular-nums text-slate-400">QA #{{ item.id }}</p>
+      <div class="flex shrink-0 items-center gap-2">
         <button
           v-if="!editing"
           type="button"
@@ -312,6 +305,14 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           <Trash2 class="h-3.5 w-3.5" /> 삭제
         </button>
       </div>
+    </div>
+    <div class="min-w-0">
+      <input
+        v-if="editing"
+        v-model="form.title"
+        class="w-full rounded-md border border-slate-300 px-3 py-2 text-lg font-bold focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+      />
+      <h1 v-else class="break-words text-xl font-bold text-slate-800 md:text-2xl">{{ item.title }}</h1>
     </div>
 
     <!-- 메타 -->
