@@ -4,7 +4,7 @@ import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ExpandableText from '~/components/base/ExpandableText.vue'
 import { emptyQaFilter, saveQaFilter } from '~/utils/qaFilter'
-import type { ProjectUpdate, QaItem, QaStatusUpper, UpdateStatus } from '~/types/api'
+import type { ProjectUpdate, QaItem, QaStatus, QaStatusUpper, UpdateStatus } from '~/types/api'
 
 const props = defineProps<{
   update: ProjectUpdate
@@ -21,9 +21,20 @@ const emit = defineEmits<{
 
 const open = ref(!!props.defaultOpen)
 
-const resolvedCount = computed(() => props.items.filter(
-  (q) => q.status === 'fix_done' || q.status === 'confirmed',
-).length)
+/** 헤더에 표시할 상태별 QA 개수 (0건인 상태는 생략). 색상은 StatusBadge 와 동일. */
+const STATUS_META: { key: QaStatus; label: string; cls: string }[] = [
+  { key: 'needs_fix',     label: '수정필요',     cls: 'bg-rose-50 text-rose-600' },
+  { key: 'in_progress',   label: '진행중',       cls: 'bg-blue-50 text-blue-600' },
+  { key: 'fix_done',      label: '수정완료',     cls: 'bg-amber-50 text-amber-600' },
+  { key: 'confirmed',     label: '확인완료',     cls: 'bg-emerald-50 text-emerald-600' },
+  { key: 'on_hold',       label: '보류',         cls: 'bg-slate-100 text-slate-600' },
+  { key: 'needs_recheck', label: '추가확인필요', cls: 'bg-purple-50 text-purple-600' },
+]
+const statusCounts = computed(() =>
+  STATUS_META
+    .map((m) => ({ ...m, count: props.items.filter((q) => q.status === m.key).length }))
+    .filter((m) => m.count > 0),
+)
 
 const upperStatus = computed<'IN_PROGRESS' | 'TESTING' | 'RELEASED'>(() => {
   switch (props.update.status) {
@@ -70,8 +81,15 @@ function rememberFilter() {
         <span class="truncate text-sm font-semibold text-slate-800">{{ update.title }}</span>
         <StatusBadge :status="update.status" />
       </div>
-      <div class="flex shrink-0 items-center gap-2 text-xs text-slate-400">
-        <span>QA {{ items.length }}건 (완료 {{ resolvedCount }})</span>
+      <div class="flex shrink-0 flex-wrap items-center justify-end gap-1.5 text-xs text-slate-400">
+        <span>QA {{ items.length }}건</span>
+        <span
+          v-for="sc in statusCounts"
+          :key="sc.key"
+          :class="['inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 font-medium', sc.cls]"
+        >
+          {{ sc.label }} {{ sc.count }}
+        </span>
       </div>
     </button>
 

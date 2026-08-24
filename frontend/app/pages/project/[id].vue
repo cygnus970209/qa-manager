@@ -91,6 +91,22 @@ const resolvedAll = computed(
   () => items.value.filter((q) => q.status === 'fix_done' || q.status === 'confirmed').length,
 )
 
+/* '배포완료 숨기기' 토글 (localStorage 영속) */
+const HIDE_RELEASED_KEY = 'project-hide-released-updates'
+const hideReleased = ref(false)
+if (import.meta.client) {
+  onMounted(() => {
+    const v = localStorage.getItem(HIDE_RELEASED_KEY)
+    if (v !== null) hideReleased.value = v === '1'
+  })
+}
+watch(hideReleased, (v) => localStorage.setItem(HIDE_RELEASED_KEY, v ? '1' : '0'))
+
+const visibleUpdates = computed(() =>
+  hideReleased.value ? updates.value.filter((u) => u.status !== 'released') : updates.value,
+)
+const hiddenReleasedCount = computed(() => updates.value.length - visibleUpdates.value.length)
+
 const itemsByUpdate = computed(() => {
   const map = new Map<number, QaItem[]>()
   for (const q of items.value) {
@@ -250,7 +266,15 @@ async function confirmUpdateDelete() {
         <div class="mb-3 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-slate-700">업데이트별 QA 항목</h2>
           <div class="flex items-center gap-2 text-xs text-slate-400">
-            <span>{{ updates.length }}개 업데이트 · {{ items.length }}개 QA</span>
+            <label class="flex cursor-pointer select-none items-center gap-1.5 font-medium text-slate-500">
+              <input
+                v-model="hideReleased"
+                type="checkbox"
+                class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
+              />
+              배포완료 숨기기
+            </label>
+            <span>{{ updates.length }}개 업데이트{{ hiddenReleasedCount > 0 ? ` (${hiddenReleasedCount}개 숨김)` : '' }} · {{ items.length }}개 QA</span>
             <button
               v-if="updates.length > 1"
               type="button"
@@ -279,13 +303,16 @@ async function confirmUpdateDelete() {
         <div v-if="updates.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-400">
           등록된 업데이트가 없습니다.
         </div>
+        <div v-else-if="visibleUpdates.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-400">
+          배포완료 업데이트 {{ hiddenReleasedCount }}개가 숨겨져 있습니다.
+        </div>
         <div v-else class="flex flex-col gap-3">
           <UpdateAccordion
-            v-for="u in updates"
+            v-for="u in visibleUpdates"
             :key="u.id"
             :update="u"
             :items="itemsByUpdate.get(u.id) ?? []"
-            :default-open="u === updates[0]"
+            :default-open="u === visibleUpdates[0]"
             @change-status="onUpdateStatus"
             @add-qa="onAddInlineQa"
             @edit="openUpdateEdit"
