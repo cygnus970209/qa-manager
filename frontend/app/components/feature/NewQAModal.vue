@@ -34,6 +34,8 @@ const form = reactive<{
   assignee2Id: number | null
   images: string[]
   createGithubIssue: boolean
+  /** 이슈를 생성할 repo fullName (프로젝트에 여러 repo 연결 시 선택). */
+  githubRepo: string
 }>({
   projectId: null,
   updateId: null,
@@ -47,6 +49,7 @@ const form = reactive<{
   assignee2Id: null,
   images: [],
   createGithubIssue: true,
+  githubRepo: '',
 })
 
 const submitting = ref(false)
@@ -58,11 +61,15 @@ const filteredUpdates = computed(() => {
   return props.updates.filter((u) => u.projectId === form.projectId)
 })
 
-/** 선택된 프로젝트에 GitHub repo 가 연결돼 있으면 fullName, 아니면 null (체크박스 숨김). */
-const githubRepoFullName = computed(() => {
+/** 선택된 프로젝트에 연결된 GitHub repo 목록 (없으면 빈 배열 → 체크박스 숨김). */
+const githubRepos = computed(() => {
   const p = props.projects.find((x) => x.id === form.projectId)
-  return p?.githubRepoOwner && p.githubRepoName ? `${p.githubRepoOwner}/${p.githubRepoName}` : null
+  return (p?.githubRepos ?? []).map((r) => ({ ...r, fullName: `${r.repoOwner}/${r.repoName}` }))
 })
+/** 실제 이슈가 생성될 repo. 선택값이 목록에 없으면 첫 번째 연결 repo 로 폴백. */
+const selectedGithubRepo = computed(() =>
+  githubRepos.value.find((r) => r.fullName === form.githubRepo) ?? githubRepos.value[0] ?? null,
+)
 
 watch(() => props.open, (v) => {
   if (!v) return
@@ -79,6 +86,7 @@ watch(() => props.open, (v) => {
   form.assignee2Id = null
   form.images = []
   form.createGithubIssue = true
+  form.githubRepo = ''
   error.value = null
 
   // 우선순위: defaultUpdateId > defaultProjectId
@@ -103,6 +111,8 @@ watch(() => form.projectId, (pid) => {
   } else if (!filteredUpdates.value.find((u) => u.id === form.updateId)) {
     form.updateId = filteredUpdates.value[0]?.id ?? null
   }
+  // 이슈 대상 repo 도 첫 번째 연결 repo 로 초기화
+  form.githubRepo = githubRepos.value[0]?.fullName ?? ''
 })
 
 function ensureNamed(f: File): File {
@@ -197,7 +207,9 @@ async function onSubmit() {
       assignee2Id: form.assignee2Id ?? undefined,
       images: form.images,
       // repo 미연결 프로젝트면 필드 자체를 보내지 않는다.
-      createGithubIssue: githubRepoFullName.value && form.createGithubIssue ? true : undefined,
+      createGithubIssue: selectedGithubRepo.value && form.createGithubIssue ? true : undefined,
+      githubRepoOwner: selectedGithubRepo.value && form.createGithubIssue ? selectedGithubRepo.value.repoOwner : undefined,
+      githubRepoName: selectedGithubRepo.value && form.createGithubIssue ? selectedGithubRepo.value.repoName : undefined,
     })
     emit('created', created)
     emit('close')
@@ -238,17 +250,25 @@ async function onSubmit() {
         </label>
       </div>
 
-      <label v-if="githubRepoFullName" class="flex cursor-pointer items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
-        <input
-          v-model="form.createGithubIssue"
-          type="checkbox"
-          class="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-emerald-500"
-        />
-        <span class="text-xs text-slate-600">
-          GitHub 이슈도 함께 생성
-          <span class="text-slate-400">({{ githubRepoFullName }})</span>
-        </span>
-      </label>
+      <div v-if="githubRepos.length > 0" class="flex flex-wrap items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
+        <label class="flex cursor-pointer items-center gap-2">
+          <input
+            v-model="form.createGithubIssue"
+            type="checkbox"
+            class="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-emerald-500"
+          />
+          <span class="text-xs text-slate-600">GitHub 이슈도 함께 생성</span>
+        </label>
+        <span v-if="githubRepos.length === 1" class="text-xs text-slate-400">({{ githubRepos[0]?.fullName }})</span>
+        <select
+          v-else
+          v-model="form.githubRepo"
+          :disabled="!form.createGithubIssue"
+          class="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50"
+        >
+          <option v-for="r in githubRepos" :key="r.fullName" :value="r.fullName">{{ r.fullName }}</option>
+        </select>
+      </div>
 
       <label class="block">
         <span class="block text-xs font-medium text-slate-600">제목</span>

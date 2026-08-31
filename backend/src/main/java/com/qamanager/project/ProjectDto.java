@@ -1,10 +1,20 @@
 package com.qamanager.project;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public class ProjectDto {
+
+    /** 프로젝트에 연결된 GitHub repo. */
+    public record GithubRepoLink(Long installationId, String repoOwner, String repoName) {
+        public static GithubRepoLink from(ProjectGithubRepo r) {
+            return new GithubRepoLink(r.getInstallationId(), r.getRepoOwner(), r.getRepoName());
+        }
+    }
 
     public record Response(
         Long id,
@@ -12,22 +22,18 @@ public class ProjectDto {
         String description,
         String status,
         boolean pinned,
-        Long githubInstallationId,
-        String githubRepoOwner,
-        String githubRepoName,
+        List<GithubRepoLink> githubRepos,
         String createdAt,
         String updatedAt
     ) {
-        public static Response from(Project p, boolean pinned) {
+        public static Response from(Project p, boolean pinned, List<GithubRepoLink> githubRepos) {
             return new Response(
                 p.getId(),
                 p.getName(),
                 p.getDescription(),
                 p.getStatus().getCode(),
                 pinned,
-                p.getGithubInstallationId(),
-                p.getGithubRepoOwner(),
-                p.getGithubRepoName(),
+                githubRepos == null ? List.of() : githubRepos,
                 p.getCreatedAt() != null ? p.getCreatedAt().toString() : null,
                 p.getUpdatedAt() != null ? p.getUpdatedAt().toString() : null
             );
@@ -40,15 +46,18 @@ public class ProjectDto {
         @NotNull ProjectStatus status
     ) {}
 
+    /** UpdateRequest.githubRepos 원소. */
+    public record GithubRepoRef(
+        @NotNull Long installationId,
+        @NotBlank @Size(max = 100) String repoOwner,
+        @NotBlank @Size(max = 200) String repoName
+    ) {}
+
     public record UpdateRequest(
         @Size(max = 100) String name,
         @Size(max = 4000) String description,
         ProjectStatus status,
-        /** GitHub repo 연결 — 세 필드를 함께 보낸다. null 이면 '변경 없음'. */
-        Long githubInstallationId,
-        @Size(max = 100) String githubRepoOwner,
-        @Size(max = 200) String githubRepoName,
-        /** repo 연결 해제는 true. */
-        Boolean clearGithubRepo
+        /** GitHub repo 연결 목록 전체 교체. null 이면 '변경 없음', 빈 목록이면 전부 해제. */
+        List<@Valid GithubRepoRef> githubRepos
     ) {}
 }

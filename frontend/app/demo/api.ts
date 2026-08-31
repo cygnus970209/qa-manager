@@ -146,9 +146,7 @@ const ROUTES: Route[] = [
         description: req.description ?? null,
         status: (lower(req.status) || 'active') as DemoProject['status'],
         pinnedBy: [],
-        githubInstallationId: null,
-        githubRepoOwner: null,
-        githubRepoName: null,
+        githubRepos: [],
         createdAt: now,
         updatedAt: now,
       }
@@ -167,14 +165,10 @@ const ROUTES: Route[] = [
       if (req.name !== undefined) p.name = req.name
       if (req.description !== undefined) p.description = req.description ?? null
       if (req.status !== undefined) p.status = lower(req.status) as DemoProject['status']
-      if (req.clearGithubRepo) {
-        p.githubInstallationId = null
-        p.githubRepoOwner = null
-        p.githubRepoName = null
-      } else if (req.githubInstallationId !== undefined && req.githubRepoOwner !== undefined && req.githubRepoName !== undefined) {
-        p.githubInstallationId = req.githubInstallationId
-        p.githubRepoOwner = req.githubRepoOwner
-        p.githubRepoName = req.githubRepoName
+      if (req.githubRepos !== undefined) {
+        p.githubRepos = (req.githubRepos ?? []).map((r) => ({
+          installationId: r.installationId, repoOwner: r.repoOwner, repoName: r.repoName,
+        }))
       }
       p.updatedAt = db.nowIso()
       db.save()
@@ -383,17 +377,20 @@ const ROUTES: Route[] = [
         updatedAt: now,
       }
       // createGithubIssue: 프로젝트에 repo 가 연결돼 있으면 가짜 이슈를 만들어 연결한다.
+      // 지정 repo 가 연결 목록에 있으면 그 repo, 아니면 첫 번째 연결 repo (백엔드 규칙과 동일).
       if (req.createGithubIssue) {
         const upd = db.state.updates.find((u) => u.id === req.updateId)
         const proj = upd ? db.state.projects.find((p) => p.id === upd.projectId) : undefined
-        if (proj?.githubRepoOwner && proj.githubRepoName) {
+        const repos = proj?.githubRepos ?? []
+        const repo = repos.find((r) => r.repoOwner === req.githubRepoOwner && r.repoName === req.githubRepoName) ?? repos[0]
+        if (repo) {
           const issueNumber = db.nextId()
           q.githubIssue = {
             issueNumber,
-            issueUrl: `https://github.com/${proj.githubRepoOwner}/${proj.githubRepoName}/issues/${issueNumber}`,
+            issueUrl: `https://github.com/${repo.repoOwner}/${repo.repoName}/issues/${issueNumber}`,
             state: 'open',
-            repoOwner: proj.githubRepoOwner,
-            repoName: proj.githubRepoName,
+            repoOwner: repo.repoOwner,
+            repoName: repo.repoName,
           }
         }
       }

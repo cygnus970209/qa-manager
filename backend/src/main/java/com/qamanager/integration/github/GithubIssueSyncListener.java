@@ -24,7 +24,7 @@ public class GithubIssueSyncListener {
     @EventListener
     public void onQaCreated(QaItemService.QaCreatedEvent ev) {
         if (!ev.createGithubIssue()) return;
-        afterCommit(() -> issueService.createIssueForQa(ev.qaItemId()));
+        afterCommit(() -> issueService.createIssueForQa(ev.qaItemId(), ev.githubRepoOwner(), ev.githubRepoName()));
     }
 
     @EventListener

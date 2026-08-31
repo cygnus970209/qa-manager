@@ -25,16 +25,6 @@ public class Project extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    // ── GitHub 연동 (선택) — 연결된 repo 로 QA 이슈를 생성한다 ──
-    @Column(name = "github_installation_id")
-    private Long githubInstallationId;
-
-    @Column(name = "github_repo_owner", length = 100)
-    private String githubRepoOwner;
-
-    @Column(name = "github_repo_name", length = 200)
-    private String githubRepoName;
-
     protected Project() {}
 
     public Project(String name, String description, ProjectStatus status) {
@@ -49,23 +39,8 @@ public class Project extends BaseEntity {
         if (status != null) this.status = status.getCode();
     }
 
-    public void connectGithubRepo(Long installationId, String owner, String name) {
-        this.githubInstallationId = installationId;
-        this.githubRepoOwner = owner;
-        this.githubRepoName = name;
-    }
-
-    public void clearGithubRepo() {
-        this.githubInstallationId = null;
-        this.githubRepoOwner = null;
-        this.githubRepoName = null;
-    }
-
     public Long getId() { return id; }
     public String getName() { return name; }
     public String getDescription() { return description; }
     public ProjectStatus getStatus() { return ProjectStatus.from(status); }
-    public Long getGithubInstallationId() { return githubInstallationId; }
-    public String getGithubRepoOwner() { return githubRepoOwner; }
-    public String getGithubRepoName() { return githubRepoName; }
 }

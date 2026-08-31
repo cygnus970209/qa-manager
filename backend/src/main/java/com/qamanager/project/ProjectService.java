@@ -8,8 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
@@ -17,13 +20,16 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectPinRepository pinRepository;
     private final TeamMemberRepository memberRepository;
+    private final ProjectGithubRepoRepository githubRepoRepository;
 
     public ProjectService(ProjectRepository projectRepository,
                           ProjectPinRepository pinRepository,
-                          TeamMemberRepository memberRepository) {
+                          TeamMemberRepository memberRepository,
+                          ProjectGithubRepoRepository githubRepoRepository) {
         this.projectRepository = projectRepository;
         this.pinRepository = pinRepository;
         this.memberRepository = memberRepository;
+        this.githubRepoRepository = githubRepoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -34,8 +40,14 @@ public class ProjectService {
 
         Set<Long> pinned = new HashSet<>(pinRepository.findPinnedProjectIdsByMember(currentMemberId));
 
+        List<Long> ids = projects.stream().map(Project::getId).toList();
+        Map<Long, List<ProjectDto.GithubRepoLink>> repoMap = ids.isEmpty() ? Map.of()
+            : githubRepoRepository.findAllByProjectIdInOrderByIdAsc(ids).stream()
+                .collect(Collectors.groupingBy(ProjectGithubRepo::getProjectId,
+                    Collectors.mapping(ProjectDto.GithubRepoLink::from, Collectors.toList())));
+
         return projects.stream()
-            .map(p -> ProjectDto.Response.from(p, pinned.contains(p.getId())))
+            .map(p -> ProjectDto.Response.from(p, pinned.contains(p.getId()), repoMap.getOrDefault(p.getId(), List.of())))
             // pinned 우선, 그다음 createdAt desc
             .sorted(Comparator
                 .comparing(ProjectDto.Response::pinned).reversed()
@@ -47,32 +59,41 @@ public class ProjectService {
     public ProjectDto.Response get(Long projectId, Long currentMemberId) {
         Project p = findOrThrow(projectId);
         boolean pinned = pinRepository.findByProjectIdAndMemberId(projectId, currentMemberId).isPresent();
-        return ProjectDto.Response.from(p, pinned);
+        return ProjectDto.Response.from(p, pinned, repoLinks(projectId));
     }
 
     @Transactional
     public ProjectDto.Response create(ProjectDto.CreateRequest req, Long currentMemberId) {
         Project p = new Project(req.name(), req.description(), req.status());
         Project saved = projectRepository.save(p);
-        return ProjectDto.Response.from(saved, false);
+        return ProjectDto.Response.from(saved, false, List.of());
     }
 
     @Transactional
     public ProjectDto.Response update(Long projectId, ProjectDto.UpdateRequest req, Long currentMemberId) {
         Project p = findOrThrow(projectId);
         p.update(req.name(), req.description(), req.status());
-        if (Boolean.TRUE.equals(req.clearGithubRepo())) {
-            p.clearGithubRepo();
-        } else if (req.githubInstallationId() != null
-            && notBlank(req.githubRepoOwner()) && notBlank(req.githubRepoName())) {
-            p.connectGithubRepo(req.githubInstallationId(), req.githubRepoOwner(), req.githubRepoName());
+        if (req.githubRepos() != null) {
+            replaceGithubRepos(projectId, req.githubRepos());
         }
         boolean pinned = pinRepository.findByProjectIdAndMemberId(projectId, currentMemberId).isPresent();
-        return ProjectDto.Response.from(p, pinned);
+        return ProjectDto.Response.from(p, pinned, repoLinks(projectId));
     }
 
-    private static boolean notBlank(String s) {
-        return s != null && !s.isBlank();
+    /** 연결 repo 목록 전체 교체 (owner/name 중복은 첫 항목만 유지). */
+    private void replaceGithubRepos(Long projectId, List<ProjectDto.GithubRepoRef> repos) {
+        githubRepoRepository.deleteAllByProjectId(projectId);
+        Set<String> seen = new LinkedHashSet<>();
+        for (ProjectDto.GithubRepoRef r : repos) {
+            if (!seen.add(r.repoOwner() + "/" + r.repoName())) continue;
+            githubRepoRepository.save(new ProjectGithubRepo(projectId, r.installationId(), r.repoOwner(), r.repoName()));
+        }
+    }
+
+    private List<ProjectDto.GithubRepoLink> repoLinks(Long projectId) {
+        return githubRepoRepository.findAllByProjectIdOrderByIdAsc(projectId).stream()
+            .map(ProjectDto.GithubRepoLink::from)
+            .toList();
     }
 
     @Transactional

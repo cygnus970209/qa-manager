@@ -161,7 +161,8 @@ public class QaItemService {
             tester == null ? null : tester.getId(),
             assignee1 == null ? null : assignee1.getId(),
             assignee2 == null ? null : assignee2.getId(),
-            Boolean.TRUE.equals(req.createGithubIssue())));
+            Boolean.TRUE.equals(req.createGithubIssue()),
+            req.githubRepoOwner(), req.githubRepoName()));
         return QaDto.Response.from(saved);
     }
 
@@ -314,7 +315,9 @@ public class QaItemService {
                                  Long testerMemberId,
                                  Long assignee1MemberId,
                                  Long assignee2MemberId,
-                                 boolean createGithubIssue) {}
+                                 boolean createGithubIssue,
+                                 String githubRepoOwner,
+                                 String githubRepoName) {}
 
     public record QaStatusChangedEvent(Long qaItemId, Long projectId, String title,
                                        String newStatus, Long actorMemberId,

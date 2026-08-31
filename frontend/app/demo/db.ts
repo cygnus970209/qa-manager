@@ -117,9 +117,8 @@ export class DemoDb {
       pinned: uid != null && p.pinnedBy.includes(uid),
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
-      githubInstallationId: p.githubInstallationId ?? null,
-      githubRepoOwner: p.githubRepoOwner ?? null,
-      githubRepoName: p.githubRepoName ?? null,
+      // 구버전 localStorage 상태(단일 repo 필드)엔 배열이 없으므로 빈 배열로 폴백.
+      githubRepos: p.githubRepos ?? [],
     }
   }
 

@@ -82,7 +82,8 @@ class QaItemServiceTest {
                 null, null, null, // testerId / assignee1Id / assignee2Id 모두 null
                 QaPriority.MEDIUM,
                 List.of(),
-                null              // createGithubIssue
+                null,             // createGithubIssue
+                null, null        // githubRepoOwner / githubRepoName
             );
 
             service.create(req, currentUserId);
@@ -108,7 +109,7 @@ class QaItemServiceTest {
             QaDto.CreateRequest req = new QaDto.CreateRequest(
                 1L, "title", null, null, QaStatus.NEEDS_FIX,
                 explicitTesterId, null, null,
-                QaPriority.MEDIUM, List.of(), null
+                QaPriority.MEDIUM, List.of(), null, null, null
             );
 
             service.create(req, currentUserId);
@@ -133,7 +134,7 @@ class QaItemServiceTest {
 
             QaDto.CreateRequest req = new QaDto.CreateRequest(
                 1L, "t", null, null, QaStatus.NEEDS_FIX,
-                null, 2L, 3L, QaPriority.MEDIUM, List.of(), null
+                null, 2L, 3L, QaPriority.MEDIUM, List.of(), null, null, null
             );
 
             service.create(req, currentUserId);

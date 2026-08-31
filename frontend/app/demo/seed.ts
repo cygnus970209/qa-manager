@@ -16,10 +16,10 @@ export function createSeed(): DemoState {
     ],
 
     projects: [
-      { id: 1, name: '모바일 쇼핑몰 앱', description: 'iOS/Android 하이브리드 쇼핑몰 앱 리뉴얼 프로젝트. 신규 결제 시스템 도입 및 UI/UX 개선.', status: 'active', pinnedBy: [], githubInstallationId: 9001, githubRepoOwner: 'qa-demo-org', githubRepoName: 'mobile-shop-app', createdAt: '2026-01-15T00:00:00', updatedAt: '2026-01-15T00:00:00' },
-      { id: 2, name: '관리자 대시보드', description: '내부 운영팀을 위한 실시간 데이터 분석 및 모니터링 대시보드 구축.', status: 'active', pinnedBy: [], githubInstallationId: 9001, githubRepoOwner: 'qa-demo-org', githubRepoName: 'admin-dashboard', createdAt: '2026-02-20T00:00:00', updatedAt: '2026-02-20T00:00:00' },
-      { id: 3, name: 'SNS 연동 API', description: '카카오톡, 인스타그램, 네이버 등 외부 SNS 플랫폼 연동 API 개발.', status: 'paused', pinnedBy: [], githubInstallationId: null, githubRepoOwner: null, githubRepoName: null, createdAt: '2026-03-10T00:00:00', updatedAt: '2026-03-10T00:00:00' },
-      { id: 4, name: '회원 시스템 v2', description: '기존 회원 인증 시스템 전면 개편. OAuth2 + MFA 다중 인증 도입.', status: 'completed', pinnedBy: [], githubInstallationId: null, githubRepoOwner: null, githubRepoName: null, createdAt: '2025-11-01T00:00:00', updatedAt: '2025-11-01T00:00:00' },
+      { id: 1, name: '모바일 쇼핑몰 앱', description: 'iOS/Android 하이브리드 쇼핑몰 앱 리뉴얼 프로젝트. 신규 결제 시스템 도입 및 UI/UX 개선.', status: 'active', pinnedBy: [], githubRepos: [{ installationId: 9001, repoOwner: 'qa-demo-org', repoName: 'mobile-shop-app' }], createdAt: '2026-01-15T00:00:00', updatedAt: '2026-01-15T00:00:00' },
+      { id: 2, name: '관리자 대시보드', description: '내부 운영팀을 위한 실시간 데이터 분석 및 모니터링 대시보드 구축.', status: 'active', pinnedBy: [], githubRepos: [{ installationId: 9001, repoOwner: 'qa-demo-org', repoName: 'admin-dashboard' }], createdAt: '2026-02-20T00:00:00', updatedAt: '2026-02-20T00:00:00' },
+      { id: 3, name: 'SNS 연동 API', description: '카카오톡, 인스타그램, 네이버 등 외부 SNS 플랫폼 연동 API 개발.', status: 'paused', pinnedBy: [], githubRepos: [], createdAt: '2026-03-10T00:00:00', updatedAt: '2026-03-10T00:00:00' },
+      { id: 4, name: '회원 시스템 v2', description: '기존 회원 인증 시스템 전면 개편. OAuth2 + MFA 다중 인증 도입.', status: 'completed', pinnedBy: [], githubRepos: [], createdAt: '2025-11-01T00:00:00', updatedAt: '2025-11-01T00:00:00' },
     ],
 
     updates: [

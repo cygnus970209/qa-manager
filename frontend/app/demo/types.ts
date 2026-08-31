@@ -22,10 +22,8 @@ export interface DemoProject {
   status: ProjectStatus
   /** 핀은 사용자별이므로 핀을 건 멤버 id 목록으로 보관. DTO 의 pinned 는 현재 사용자 기준으로 계산. */
   pinnedBy: number[]
-  /** GitHub repo 연결 정보 (미연결 시 null). */
-  githubInstallationId: number | null
-  githubRepoOwner: string | null
-  githubRepoName: string | null
+  /** 연결된 GitHub repo 목록. */
+  githubRepos: { installationId: number; repoOwner: string; repoName: string }[]
   createdAt: string
   updatedAt: string
 }

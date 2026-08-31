@@ -1,6 +1,8 @@
 package com.qamanager.integration.github;
 
 import com.qamanager.project.Project;
+import com.qamanager.project.ProjectGithubRepo;
+import com.qamanager.project.ProjectGithubRepoRepository;
 import com.qamanager.qa.item.QaItem;
 import com.qamanager.qa.item.QaItemRepository;
 import com.qamanager.qa.shared.QaStatus;
@@ -30,26 +32,33 @@ public class GithubIssueService {
     private final GithubAppRepository appRepository;
     private final QaGithubIssueRepository issueRepository;
     private final QaItemRepository qaRepository;
+    private final ProjectGithubRepoRepository projectRepoRepository;
     private final GithubClient client;
     private final String linkBaseUrl;
 
     public GithubIssueService(GithubAppRepository appRepository,
                               QaGithubIssueRepository issueRepository,
                               QaItemRepository qaRepository,
+                              ProjectGithubRepoRepository projectRepoRepository,
                               GithubClient client,
                               @Value("${app.cors.allowed-origins:}") String allowedOrigins) {
         this.appRepository = appRepository;
         this.issueRepository = issueRepository;
         this.qaRepository = qaRepository;
+        this.projectRepoRepository = projectRepoRepository;
         this.client = client;
         this.linkBaseUrl = firstOrigin(allowedOrigins);
     }
 
     /* ─────────────── QA 생성 → 이슈 생성 ─────────────── */
 
+    /**
+     * @param repoOwner/repoName 이슈를 생성할 repo. 둘 다 null 이면 프로젝트의 첫 번째 연결 repo 사용.
+     *                           지정했는데 연결 목록에 없으면 skip (임의 repo 생성 방지).
+     */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void createIssueForQa(Long qaItemId) {
+    public void createIssueForQa(Long qaItemId, String repoOwner, String repoName) {
         GithubApp app = appRepository.findTopByOrderByIdAsc().orElse(null);
         if (app == null) {
             log.debug("GitHub App 미설정 — 이슈 생성 skip (qa={})", qaItemId);
@@ -58,22 +67,35 @@ public class GithubIssueService {
         QaItem qa = qaRepository.findById(qaItemId).orElse(null);
         if (qa == null) return;
         Project project = qa.getProjectUpdate().getProject();
-        if (project.getGithubInstallationId() == null
-            || project.getGithubRepoOwner() == null || project.getGithubRepoName() == null) {
+        List<ProjectGithubRepo> links = projectRepoRepository.findAllByProjectIdOrderByIdAsc(project.getId());
+        if (links.isEmpty()) {
             log.debug("프로젝트에 repo 미연결 — 이슈 생성 skip (qa={}, project={})", qaItemId, project.getId());
             return;
+        }
+        ProjectGithubRepo target;
+        if (repoOwner != null && repoName != null) {
+            target = links.stream()
+                .filter(l -> l.getRepoOwner().equals(repoOwner) && l.getRepoName().equals(repoName))
+                .findFirst().orElse(null);
+            if (target == null) {
+                log.warn("지정 repo {}/{} 가 프로젝트 연결 목록에 없음 — 이슈 생성 skip (qa={}, project={})",
+                    repoOwner, repoName, qaItemId, project.getId());
+                return;
+            }
+        } else {
+            target = links.get(0);
         }
         if (issueRepository.existsByQaItemId(qaItemId)) return; // 중복 생성 방지
 
         try {
-            GithubDto.IssueRef ref = client.createIssue(app, project.getGithubInstallationId(),
-                project.getGithubRepoOwner(), project.getGithubRepoName(),
+            GithubDto.IssueRef ref = client.createIssue(app, target.getInstallationId(),
+                target.getRepoOwner(), target.getRepoName(),
                 qa.getTitle(), buildIssueBody(qa));
             issueRepository.save(new QaGithubIssue(qaItemId,
-                project.getGithubRepoOwner(), project.getGithubRepoName(),
+                target.getRepoOwner(), target.getRepoName(),
                 ref.number(), ref.htmlUrl(), ref.state()));
             log.info("GitHub 이슈 생성: {}/{}#{} (qa={})",
-                project.getGithubRepoOwner(), project.getGithubRepoName(), ref.number(), qaItemId);
+                target.getRepoOwner(), target.getRepoName(), ref.number(), qaItemId);
         } catch (Exception e) {
             log.warn("GitHub 이슈 생성 실패 (qa={}): {}", qaItemId, e.getMessage());
         }

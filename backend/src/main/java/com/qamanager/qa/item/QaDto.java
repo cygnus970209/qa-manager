@@ -105,7 +105,10 @@ public class QaDto {
         @NotNull QaPriority priority,
         List<@Size(max = 800) String> images,
         /** true 면 프로젝트에 연결된 GitHub repo 에 이슈도 생성 (커밋 후 비동기). */
-        Boolean createGithubIssue
+        Boolean createGithubIssue,
+        /** 이슈를 생성할 repo (프로젝트에 여러 repo 가 연결된 경우). 생략 시 첫 번째 연결 repo. */
+        @Size(max = 100) String githubRepoOwner,
+        @Size(max = 200) String githubRepoName
     ) {}
 
     public record UpdateRequest(

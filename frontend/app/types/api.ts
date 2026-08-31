@@ -125,6 +125,13 @@ export interface MemberUpdateRequest {
 /* ─────────────── Project ─────────────── */
 export type ProjectStatus = 'active' | 'completed' | 'paused'
 
+/** 프로젝트에 연결된 GitHub repo. */
+export interface ProjectGithubRepoLink {
+  installationId: number
+  repoOwner: string
+  repoName: string
+}
+
 export interface Project {
   id: number
   name: string
@@ -133,10 +140,8 @@ export interface Project {
   pinned: boolean
   createdAt: string | null
   updatedAt: string | null
-  /** GitHub repo 연결 정보. non_null 직렬화라 미연결 시 필드 자체가 생략됨. */
-  githubInstallationId?: number | null
-  githubRepoOwner?: string | null
-  githubRepoName?: string | null
+  /** 연결된 GitHub repo 목록 (미연결이면 빈 배열). */
+  githubRepos?: ProjectGithubRepoLink[]
 }
 
 export interface ProjectCreateRequest {
@@ -149,12 +154,8 @@ export interface ProjectUpdateRequest {
   name?: string
   description?: string
   status?: 'ACTIVE' | 'COMPLETED' | 'PAUSED'
-  /** GitHub repo 연결 — 셋 다 함께 보내야 함. */
-  githubInstallationId?: number
-  githubRepoOwner?: string
-  githubRepoName?: string
-  /** GitHub repo 연결 해제. */
-  clearGithubRepo?: boolean
+  /** GitHub repo 연결 목록 전체 교체. 생략하면 변경 없음, 빈 배열이면 전부 해제. */
+  githubRepos?: ProjectGithubRepoLink[]
 }
 
 /* ─────────────── ProjectUpdate (버전) ─────────────── */
@@ -259,6 +260,9 @@ export interface QaCreateRequest {
   images?: string[]
   /** true 면 프로젝트에 연결된 repo 에 GitHub 이슈를 함께 생성. */
   createGithubIssue?: boolean
+  /** 이슈를 생성할 repo (프로젝트에 여러 repo 연결 시). 생략 시 첫 번째 연결 repo. */
+  githubRepoOwner?: string
+  githubRepoName?: string
 }
 
 export interface QaPatchRequest {
