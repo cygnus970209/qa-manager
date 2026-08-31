@@ -1,7 +1,76 @@
 # QA Manager
 
-팀 내부 QA(품질보증) 관리 도구. 프로젝트 → 업데이트(버전) → QA 항목을 체계적으로 관리하고,
-담당자 배정 · 우선순위 · 코멘트 · 변경 이력 · 실시간 알림으로 협업하는 웹 서비스.
+> 프로젝트 → 업데이트(버전) → QA 항목으로 이어지는 팀 QA 워크플로 관리 풀스택 웹 서비스.
+> 실시간 알림(SSE) · MS Teams 봇 · GitHub 이슈/커밋 추적까지, 사내 QA 협업 흐름 전체를 다룹니다.
+
+![Nuxt 4](https://img.shields.io/badge/Nuxt-4-00DC82?logo=nuxt&logoColor=white)
+![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?logo=vuedotjs&logoColor=white)
+![Spring Boot 4](https://img.shields.io/badge/Spring%20Boot-4-6DB33F?logo=springboot&logoColor=white)
+![Java 25](https://img.shields.io/badge/Java-25-orange)
+![MariaDB 11](https://img.shields.io/badge/MariaDB-11-003545?logo=mariadb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+
+**🔗 라이브 데모: https://qa-manager-demo.cygnus2.com**
+백엔드 없이 동작하는 정적 데모입니다(변경 사항은 방문자 브라우저에만 저장). 로그인 화면에서 데모 계정을 클릭하면 바로 체험할 수 있습니다. → [데모 모드 문서](docs/DEMO.md)
+
+---
+
+## 스크린샷
+
+<!--
+  스크린샷은 docs/images/ 에 아래 파일명으로 넣으면 자동으로 표시됩니다.
+  권장 캡처 목록: docs/images/README.md 참고
+-->
+
+| 대시보드 | QA 상세 (3분할 뷰) |
+|---|---|
+| ![대시보드](docs/images/dashboard.png) | ![QA 상세](docs/images/qa-detail.png) |
+
+| 코멘트 · 멘션 · 이모지 반응 | GitHub 이슈 · 커밋 추적 |
+|---|---|
+| ![코멘트](docs/images/qa-comments.png) | ![GitHub 연동](docs/images/github-commits.png) |
+
+| 실시간 알림센터 | 이메일 OTP 2단계 로그인 |
+|---|---|
+| ![알림센터](docs/images/notification-center.png) | ![OTP 로그인](docs/images/login-otp.png) |
+
+---
+
+## 주요 기능
+
+전체 기능의 상세 설명과 화면별 가이드는 **[docs/FEATURES.md](docs/FEATURES.md)** 에 있습니다.
+
+### QA 워크플로
+- 프로젝트 → 업데이트(릴리즈 버전) → QA 항목 3단 구조, 업데이트 드래그 순서 변경
+- QA 상태 6단계(수정필요 → 진행중 → 수정완료 → 확인완료 / 보류 / 추가확인필요) + 우선순위 4단계
+- 담당 구조: 테스터 1명 + 담당자 2명, 목록에서 인라인 즉시 변경
+- 필드 단위 변경 이력 자동 기록, `#번호` QA 상호참조 태그(자동완성 + 링크 렌더링)
+- QA 상세는 목록 사이드바 / 본문·코멘트 / 변경 이력 3분할 뷰 — 필터와 이전/다음 내비게이션이 목록과 동기화
+
+### 협업
+- 코멘트 + 1-depth 답글, `@멘션` 자동완성, 이모지 반응 8종, `Ctrl+Enter` 등록
+- 이미지·PDF 첨부(클립보드 붙여넣기 지원) + 휠 줌/드래그 라이트박스
+
+### 알림
+- 인앱 실시간 알림 (SSE) — QA 등록/상태 변경/담당자 배정/코멘트/답글/멘션 6종
+- **MS Teams 봇** 1:1 프로액티브 메시지 (Adaptive Card + 딥링크) — 종류별 on/off, 방해금지 시간대 설정
+- 알림센터 드롭다운: 안읽음 배지, 모두 읽기, 클릭 시 해당 QA로 이동
+
+### GitHub 연동
+- **GitHub App Manifest flow** — 관리자 화면에서 원클릭으로 전용 GitHub App 생성·연동
+- QA 등록 시 GitHub 이슈 자동 생성, QA 상태 변경 시 이슈 open/close 동기화
+- 커밋 메시지에 `#이슈번호` 를 남기면 QA 상세에 관련 커밋이 자동 표시
+
+### 보안
+- JWT HttpOnly 쿠키 + refresh rotation + Redis 토큰 블랙리스트
+- **IP 조건부 이메일 OTP 2FA** — 신뢰 IP(사무실) 밖 로그인에만 6자리 이메일 인증 요구
+- API 감사 로그(쓰기 요청 전수 기록), X-Forwarded-For 신뢰 경계 처리, CSP 등 보안 헤더
+
+### 운영
+- 관리자 페이지 4탭(프로젝트/QA/팀원/설정) + Teams 발송 단계별 진단 도구
+- Docker Compose 풀스택 배포(DB + Redis + BE + FE), Flyway 마이그레이션 자동 적용
+- 백엔드 없이 정적 호스팅되는 **데모 모드** 빌드 내장
 
 ---
 
@@ -9,91 +78,60 @@
 
 | 영역 | 스택 |
 |---|---|
-| Frontend | Nuxt 4 (SSR), Vue 3, Pinia, Tailwind CSS |
-| Backend | Spring Boot 4, Java 25, Hibernate 7, Spring Security |
-| DB | MariaDB 11 + Flyway 마이그레이션 |
-| Auth | JWT (access + refresh) |
-| Storage | AWS S3 (브라우저 직접 업로드, presigned URL) |
-| 실시간 | SSE (Server-Sent Events) |
-| 배포 | Docker Compose (풀스택) / systemd / pm2 |
+| Frontend | Nuxt 4 (SSR), Vue 3, Pinia, Tailwind CSS, TypeScript strict |
+| Backend | Spring Boot 4, Java 25 (가상 스레드), Spring Security, JPA/Hibernate |
+| DB / Cache | MariaDB 11 + Flyway (V1~V14), Redis 7 (토큰 블랙리스트 · OTP) |
+| Auth | JWT (HttpOnly 쿠키, access + refresh rotation), 이메일 OTP 2FA |
+| Storage | AWS S3 — presigned URL 브라우저 직접 업로드 |
+| 실시간 | SSE (fetch + ReadableStream 구독) |
+| 외부 연동 | GitHub App (이슈/커밋), MS Teams Bot Framework, SMTP |
+| 배포 | Docker Compose / systemd / Nginx (예시 설정 포함) |
 
 ---
 
-## 주요 기능
+## 아키텍처 하이라이트
 
-### 프로젝트 & QA
-- 프로젝트 CRUD, 상태(`active` / `paused` / `completed`), 고정
-- 프로젝트별 업데이트(릴리즈 버전) 관리
-- QA 아이템 CRUD, 상태/우선순위/담당자/이미지 첨부
-- 필드 변경 히스토리 자동 기록
+구조와 기술 결정의 배경은 **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** 에 정리되어 있습니다.
 
-### 코멘트
-- 루트 코멘트 + 답글 (1-depth 스레드)
-- 본인 코멘트 인라인 수정/삭제
-- 이미지 첨부 (S3 업로드) + Lightbox(휠 줌, 드래그 이동)
-- `@` 멘션 자동완성 (방향키/Enter)
-- 이모지 반응 (8종, toggle)
-
-### 알림 (SSE 실시간)
-| 조건 | 수신자 |
-|---|---|
-| 새 QA 가 본인에게 배정될 때 | 새 담당자 |
-| 기존 QA 의 담당자가 본인으로 변경될 때 | 새 담당자 |
-| 담당 QA 에 코멘트가 달릴 때 | QA 담당자 |
-| 본인 코멘트에 답글이 달릴 때 | 부모 코멘트 작성자 |
-| QA 상태가 변경될 때 | QA 담당자 |
-
-자기 자신이 발생시킨 이벤트는 알림 발송 X.
-
-### 인증 & 프로필
-- JWT 로그인 / refresh / logout
-- 헤더에서 아바타 클릭 → 프로필 모달 (이름 · 비밀번호 변경 · 아바타 업로드)
-- 비밀번호 변경 시 현재 비밀번호 검증
-
-### Admin 페이지
-4 탭 구조: **프로젝트 관리** / **QA 관리** / **팀원 관리** / **설정**
-- Stats 카드 4개 (전체 프로젝트, 전체 QA, 진행중 프로젝트, 긴급 QA)
-- 셀렉트박스로 상태 즉시 변경
-- 팀원 추가/수정 통합 모달, 삭제 확인 모달
-- 설정 탭은 알림/MS Teams UI mock (백엔드 연동 예정)
+- **이벤트 기반 부수효과 격리** — Teams 발송·GitHub 이슈 생성·감사 로그는 `ApplicationEvent` + `@Async` + `afterCommit` 으로 본 트랜잭션과 분리. 외부 API 장애가 QA 저장에 영향을 주지 않음
+- **SSE를 fetch + ReadableStream으로 구독** — `EventSource` 가 HttpOnly 쿠키/헤더를 다루지 못하는 한계 회피
+- **S3 presigned 업로드** — 파일이 서버를 경유하지 않으며, `contentLength` 를 서명에 포함해 선언한 크기와 다른 업로드는 S3가 거부
+- **GitHub App Manifest flow** — 셀프호스팅 환경에서도 환경변수 없이 관리자 화면에서 앱 생성 → 자격증명이 DB에 저장. PKCS#1 PEM을 외부 라이브러리 없이 PKCS#8로 변환
+- **Teams 웹훅 자체 JWT 검증** — Bot Framework OpenID JWKS 서명 검증 + serviceUrl claim 대조로 위조 요청 차단
+- **XFF 신뢰 경계** — OTP의 신뢰 IP 판정에 X-Forwarded-For를 "오른쪽에서 신뢰 프록시 수만큼" 파싱해 헤더 위조 방지
 
 ---
 
-## 디렉토리 구조
+## 프로젝트 구조
 
 ```
 qa-manager/
-├── frontend/             # Nuxt 4 (port 3000)
+├── frontend/                    # Nuxt 4 (운영: SSR / 데모: 정적 SPA)
 │   ├── app/
-│   │   ├── components/   # base, feature
-│   │   ├── composables/  # useApi, useQa, useProjects, …
-│   │   ├── pages/        # 라우팅 (auth, admin, project, qa, index)
-│   │   ├── stores/       # auth, notifications (Pinia)
-│   │   └── types/        # 백엔드 DTO 1:1 매핑 타입
-│   └── Dockerfile
-├── backend/              # Spring Boot 4 (port 8080)
-│   ├── src/main/java/com/qamanager/
-│   │   ├── auth/         # JWT, /api/me
-│   │   ├── member/       # 팀원
-│   │   ├── project/
-│   │   ├── projectupdate/
-│   │   ├── qa/
-│   │   │   ├── item/     # QaItem, History, DTO
-│   │   │   ├── comment/  # QaComment, Reaction, DTO
-│   │   │   └── shared/   # QaStatus, QaPriority
-│   │   ├── notification/ # SSE + Event 리스너
-│   │   ├── file/         # S3 presigned
-│   │   ├── config/       # Security, JPA
-│   │   └── common/       # BaseEntity, ApiException 등
-│   ├── src/main/resources/
-│   │   ├── application.yml
-│   │   └── db/migration/ # Flyway
-│   └── Dockerfile
-├── docs/
-│   └── DEPLOYMENT.md     # 배포 가이드
-├── docker-compose.yml    # 풀스택 (DB + BE + FE)
-├── .env.example
-└── README.md
+│   │   ├── components/          # base(공용 UI) · feature(도메인)
+│   │   ├── composables/         # useQa, useGithub, useUpload, …
+│   │   ├── demo/                # 데모 모드 mock 백엔드 (localStorage)
+│   │   ├── pages/               # /, /project/:id, /qa/:id, /admin, /auth/login
+│   │   ├── stores/              # auth, notifications (Pinia)
+│   │   └── types/               # 백엔드 DTO 1:1 타입
+│   ├── Dockerfile               # SSR 운영용
+│   └── Dockerfile.demo          # 데모 정적 서빙용 (nginx)
+├── backend/                     # Spring Boot 4 · Java 25
+│   └── src/main/
+│       ├── java/com/qamanager/
+│       │   ├── auth/            # JWT · 쿠키 · 블랙리스트 / otp: 이메일 OTP 2FA
+│       │   ├── audit/           # API 요청 감사 로그
+│       │   ├── project/ projectupdate/
+│       │   ├── qa/              # item · comment · shared
+│       │   ├── notification/    # 인앱 + SSE / teams: Teams 봇
+│       │   ├── integration/github/  # GitHub App 연동
+│       │   └── member/ file/ config/ common/
+│       └── resources/db/migration/  # Flyway V1~V14
+├── teams-app/                   # Teams 앱 매니페스트 패키지
+├── docs/                        # 📚 문서 위키 (아래 '문서' 참고)
+├── docker-compose.yml           # 운영 풀스택 (DB + Redis + BE + FE)
+├── docker-compose.demo.yml      # 데모 전용 (정적 SPA 단일 컨테이너)
+└── .env.example                 # 환경변수 템플릿 (항목별 주석)
 ```
 
 ---
@@ -107,67 +145,62 @@ cp .env.example .env       # JWT_SECRET, DB_PASSWORD, AWS 키 등 채우기
 docker compose up -d --build
 ```
 
-- 프론트엔드: `http://localhost:3000`
-- 백엔드: `http://localhost:8080`
-- API 문서: `http://localhost:8080/swagger-ui.html`
-
-상세는 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) 참고.
+- 프론트엔드: `http://localhost:3247`
+- 백엔드: `http://localhost:8357` (Swagger: `/swagger-ui.html`)
+- 시드 계정으로 로그인 가능 (예: `kimminjun` / `1234` — 운영 배포 시 시드 비활성화 권장)
 
 ### 옵션 B: 호스트에서 직접 실행
 
-사전 준비:
-- JDK 25 (Corretto / OpenJDK)
-- Node ≥ 22.12
-- 접근 가능한 MariaDB 11
-- AWS S3 버킷 + IAM 키
+사전 준비: JDK 25 · Node ≥ 22.12 · MariaDB 11 · Redis · AWS S3 버킷
 
 ```bash
-# 1. 환경변수
 cp .env.example .env       # DB_HOST=localhost 등 조정
 
-# 2. 백엔드
-cd backend
-./gradlew bootRun
+cd backend && ./gradlew bootRun          # http://localhost:8080
 
-# 3. 프론트엔드 (별도 터미널)
-cd frontend
-npm install
-npm run dev
+cd frontend && npm install && npm run dev  # http://localhost:3000
 ```
+
+### 데모 빌드 (백엔드 없이)
+
+```bash
+cd frontend
+DEMO_BUILD=true npm run generate     # → .output/public 을 정적 호스팅
+# 또는: docker compose -f docker-compose.demo.yml up -d --build
+```
+
+상세 절차·리버스 프록시·백업·트러블슈팅은 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) 참고.
+
+---
+
+## 문서
+
+| 문서 | 내용 |
+|---|---|
+| [docs/README.md](docs/README.md) | 📚 **위키 홈** — 독자별 읽기 가이드 |
+| [docs/FEATURES.md](docs/FEATURES.md) | 기능 상세 가이드 (화면별) |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 시스템 아키텍처 · 기술 결정 · DB 스키마 히스토리 |
+| [docs/API.md](docs/API.md) | REST API 레퍼런스 |
+| [docs/GITHUB_INTEGRATION.md](docs/GITHUB_INTEGRATION.md) | GitHub App 연동 설정 · 동작 방식 |
+| [docs/TEAMS_INTEGRATION.md](docs/TEAMS_INTEGRATION.md) | MS Teams 봇 알림 설정 가이드 |
+| [docs/DEMO.md](docs/DEMO.md) | 데모 모드 동작 방식 · 배포 |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | 배포 · 운영 · 트러블슈팅 |
+| [docs/SECURITY_IP_OTP_LOGIN.md](docs/SECURITY_IP_OTP_LOGIN.md) | IP 조건부 이메일 OTP 설계 문서 |
 
 ---
 
 ## 환경변수
 
-`.env.example` 참고. 주요 항목:
+`.env.example` 에 전 항목이 주석과 함께 정리되어 있습니다. 핵심만 요약:
 
 | 키 | 비고 |
 |---|---|
-| `DB_HOST` `DB_PORT` `DB_NAME` `DB_USER` `DB_PASSWORD` | MariaDB 접속 |
-| `DB_ROOT_PASSWORD` | Docker Compose 전용 (mariadb 컨테이너 root 비밀번호) |
-| `JWT_SECRET` | **64자 이상** 랜덤. `openssl rand -hex 48` 추천 |
-| `AWS_REGION` `AWS_S3_BUCKET` `AWS_ACCESS_KEY_ID` `AWS_SECRET_ACCESS_KEY` | S3 업로드 |
-| `CORS_ALLOWED_ORIGINS` | 프론트 도메인 (콤마 구분) |
+| `DB_*` / `REDIS_*` | MariaDB · Redis 접속 |
+| `JWT_SECRET` | **64자 이상** 랜덤 (`openssl rand -hex 48`). 미설정 시 부팅 실패 |
+| `AWS_*` | S3 presigned 업로드 |
+| `UPLOAD_MAX_FILE_SIZE_MB` | 첨부 용량 제한 (기본 100MB, FE/BE 공통 주입) |
+| `TEAMS_*` | Teams 봇 (기본 비활성) → [설정 가이드](docs/TEAMS_INTEGRATION.md) |
+| `SECURITY_IP_OTP_*` / `SMTP_*` | 이메일 OTP 2FA (기본 비활성) |
 | `NUXT_PUBLIC_API_BASE` | **브라우저에서 접근 가능한** 백엔드 URL |
 
-> ⚠️ `.env` 는 절대 깃에 커밋하지 말 것. 운영/스테이징/로컬 모두 다른 `JWT_SECRET` 사용 권장.
-
----
-
-## API 문서
-
-백엔드 실행 후 접근 가능:
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
-- Health: `http://localhost:8080/actuator/health`
-
----
-
-## 개발 메모
-
-- **DB 마이그레이션**: Flyway 가 백엔드 부팅 시 자동 실행. 마이그레이션 파일은 `backend/src/main/resources/db/migration/`.
-- **JPA `ddl-auto: validate`**: 엔티티와 스키마 불일치 시 부팅 실패. 스키마 변경은 반드시 Flyway 마이그레이션으로.
-- **알림 SSE**: 브라우저 fetch + ReadableStream 으로 구독. `EventSource` 가 헤더를 못 보내는 한계 회피.
-- **이미지 업로드**: 프론트 → 백엔드(`POST /api/files/presigned`) → S3 PUT 직접. 백엔드는 메타만 다룸.
-
-배포 / 트러블슈팅 / 백업 등 운영 정보는 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) 참고.
+> ⚠️ `.env` 는 절대 커밋하지 말 것. GitHub App 자격증명은 환경변수가 아니라 관리자 화면의 Manifest flow로 생성되어 DB에 저장됩니다.

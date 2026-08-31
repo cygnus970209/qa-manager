@@ -9,6 +9,7 @@ QA Manager 를 호스트 환경 또는 Docker Compose 로 배포하는 방법.
 | 항목 | 비고 |
 |---|---|
 | MariaDB 11+ | docker compose 사용 시 자동 제공 |
+| Redis 7+ | 토큰 블랙리스트 · OTP 저장. docker compose 사용 시 자동 제공 |
 | JDK 25 | 호스트 직접 실행 시만 필요 |
 | Node ≥ 22.12 | 호스트 직접 실행 시만 필요 |
 | AWS S3 버킷 + IAM 키 | 첨부 이미지 업로드. `s3:PutObject` 권한 필요 |
@@ -42,7 +43,7 @@ cp .env.example .env
 
 ## 3. Docker Compose 로 배포 (권장)
 
-원클릭 풀스택 실행. MariaDB + 백엔드 + 프론트엔드 컨테이너 3개.
+원클릭 풀스택 실행. MariaDB + Redis + 백엔드 + 프론트엔드 컨테이너 4개.
 
 ### 시작
 
@@ -53,10 +54,11 @@ docker compose up -d --build
 
 최초 빌드는 5~10분 정도. 두 번째부터는 Gradle/npm 의존성 캐시로 빨라짐.
 
-기본 노출 포트:
-- 프론트엔드: `http://<HOST>:3000`
-- 백엔드: `http://<HOST>:8080`
-- DB: `127.0.0.1:3306` (호스트 디버깅용, 운영에선 `docker-compose.yml` 의 db `ports` 섹션 제거 권장)
+기본 노출 포트 (`docker-compose.yml` 기준):
+- 프론트엔드: `http://<HOST>:3247`
+- 백엔드: `http://<HOST>:8357`
+- DB: `<HOST>:13307` (운영에선 방화벽/보안그룹으로 허용 IP 를 제한하거나 db `ports` 섹션 제거 권장)
+- Redis: 외부 미노출 (compose 네트워크 내부 전용)
 
 ### 운영 명령
 
@@ -84,9 +86,8 @@ docker exec -i qa-manager-db sh -c 'mariadb -u root -p"$MARIADB_ROOT_PASSWORD" "
 운영 시 80/443 단일 진입점이 필요하면 호스트에 Nginx / Caddy 를 두고 프록시:
 
 ```
-/        → frontend:3000
-/api     → backend:8080
-/swagger-ui.html, /v3/api-docs → backend:8080
+/        → 프론트엔드 (호스트 직접 실행: 127.0.0.1:3000 / compose: 127.0.0.1:3247)
+/api, /swagger-ui.html, /v3/api-docs → 백엔드 (호스트 직접 실행: 127.0.0.1:8080 / compose: 127.0.0.1:8357)
 ```
 
 **바로 쓸 수 있는 예시:** [`docs/nginx.example.conf`](./nginx.example.conf)
@@ -162,7 +163,7 @@ HOST=0.0.0.0 PORT=3000 NODE_ENV=production node .output/server/index.mjs
 - [ ] `.env` 작성 (`JWT_SECRET` 길이 충분한지 확인)
 - [ ] AWS S3 버킷 CORS 설정 — 프론트 도메인에서 `PUT` 허용
 - [ ] DB 외부 노출 차단 (compose 의 `db.ports` 제거 권장)
-- [ ] 첫 관리자 계정 생성 (백엔드 부팅 후 직접 INSERT 또는 추후 시드 추가)
+- [ ] 계정 정리 — Flyway `V2__seed.sql` 시드 계정(비밀번호 `1234`)이 함께 생성되므로, 운영에서는 시드 비활성화 또는 전 계정 비밀번호 변경
 - [ ] 백엔드 헬스체크: `curl http://<HOST>:8080/actuator/health`
 - [ ] 프론트엔드 접근: 브라우저에서 `http://<HOST>:3000`
 - [ ] 로그인 → 프로필 이미지 업로드 → S3 권한 확인
