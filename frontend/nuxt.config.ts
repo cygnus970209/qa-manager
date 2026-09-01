@@ -22,6 +22,12 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
   ],
 
+  // 커스텀 base CSS (color-scheme + 다크 대비 완화 오버라이드).
+  // 명시하지 않으면 @nuxtjs/tailwindcss 가 내장 기본 CSS 를 사용해 이 파일이 무시된다.
+  tailwindcss: {
+    cssPath: '~/assets/css/tailwind.css',
+  },
+
   // 다크모드. Tailwind `dark:` variant(class 전략)와 연동 — html 에 'dark'/'light' 클래스 부착.
   // 기본은 OS 설정(system) 따라가고, 사용자가 선택하면 localStorage 에 기억된다(FOUC 방지 스크립트 내장).
   colorMode: {

@@ -7,7 +7,9 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import {
+  ArrowLeft,
   Check,
+  ChevronRight,
   CircleCheck,
   GitBranch,
   ListChecks,
@@ -19,6 +21,7 @@ import {
   Trash2,
   Workflow,
 } from '@lucide/vue'
+import { formatDate } from '~/utils/format'
 import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
 import TestFlowPathModal from '~/components/feature/testing/TestFlowPathModal.vue'
 import type { FlowEdge, FlowGraph, FlowNode, FlowNodeType, ProjectUpdate, TestFlowSummary, TestSuite } from '~/types/api'
@@ -146,23 +149,28 @@ function serializeGraph(): FlowGraph {
   }
 }
 
-/* ─────────────── 플로우 목록/로드 ─────────────── */
+/* ─────────────── 플로우 목록/로드 ───────────────
+ * 진입 구조: 목록(selectedFlowId == null) → 행 클릭으로 에디터 진입.
+ * 프로젝트별 플로우가 많아질 수 있어 드롭다운 대신 목록 화면을 1차 뷰로 둔다. */
 async function loadFlows(selectId?: number) {
   loadingFlows.value = true
   error.value = null
   try {
     flows.value = await testing.listFlows(props.projectId)
-    const target = selectId ?? selectedFlowId.value ?? flows.value[0]?.id ?? null
-    if (target != null && flows.value.some((f) => f.id === target)) {
-      await loadFlow(target)
-    } else if (flows.value.length === 0) {
-      clearEditor()
+    if (selectId != null && flows.value.some((f) => f.id === selectId)) {
+      await loadFlow(selectId)
     }
   } catch (e: any) {
     error.value = e?.data?.message ?? t('testflow.messages.loadFailed')
   } finally {
     loadingFlows.value = false
   }
+}
+
+/** 에디터 → 목록 복귀 (미저장 변경은 확인 후 폐기) */
+function backToList() {
+  if (dirty.value && !window.confirm(t('testflow.messages.discardConfirm'))) return
+  clearEditor()
 }
 
 async function loadFlow(id: number) {
@@ -183,6 +191,8 @@ async function loadFlow(id: number) {
     await nextTick()
     await nextTick()
     suppressChanges = false
+    resetHistory()
+    present = serializeGraph()
   } catch (e: any) {
     error.value = e?.data?.message ?? t('testflow.messages.loadFailed')
   } finally {
@@ -201,19 +211,13 @@ function clearEditor() {
   dirty.value = false
   selectedNodeId.value = null
   selectedEdgeId.value = null
+  resetHistory()
   void nextTick(() => { suppressChanges = false })
 }
 
-async function onFlowSelChange(e: Event) {
-  const el = e.target as HTMLSelectElement
-  const id = el.value === '' ? null : Number(el.value)
-  const prev = selectedFlowId.value
-  if (id === prev || id == null) return
-  if (dirty.value && !window.confirm(t('testflow.messages.discardConfirm'))) {
-    // 취소 시 select 표시값 복원
-    el.value = prev == null ? '' : String(prev)
-    return
-  }
+/** 목록에서 플로우 열기 */
+async function openFlow(id: number) {
+  if (loadingFlow.value) return
   await loadFlow(id)
 }
 
@@ -296,9 +300,7 @@ async function confirmDeleteFlow() {
     await testing.removeFlow(id)
     flows.value = flows.value.filter((f) => f.id !== id)
     deleteOpen.value = false
-    const next = flows.value[0]
-    if (next) await loadFlow(next.id)
-    else clearEditor()
+    clearEditor() // 삭제 후 목록으로 복귀
   } catch (e: any) {
     deleteOpen.value = false
     error.value = e?.data?.message ?? t('testflow.messages.deleteFailed')
@@ -310,6 +312,143 @@ function markDirty() {
   if (suppressChanges) return
   dirty.value = true
   savedFlash.value = false
+  scheduleHistory()
+}
+
+/* ─────────────── 실행 취소/다시 실행 (그래프 스냅샷 히스토리) ───────────────
+ * 모든 변경은 markDirty 를 거치므로 여기서 디바운스로 스냅샷을 쌓는다.
+ * present = 마지막으로 확정된 상태(연속 입력 burst 이전) → undo 시 그 상태로 복원. */
+const HISTORY_MAX = 50
+const history = ref<FlowGraph[]>([])
+const future = ref<FlowGraph[]>([])
+let present: FlowGraph | null = null
+let historyTimer: ReturnType<typeof setTimeout> | undefined
+let historyPending = false
+
+function resetHistory() {
+  clearTimeout(historyTimer)
+  historyPending = false
+  history.value = []
+  future.value = []
+  present = null
+}
+
+function flushHistory() {
+  if (!historyPending) return
+  clearTimeout(historyTimer)
+  historyPending = false
+  if (present) {
+    history.value.push(present)
+    if (history.value.length > HISTORY_MAX) history.value.shift()
+  }
+  present = serializeGraph()
+  future.value = []
+}
+
+/** 연속 입력(타이핑·드래그 후속 이벤트)은 350ms 디바운스로 1건으로 합친다. */
+function scheduleHistory() {
+  historyPending = true
+  clearTimeout(historyTimer)
+  historyTimer = setTimeout(flushHistory, 350)
+}
+
+function applySnapshot(snap: FlowGraph) {
+  suppressChanges = true
+  toVueFlowGraph(snap)
+  selectedNodeId.value = null
+  selectedEdgeId.value = null
+  dirty.value = true
+  savedFlash.value = false
+  void nextTick().then(() => nextTick()).then(() => { suppressChanges = false })
+}
+
+function undo() {
+  flushHistory() // 아직 확정되지 않은 burst 를 먼저 히스토리에 반영
+  const snap = history.value.pop()
+  if (!snap) return
+  if (present) future.value.push(present)
+  present = snap
+  applySnapshot(snap)
+}
+
+function redo() {
+  flushHistory()
+  const snap = future.value.pop()
+  if (!snap) return
+  if (present) history.value.push(present)
+  present = snap
+  applySnapshot(snap)
+}
+
+/* ─────────────── 노드 복사/붙여넣기 ─────────────── */
+let clipboard: { kind: FlowNodeType; label: string; expected: string; position: { x: number; y: number } } | null = null
+let pasteCount = 0
+
+function copySelectedNode() {
+  const n = selectedNode.value
+  const d = selectedNodeData.value
+  if (!n || !d || d.kind === 'start' || d.kind === 'end') return
+  clipboard = { kind: d.kind, label: d.label, expected: d.expected, position: { x: n.position.x, y: n.position.y } }
+  pasteCount = 0
+}
+
+function pasteNode() {
+  if (!clipboard || selectedFlowId.value == null) return
+  pasteCount += 1
+  const id = genId('n')
+  addNodes([{
+    id,
+    type: 'custom',
+    position: { x: clipboard.position.x + 28 * pasteCount, y: clipboard.position.y + 28 * pasteCount },
+    deletable: true,
+    data: { kind: clipboard.kind, label: clipboard.label, expected: clipboard.expected } satisfies EditorNodeData,
+  }])
+  selectedNodeId.value = id
+  selectedEdgeId.value = null
+  markDirty()
+}
+
+/* ─────────────── 에디터 단축키 (Del 삭제 · Ctrl+Z/Y · Ctrl+C/V) ─────────────── */
+function isTypingTarget(el: EventTarget | null): boolean {
+  const t = el as HTMLElement | null
+  return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)
+}
+
+function onEditorKeydown(e: KeyboardEvent) {
+  if (selectedFlowId.value == null || pathModalOpen.value || deleteOpen.value || loadingFlow.value) return
+  if (isTypingTarget(e.target)) return
+  const mod = e.metaKey || e.ctrlKey
+  if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) {
+    if (selectedEdgeId.value) {
+      removeSelectedEdge()
+      e.preventDefault()
+    } else if (selectedNodeId.value) {
+      removeSelectedNode()
+      e.preventDefault()
+    }
+    return
+  }
+  if (!mod) return
+  const k = e.key.toLowerCase()
+  if (k === 'z') {
+    e.preventDefault()
+    if (e.shiftKey) redo()
+    else undo()
+  } else if (k === 'y') {
+    e.preventDefault()
+    redo()
+  } else if (k === 'c') {
+    // 노드 미선택 시에는 기본 텍스트 복사 동작 유지
+    if (selectedNodeId.value) {
+      copySelectedNode()
+      e.preventDefault()
+    }
+  } else if (k === 'v') {
+    if (clipboard) {
+      pasteNode()
+      e.preventDefault()
+    }
+  }
 }
 
 function addPaletteNode(kind: 'screen' | 'action' | 'decision') {
@@ -510,11 +649,16 @@ watch(() => props.projectId, () => {
   void loadFlows()
 })
 
-onMounted(() => { void loadFlows() })
+onMounted(() => {
+  void loadFlows()
+  window.addEventListener('keydown', onEditorKeydown)
+})
 
 onBeforeUnmount(() => {
   clearTimeout(savedTimer)
   clearTimeout(createdTimer)
+  clearTimeout(historyTimer)
+  window.removeEventListener('keydown', onEditorKeydown)
 })
 </script>
 
@@ -528,90 +672,103 @@ onBeforeUnmount(() => {
       <LoaderCircle class="h-5 w-5 animate-spin text-slate-400 dark:text-slate-500" />
     </div>
 
-    <!-- 빈 상태: 플로우 없음 -->
+    <!-- 목록 뷰: 플로우 선택 → 에디터 진입 -->
     <div
-      v-else-if="flows.length === 0"
-      class="flex h-[560px] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white px-6 text-center dark:border-slate-700 dark:bg-slate-900"
+      v-else-if="selectedFlowId == null"
+      class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
     >
-      <Workflow class="h-10 w-10 text-slate-300 dark:text-slate-600" />
-      <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">{{ $t('testflow.empty.title') }}</p>
-      <p class="text-xs text-slate-400 dark:text-slate-500">{{ $t('testflow.empty.description') }}</p>
-      <div v-if="newFlowOpen" class="mt-3 flex items-center gap-2">
-        <input
-          v-model="newFlowName"
-          type="text"
-          maxlength="150"
-          :placeholder="$t('testflow.toolbar.newFlowNamePlaceholder')"
-          class="w-48 rounded-md border border-slate-300 px-3 py-1.5 text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
-          @keydown.enter.prevent="createNewFlow"
-          @keydown.esc="newFlowOpen = false"
-        />
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <Workflow class="h-4 w-4 text-slate-400 dark:text-slate-500" />
+          {{ $t('testflow.list.title') }}
+          <span class="text-xs font-normal tabular-nums text-slate-400 dark:text-slate-500">{{ flows.length }}</span>
+        </h3>
+        <div v-if="newFlowOpen" class="flex items-center gap-2">
+          <input
+            v-model="newFlowName"
+            type="text"
+            maxlength="150"
+            :placeholder="$t('testflow.toolbar.newFlowNamePlaceholder')"
+            class="w-48 rounded-md border border-slate-300 px-3 py-1.5 text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
+            @keydown.enter.prevent="createNewFlow"
+            @keydown.esc="newFlowOpen = false"
+          />
+          <button
+            type="button"
+            :disabled="creatingFlow || !newFlowName.trim()"
+            class="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            @click="createNewFlow"
+          >{{ creatingFlow ? $t('common.state.processing') : $t('common.actions.create') }}</button>
+          <button
+            type="button"
+            class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
+            @click="newFlowOpen = false; newFlowName = ''"
+          >{{ $t('common.actions.cancel') }}</button>
+        </div>
         <button
+          v-else
           type="button"
-          :disabled="creatingFlow || !newFlowName.trim()"
-          class="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-          @click="createNewFlow"
-        >{{ creatingFlow ? $t('common.state.processing') : $t('common.actions.create') }}</button>
-        <button
-          type="button"
-          class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
-          @click="newFlowOpen = false; newFlowName = ''"
-        >{{ $t('common.actions.cancel') }}</button>
+          class="flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+          @click="newFlowOpen = true"
+        >
+          <Plus class="h-3.5 w-3.5" />{{ $t('testflow.toolbar.newFlow') }}
+        </button>
       </div>
-      <button
-        v-else
-        type="button"
-        class="mt-3 flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
-        @click="newFlowOpen = true"
-      >
-        <Plus class="h-4 w-4" />{{ $t('testflow.toolbar.newFlow') }}
-      </button>
-      <p v-if="error" class="mt-2 text-xs text-red-600 dark:text-red-400">{{ error }}</p>
+
+      <!-- 빈 상태 -->
+      <div v-if="flows.length === 0" class="flex flex-col items-center justify-center gap-1.5 px-6 py-16 text-center">
+        <Workflow class="h-10 w-10 text-slate-300 dark:text-slate-600" />
+        <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">{{ $t('testflow.empty.title') }}</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500">{{ $t('testflow.empty.description') }}</p>
+      </div>
+
+      <!-- 플로우 테이블 -->
+      <table v-else class="w-full text-left text-sm">
+        <thead class="border-b border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
+          <tr>
+            <th class="px-4 py-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('testflow.list.nameCol') }}</th>
+            <th class="w-56 px-4 py-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('testflow.list.linkedCol') }}</th>
+            <th class="w-28 px-4 py-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('testflow.list.updatedCol') }}</th>
+            <th class="w-10 px-4 py-2.5" />
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <tr
+            v-for="f in flows"
+            :key="f.id"
+            class="cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
+            @click="openFlow(f.id)"
+          >
+            <td class="px-4 py-3">
+              <span class="font-medium text-slate-800 dark:text-slate-100">{{ f.name }}</span>
+            </td>
+            <td class="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+              <template v-if="f.updateId != null && projectUpdates.some((u) => u.id === f.updateId)">
+                {{ projectUpdates.find((u) => u.id === f.updateId)!.version }} · {{ projectUpdates.find((u) => u.id === f.updateId)!.title }}
+              </template>
+              <span v-else class="text-slate-400 dark:text-slate-500">{{ $t('testflow.toolbar.noLinkedUpdate') }}</span>
+            </td>
+            <td class="px-4 py-3 text-xs tabular-nums text-slate-400 dark:text-slate-500">{{ formatDate(f.updatedAt) }}</td>
+            <td class="px-4 py-3 text-right">
+              <ChevronRight class="h-4 w-4 text-slate-300 dark:text-slate-600" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-if="error" class="border-t border-slate-100 px-4 py-2 text-xs text-red-600 dark:border-slate-800 dark:text-red-400">{{ error }}</p>
     </div>
 
     <template v-else>
       <!-- 상단 툴바 -->
       <div class="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
         <div class="flex flex-wrap items-center gap-2">
-          <select
-            :value="selectedFlowId ?? ''"
-            :aria-label="$t('testflow.toolbar.flowSelectLabel')"
-            class="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            @change="onFlowSelChange"
-          >
-            <option v-for="f in flows" :key="f.id" :value="f.id">{{ f.name }}</option>
-          </select>
-
-          <!-- 새 플로우 (인라인 입력) -->
-          <template v-if="newFlowOpen">
-            <input
-              v-model="newFlowName"
-              type="text"
-              maxlength="150"
-              :placeholder="$t('testflow.toolbar.newFlowNamePlaceholder')"
-              class="w-36 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
-              @keydown.enter.prevent="createNewFlow"
-              @keydown.esc="newFlowOpen = false"
-            />
-            <button
-              type="button"
-              :disabled="creatingFlow || !newFlowName.trim()"
-              class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-              @click="createNewFlow"
-            >{{ creatingFlow ? $t('common.state.processing') : $t('common.actions.create') }}</button>
-            <button
-              type="button"
-              class="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
-              @click="newFlowOpen = false; newFlowName = ''"
-            >{{ $t('common.actions.cancel') }}</button>
-          </template>
+          <!-- 목록으로 -->
           <button
-            v-else
             type="button"
             class="flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800/60"
-            @click="newFlowOpen = true"
+            @click="backToList"
           >
-            <Plus class="h-3.5 w-3.5" />{{ $t('testflow.toolbar.newFlow') }}
+            <ArrowLeft class="h-3.5 w-3.5" />{{ $t('testflow.toolbar.backToList') }}
           </button>
 
           <template v-if="selectedFlowId != null">
@@ -727,6 +884,7 @@ onBeforeUnmount(() => {
                 :max-zoom="2"
                 :snap-to-grid="true"
                 :snap-grid="snapGrid"
+                :delete-key-code="null"
                 fit-view-on-init
                 @connect="onConnect"
                 @node-click="onNodeClick"
@@ -769,6 +927,9 @@ onBeforeUnmount(() => {
               <LoaderCircle class="h-5 w-5 animate-spin text-slate-400 dark:text-slate-500" />
             </div>
           </div>
+
+          <!-- 단축키 안내 -->
+          <p class="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">{{ $t('testflow.shortcuts.hint') }}</p>
         </div>
 
         <!-- 선택 노드/엣지 편집 패널 -->

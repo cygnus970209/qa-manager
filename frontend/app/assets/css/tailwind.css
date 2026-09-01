@@ -9,3 +9,21 @@ html {
 html.dark {
   color-scheme: dark;
 }
+
+/* ─── 다크모드 대비 완화 ───
+ * "다크모드가 눈이 아프다"는 피드백 대응: 순백에 가까운 텍스트(halation 유발)와
+ * 순흑에 가까운 페이지 배경의 극단 대비를 낮춘다. 유틸리티 클래스를 컴포넌트마다
+ * 고치는 대신 최고 휘도 토큰만 중앙에서 오버라이드한다 (html.dark 셀렉터가
+ * Tailwind 의 :is(.dark *) variant 보다 우선한다).
+ * - dark:text-slate-100: #f1f5f9 → #d7dee8 (제목/강조 — 대비 약 15.5:1 → 12:1)
+ * - dark:text-slate-200: #e2e8f0 → #c6cfdb (본문 강조)
+ * - dark:bg-slate-950:   #020617 → #0b1120 (페이지 배경 — 완전 흑색 회피)   */
+html.dark .dark\:text-slate-100 {
+  color: #d7dee8;
+}
+html.dark .dark\:text-slate-200 {
+  color: #c6cfdb;
+}
+html.dark .dark\:bg-slate-950 {
+  background-color: #0b1120;
+}

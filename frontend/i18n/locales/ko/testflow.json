@@ -9,7 +9,8 @@
       "noLinkedUpdate": "연결 안함",
       "deleteFlow": "플로우 삭제",
       "saved": "저장됨",
-      "generateCases": "케이스 생성"
+      "generateCases": "케이스 생성",
+      "backToList": "목록으로"
     },
     "palette": {
       "addScreen": "화면 추가",
@@ -72,6 +73,15 @@
       "creating": "생성 중...",
       "createFailed": "케이스 생성에 실패했습니다.",
       "untitledPath": "{name} 경로 {index}"
+    },
+    "list": {
+      "title": "플로우 목록",
+      "nameCol": "이름",
+      "linkedCol": "연결 업데이트",
+      "updatedCol": "수정일"
+    },
+    "shortcuts": {
+      "hint": "단축키 — Del: 선택 삭제 · Ctrl+Z: 실행 취소 · Ctrl+Shift+Z: 다시 실행 · Ctrl+C/V: 노드 복사/붙여넣기"
     }
   }
 }

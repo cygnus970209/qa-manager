@@ -9,7 +9,8 @@
       "noLinkedUpdate": "Not linked",
       "deleteFlow": "Delete flow",
       "saved": "Saved",
-      "generateCases": "Generate cases"
+      "generateCases": "Generate cases",
+      "backToList": "Back to list"
     },
     "palette": {
       "addScreen": "Add screen",
@@ -72,6 +73,15 @@
       "creating": "Creating...",
       "createFailed": "Failed to create cases.",
       "untitledPath": "{name} path {index}"
+    },
+    "list": {
+      "title": "Flows",
+      "nameCol": "Name",
+      "linkedCol": "Linked update",
+      "updatedCol": "Updated"
+    },
+    "shortcuts": {
+      "hint": "Shortcuts — Del: delete selection · Ctrl+Z: undo · Ctrl+Shift+Z: redo · Ctrl+C/V: copy/paste node"
     }
   }
 }
