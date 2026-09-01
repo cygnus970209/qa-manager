@@ -13,6 +13,8 @@ export interface DemoMember {
   role: string | null
   email: string | null
   avatarUrl: string | null
+  /** true 면 로그인 시 이메일 OTP 2단계를 요구한다 (데모 체험용, 코드 123456 고정). */
+  otpEnabled?: boolean
 }
 
 export interface DemoProject {

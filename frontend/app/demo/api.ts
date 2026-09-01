@@ -14,8 +14,8 @@ import type { DemoComment, DemoProject, DemoQa, DemoUpdate } from './types'
 import { DemoDb, getDemoDb } from './db'
 
 /** ofetch 와 유사한 에러 객체. composable 들이 e.data(ApiErrorBody) / e.status 를 읽는다. */
-function apiError(status: number, code: string, message: string) {
-  const data = { timestamp: new Date().toISOString(), status, code, message }
+function apiError(status: number, code: string, message: string, details?: unknown) {
+  const data = { timestamp: new Date().toISOString(), status, code, message, details }
   const err = new Error(message) as Error & Record<string, unknown>
   err.status = status
   err.statusCode = status
@@ -28,6 +28,26 @@ const FORBIDDEN = () =>
   apiError(403, 'DEMO_READONLY', '데모 모드에서는 사용할 수 없는 기능입니다.')
 
 const lower = (v: string | undefined): string => (v ?? '').toLowerCase()
+
+/* ─────────────── 로그인 OTP (데모: 코드 123456 고정) ───────────────
+ * 챌린지는 인메모리 보관 — 새로고침하면 만료되어 처음부터 다시 로그인 (백엔드 만료와 동일 UX). */
+const OTP_DEMO_CODE = '123456'
+const OTP_MAX_ATTEMPTS = 5
+const otpChallenges = new Map<string, { memberId: number; attempts: number }>()
+let otpSeq = 0
+
+function issueOtpChallenge(memberId: number): string {
+  const id = `demo-otp-${++otpSeq}-${Math.random().toString(36).slice(2, 8)}`
+  otpChallenges.set(id, { memberId, attempts: OTP_MAX_ATTEMPTS })
+  return id
+}
+
+/** 백엔드 EmailMasker 유사 — 앞 1자만 남기고 마스킹. */
+function maskEmail(email: string | null): string {
+  if (!email || !email.includes('@')) return '***'
+  const [local, domain] = email.split('@')
+  return `${(local ?? '').slice(0, 1)}***@${domain}`
+}
 
 function requireUser(db: DemoDb) {
   const me = db.currentMember()
@@ -69,9 +89,58 @@ const ROUTES: Route[] = [
       const member = db.state.members.find((m) => m.username === username)
       // 데모는 안내된 시드 계정만 허용(비밀번호는 검증하지 않음 — 실제 인증이 아님).
       if (!member) throw apiError(401, 'INVALID_CREDENTIALS', '데모 계정이 아닙니다. 안내된 계정으로 로그인하세요.')
+      // OTP 체험 계정: 2단계(이메일 OTP) 화면으로 진입시킨다.
+      if (member.otpEnabled) {
+        return {
+          authenticated: false,
+          otpRequired: true,
+          challengeId: issueOtpChallenge(member.id),
+          maskedEmail: maskEmail(member.email),
+          otpExpiresInSeconds: 300,
+        }
+      }
       db.state.currentUserId = member.id
       db.save()
       return { authenticated: true, expiresInSeconds: 3600, user: db.meDto(member) }
+    },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/auth\/login\/otp\/verify$/,
+    handler: ({ body, db }) => {
+      const challengeId = String(body?.challengeId ?? '')
+      const ch = otpChallenges.get(challengeId)
+      if (!ch) throw apiError(401, 'UNAUTHORIZED', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.')
+      if (String(body?.code ?? '') !== OTP_DEMO_CODE) {
+        ch.attempts -= 1
+        if (ch.attempts <= 0) {
+          otpChallenges.delete(challengeId)
+          throw apiError(401, 'UNAUTHORIZED', '시도 횟수를 초과했습니다. 다시 로그인해 주세요.')
+        }
+        throw apiError(400, 'OTP_INVALID', '인증 코드가 올바르지 않습니다.', { remainingAttempts: ch.attempts })
+      }
+      otpChallenges.delete(challengeId)
+      const member = db.member(ch.memberId)
+      if (!member) throw apiError(401, 'UNAUTHORIZED', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.')
+      db.state.currentUserId = member.id
+      db.save()
+      return { authenticated: true, expiresInSeconds: 3600, user: db.meDto(member) }
+    },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/auth\/login\/otp\/resend$/,
+    handler: ({ body }) => {
+      const challengeId = String(body?.challengeId ?? '')
+      const ch = otpChallenges.get(challengeId)
+      if (!ch) throw apiError(401, 'UNAUTHORIZED', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.')
+      otpChallenges.delete(challengeId)
+      return {
+        authenticated: false,
+        otpRequired: true,
+        challengeId: issueOtpChallenge(ch.memberId),
+        otpExpiresInSeconds: 300,
+      }
     },
   },
   { method: 'POST', pattern: /^\/api\/auth\/logout$/, handler: ({ db }) => { db.state.currentUserId = null; db.save(); return {} } },

@@ -217,6 +217,10 @@ function loginAs(acc: DemoAccount) {
           </p>
         </div>
 
+        <p v-if="demoEnabled" class="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          데모 모드: 실제 이메일은 발송되지 않습니다. 인증 코드 <span class="font-mono font-semibold">123456</span> 을 입력하세요.
+        </p>
+
         <label class="block">
           <span class="block text-xs font-medium text-gray-600">인증 코드</span>
           <input

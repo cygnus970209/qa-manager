@@ -13,6 +13,8 @@ export function createSeed(): DemoState {
       { id: 3, username: 'leedoyoon', password: '1234', name: '이도윤', role: 'DevOps', email: null, avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lee' },
       { id: 4, username: 'choijiu', password: '1234', name: '최지우', role: 'QA 엔지니어', email: null, avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=choi' },
       { id: 5, username: 'jeonghyunwoo', password: '1234', name: '정현우', role: '풀스택', email: null, avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jeong' },
+      // OTP 화면 체험용 계정 — 로그인 시 이메일 OTP 2단계로 진입 (데모 인증 코드 123456).
+      { id: 6, username: 'hanboan', password: '1234', name: '한보안', role: '보안 담당자', email: 'security@qamanager.dev', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=han', otpEnabled: true },
     ],
 
     projects: [

@@ -20,7 +20,7 @@ export function useDemo() {
   const accounts = computed<DemoAccount[]>(() => {
     if (!enabled.value) return []
     return createSeed().members.map((m) => ({
-      label: [m.name, m.role].filter(Boolean).join(' · '),
+      label: [m.name, m.role].filter(Boolean).join(' · ') + (m.otpEnabled ? ' (이메일 OTP 체험)' : ''),
       username: m.username,
       password: m.password,
     }))
