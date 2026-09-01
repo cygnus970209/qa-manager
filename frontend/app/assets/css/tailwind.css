@@ -11,19 +11,65 @@ html.dark {
 }
 
 /* ─── 다크모드 대비 완화 ───
- * "다크모드가 눈이 아프다"는 피드백 대응: 순백에 가까운 텍스트(halation 유발)와
- * 순흑에 가까운 페이지 배경의 극단 대비를 낮춘다. 유틸리티 클래스를 컴포넌트마다
- * 고치는 대신 최고 휘도 토큰만 중앙에서 오버라이드한다 (html.dark 셀렉터가
- * Tailwind 의 :is(.dark *) variant 보다 우선한다).
- * - dark:text-slate-100: #f1f5f9 → #d7dee8 (제목/강조 — 대비 약 15.5:1 → 12:1)
- * - dark:text-slate-200: #e2e8f0 → #c6cfdb (본문 강조)
+ * "다크모드가 눈이 아프다"는 피드백 대응. 유틸리티 클래스를 컴포넌트마다 고치는 대신
+ * 다크 텍스트 사다리 전체를 중앙에서 오버라이드한다 (html.dark 셀렉터가 Tailwind 의
+ * :is(.dark *) variant 보다 우선). 여기 5개 값만 바꾸면 전체 톤이 조정된다.
+ *
+ * 현재 목표: 제목급 대비 ≈ 7:1 (WCAG AAA 기준점 — 4.5/6/7 비교 후 팀 결정).
+ *
+ * (카드 #0f172a 기준 대비율)
+ * - dark:text-slate-100: #f1f5f9 → #9aa5ba (제목/강조  ≈ 7.2:1)
+ * - dark:text-slate-200: #e2e8f0 → #939eb3 (본문 강조  ≈ 6.6:1)
+ * - dark:text-slate-300: #cbd5e1 → #8c97ad (본문       ≈ 6.1:1)
+ * - dark:text-slate-400: #94a3b8 → #7f8aa0 (보조       ≈ 5.1:1)
+ * - dark:text-slate-500: #64748b → #6f7a90 (희미       ≈ 4.1:1)
  * - dark:bg-slate-950:   #020617 → #0b1120 (페이지 배경 — 완전 흑색 회피)   */
 html.dark .dark\:text-slate-100 {
-  color: #d7dee8;
+  color: #9aa5ba;
 }
 html.dark .dark\:text-slate-200 {
-  color: #c6cfdb;
+  color: #939eb3;
+}
+html.dark .dark\:text-slate-300 {
+  color: #8c97ad;
+}
+html.dark .dark\:text-slate-400 {
+  color: #7f8aa0;
+}
+html.dark .dark\:text-slate-500 {
+  color: #6f7a90;
 }
 html.dark .dark\:bg-slate-950 {
   background-color: #0b1120;
+}
+
+/* 컬러 아이콘/배지 광량 완화 — dark:text-{색}-400 을 -500 톤으로 한 단계 낮춘다.
+ * (lucide 아이콘은 currentColor 라 위 텍스트 사다리/이 블록에 자동으로 묶인다)
+ * rose/red 는 오류·긴급·FAIL 시인성을 위해 의도적으로 유지. */
+html.dark .dark\:text-emerald-400 {
+  color: #10b981;
+}
+html.dark .dark\:text-blue-400 {
+  color: #3b82f6;
+}
+html.dark .dark\:text-amber-400 {
+  color: #f59e0b;
+}
+html.dark .dark\:text-purple-400 {
+  color: #a855f7;
+}
+html.dark .dark\:text-violet-400 {
+  color: #8b5cf6;
+}
+html.dark .dark\:text-teal-400 {
+  color: #14b8a6;
+}
+html.dark .dark\:text-sky-400 {
+  color: #0ea5e9;
+}
+html.dark .dark\:text-indigo-400 {
+  color: #6366f1;
+}
+html.dark .dark\:text-orange-400 {
+  color: #f97316;
 }

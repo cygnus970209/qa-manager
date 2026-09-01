@@ -39,7 +39,10 @@
       "edgeLabelPlaceholder": "예 / 아니오, 조건 등",
       "deleteNode": "노드 삭제",
       "deleteEdge": "연결 삭제",
-      "emptyHint": "노드나 연결을 선택하면 여기서 편집할 수 있습니다."
+      "emptyHint": "노드나 연결을 선택하면 여기서 편집할 수 있습니다.",
+      "imageLabel": "참고 이미지",
+      "uploadImage": "이미지 업로드",
+      "removeImage": "이미지 제거"
     },
     "empty": {
       "title": "플로우가 없습니다",
@@ -57,7 +60,8 @@
       "renameFailed": "이름 변경에 실패했습니다.",
       "linkUpdateFailed": "업데이트 연결 변경에 실패했습니다.",
       "discardConfirm": "저장하지 않은 변경사항이 있습니다. 계속하시겠습니까?",
-      "casesCreated": "케이스 {count}개가 생성되었습니다."
+      "casesCreated": "케이스 {count}개가 생성되었습니다.",
+      "imageUploadFailed": "이미지 업로드에 실패했습니다."
     },
     "pathModal": {
       "title": "경로에서 케이스 생성",

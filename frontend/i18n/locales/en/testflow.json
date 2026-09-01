@@ -39,7 +39,10 @@
       "edgeLabelPlaceholder": "Yes / No, condition, etc.",
       "deleteNode": "Delete node",
       "deleteEdge": "Delete connection",
-      "emptyHint": "Select a node or connection to edit it here."
+      "emptyHint": "Select a node or connection to edit it here.",
+      "imageLabel": "Reference image",
+      "uploadImage": "Upload image",
+      "removeImage": "Remove image"
     },
     "empty": {
       "title": "No flows yet",
@@ -57,7 +60,8 @@
       "renameFailed": "Failed to rename the flow.",
       "linkUpdateFailed": "Failed to change the linked update.",
       "discardConfirm": "You have unsaved changes. Continue?",
-      "casesCreated": "Created {count} case. | Created {count} cases."
+      "casesCreated": "Created {count} case. | Created {count} cases.",
+      "imageUploadFailed": "Failed to upload the image."
     },
     "pathModal": {
       "title": "Generate cases from paths",

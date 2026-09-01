@@ -102,7 +102,9 @@ function buildPath(nodeIds: string[], edges: (FlowEdge | null)[], nodeMap: Map<s
       const chosen = edges[i]?.label
       if (chosen) action = `${n.label} — ${chosen}`
     }
-    steps.push({ action, expected: n.expected ?? '' })
+    const step: TestStep = { action, expected: n.expected ?? '' }
+    if (n.image) step.image = n.image
+    steps.push(step)
   }
 
   return { nodeIds, nodes: pathNodes, edges, title, steps }

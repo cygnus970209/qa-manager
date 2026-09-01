@@ -12,6 +12,7 @@ import {
   ChevronRight,
   CircleCheck,
   GitBranch,
+  ImagePlus,
   ListChecks,
   LoaderCircle,
   Monitor,
@@ -20,9 +21,11 @@ import {
   Save,
   Trash2,
   Workflow,
+  X,
 } from '@lucide/vue'
 import { formatDate } from '~/utils/format'
 import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
+import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import TestFlowPathModal from '~/components/feature/testing/TestFlowPathModal.vue'
 import type { FlowEdge, FlowGraph, FlowNode, FlowNodeType, ProjectUpdate, TestFlowSummary, TestSuite } from '~/types/api'
 
@@ -45,6 +48,8 @@ interface EditorNodeData {
   kind: FlowNodeType
   label: string
   expected: string
+  /** 참고 이미지 URL (없으면 빈 문자열) */
+  image: string
 }
 
 const {
@@ -118,7 +123,7 @@ function toVueFlowGraph(graph: FlowGraph) {
     position: { x: n.position.x, y: n.position.y },
     // start/end 는 삭제 불가 (키보드 삭제 포함)
     deletable: n.type !== 'start' && n.type !== 'end',
-    data: { kind: n.type, label: n.label, expected: n.expected ?? '' } satisfies EditorNodeData,
+    data: { kind: n.type, label: n.label, expected: n.expected ?? '', image: n.image ?? '' } satisfies EditorNodeData,
   }))
   edges.value = (graph.edges ?? []).map((e) => ({ id: e.id, source: e.source, target: e.target, label: e.label }))
 }
@@ -138,6 +143,8 @@ function serializeGraph(): FlowGraph {
       }
       const expected = data.expected?.trim()
       if (expected) node.expected = expected
+      const image = data.image?.trim()
+      if (image) node.image = image
       return node
     }),
     edges: vfEdges.map((e) => {
@@ -381,14 +388,14 @@ function redo() {
 }
 
 /* ─────────────── 노드 복사/붙여넣기 ─────────────── */
-let clipboard: { kind: FlowNodeType; label: string; expected: string; position: { x: number; y: number } } | null = null
+let clipboard: { kind: FlowNodeType; label: string; expected: string; image: string; position: { x: number; y: number } } | null = null
 let pasteCount = 0
 
 function copySelectedNode() {
   const n = selectedNode.value
   const d = selectedNodeData.value
   if (!n || !d || d.kind === 'start' || d.kind === 'end') return
-  clipboard = { kind: d.kind, label: d.label, expected: d.expected, position: { x: n.position.x, y: n.position.y } }
+  clipboard = { kind: d.kind, label: d.label, expected: d.expected, image: d.image ?? '', position: { x: n.position.x, y: n.position.y } }
   pasteCount = 0
 }
 
@@ -401,11 +408,34 @@ function pasteNode() {
     type: 'custom',
     position: { x: clipboard.position.x + 28 * pasteCount, y: clipboard.position.y + 28 * pasteCount },
     deletable: true,
-    data: { kind: clipboard.kind, label: clipboard.label, expected: clipboard.expected } satisfies EditorNodeData,
+    data: { kind: clipboard.kind, label: clipboard.label, expected: clipboard.expected, image: clipboard.image } satisfies EditorNodeData,
   }])
   selectedNodeId.value = id
   selectedEdgeId.value = null
   markDirty()
+}
+
+/* ─────────────── 노드 이미지 (화면 시안/스크린샷 첨부) ─────────────── */
+const upload = useUpload()
+const nodeImageInput = ref<HTMLInputElement | null>(null)
+const uploadingImage = ref(false)
+const lightboxSrc = ref<string | null>(null)
+
+async function onNodeImagePick(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || uploadingImage.value) return
+  uploadingImage.value = true
+  error.value = null
+  try {
+    const url = await upload.uploadFile(file, 'qa_image')
+    patchSelectedNode({ image: url })
+  } catch (err: any) {
+    error.value = err?.data?.message ?? err?.message ?? t('testflow.messages.imageUploadFailed')
+  } finally {
+    uploadingImage.value = false
+  }
 }
 
 /* ─────────────── 에디터 단축키 (Del 삭제 · Ctrl+Z/Y · Ctrl+C/V) ─────────────── */
@@ -464,7 +494,7 @@ function addPaletteNode(kind: 'screen' | 'action' | 'decision') {
     type: 'custom',
     position,
     deletable: true,
-    data: { kind, label: t(`testflow.palette.defaultLabel.${kind}`), expected: '' } satisfies EditorNodeData,
+    data: { kind, label: t(`testflow.palette.defaultLabel.${kind}`), expected: '', image: '' } satisfies EditorNodeData,
   }])
   selectedNodeId.value = id
   selectedEdgeId.value = null
@@ -907,6 +937,15 @@ onBeforeUnmount(() => {
                   >
                     <Handle v-if="p.data.kind !== 'start'" type="target" :position="Position.Left" />
                     <Handle v-if="p.data.kind !== 'end'" type="source" :position="Position.Right" />
+                    <!-- 참고 이미지 썸네일 (클릭 시 라이트박스) -->
+                    <img
+                      v-if="p.data.image"
+                      :src="p.data.image"
+                      :alt="p.data.label"
+                      draggable="false"
+                      class="mb-1.5 h-16 w-40 cursor-zoom-in rounded object-cover ring-1 ring-black/10 dark:ring-white/10"
+                      @click.stop="lightboxSrc = p.data.image"
+                    />
                     <div class="flex items-center gap-1.5">
                       <component :is="kindIcon(p.data.kind)" v-if="kindIcon(p.data.kind)" class="h-3.5 w-3.5 shrink-0" />
                       <span class="max-w-[150px] truncate font-medium">{{ p.data.label }}</span>
@@ -963,6 +1002,40 @@ onBeforeUnmount(() => {
                   @input="patchSelectedNode({ expected: ($event.target as HTMLTextAreaElement).value })"
                 />
               </label>
+
+              <!-- 참고 이미지 (화면 시안/스크린샷) -->
+              <div v-if="selectedNodeData.kind !== 'start' && selectedNodeData.kind !== 'end'" class="mt-3">
+                <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('testflow.panel.imageLabel') }}</span>
+                <div v-if="selectedNodeData.image" class="relative mt-1">
+                  <img
+                    :src="selectedNodeData.image"
+                    :alt="selectedNodeData.label"
+                    class="h-28 w-full cursor-zoom-in rounded-md border border-slate-200 object-cover dark:border-slate-700"
+                    @click="lightboxSrc = selectedNodeData.image"
+                  />
+                  <button
+                    type="button"
+                    :title="$t('testflow.panel.removeImage')"
+                    :aria-label="$t('testflow.panel.removeImage')"
+                    class="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
+                    @click="patchSelectedNode({ image: '' })"
+                  >
+                    <X class="h-3 w-3" />
+                  </button>
+                </div>
+                <button
+                  v-else
+                  type="button"
+                  :disabled="uploadingImage"
+                  class="mt-1 flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-3 text-xs font-medium text-slate-500 hover:border-emerald-400 hover:text-emerald-600 disabled:opacity-60 dark:border-slate-700 dark:text-slate-400 dark:hover:border-emerald-500/60 dark:hover:text-emerald-400"
+                  @click="nodeImageInput?.click()"
+                >
+                  <LoaderCircle v-if="uploadingImage" class="h-3.5 w-3.5 animate-spin" />
+                  <ImagePlus v-else class="h-3.5 w-3.5" />
+                  {{ uploadingImage ? $t('common.state.processing') : $t('testflow.panel.uploadImage') }}
+                </button>
+                <input ref="nodeImageInput" type="file" accept="image/*" class="hidden" @change="onNodeImagePick" />
+              </div>
               <button
                 v-if="selectedNodeData.kind !== 'start' && selectedNodeData.kind !== 'end'"
                 type="button"
@@ -1023,6 +1096,9 @@ onBeforeUnmount(() => {
       @close="pathModalOpen = false"
       @created="onCasesCreated"
     />
+
+    <!-- 노드 이미지 확대 보기 -->
+    <ImageLightbox :src="lightboxSrc" @close="lightboxSrc = null" />
   </div>
 </template>
 

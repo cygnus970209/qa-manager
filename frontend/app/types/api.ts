@@ -410,6 +410,8 @@ export type TestPlatform = 'PC' | 'ANDROID' | 'IOS'
 export interface TestStep {
   action: string
   expected: string
+  /** 스텝 참고 이미지(화면 시안 등). 플로우 노드 이미지가 케이스 생성 시 전달된다. */
+  image?: string | null
 }
 
 export interface TestSuite {
@@ -460,6 +462,8 @@ export interface FlowNode {
   label: string
   /** 확인 포인트(기대 결과) — 경로→케이스 생성 시 스텝의 expected 가 된다 */
   expected?: string
+  /** 노드 참고 이미지 URL (화면 시안/스크린샷) */
+  image?: string
   position: { x: number; y: number }
 }
 

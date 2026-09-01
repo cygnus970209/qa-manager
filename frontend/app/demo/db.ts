@@ -26,9 +26,9 @@ import type {
 } from './types'
 import { createSeed } from './seed'
 
-// v8: 실행 항목 플랫폼(PC/ANDROID/IOS) 추가. (v7: 테스트 케이스 관리 시드)
+// v9: 플로우 노드 참고 이미지 시드. (v8: 실행 항목 플랫폼, v7: 테스트 케이스 관리 시드)
 // (v6: 계정 권한(accountRole) 추가, v5: 시드 다국어화(ko/en), v4: OTP 체험 계정(hanboan) 추가, v3: 다중 GitHub repo + 알림센터 시드)
-const LS_KEY = 'qa-demo-state-v8'
+const LS_KEY = 'qa-demo-state-v9'
 
 /** 호출 시점에 i18n 에 lazy 접근. nuxt 컨텍스트 밖(테스트 등)에서는 한국어 폴백. */
 function tr(key: string, fallback: string): string {

@@ -151,7 +151,7 @@ function createKoSeed(): DemoState {
       { id: 1, projectId: 1, updateId: 1, name: '결제 워크플로우', graph: {
         nodes: [
           { id: 'n1', type: 'start', label: '시작', position: { x: 40, y: 200 } },
-          { id: 'n2', type: 'screen', label: '결제 화면', expected: '주문 금액과 결제 수단이 표시된다', position: { x: 200, y: 200 } },
+          { id: 'n2', type: 'screen', label: '결제 화면', image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop', expected: '주문 금액과 결제 수단이 표시된다', position: { x: 200, y: 200 } },
           { id: 'n3', type: 'action', label: '결제 버튼 클릭', position: { x: 380, y: 200 } },
           { id: 'n4', type: 'decision', label: 'OTP 인증 필요?', position: { x: 560, y: 200 } },
           { id: 'n5', type: 'action', label: 'OTP 입력', expected: '인증 성공 시 결제가 진행된다', position: { x: 720, y: 120 } },

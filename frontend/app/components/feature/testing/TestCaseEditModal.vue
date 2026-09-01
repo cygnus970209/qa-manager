@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ChevronDown, ChevronUp, Plus, Trash2 } from '@lucide/vue'
+import { ChevronDown, ChevronUp, ImagePlus, LoaderCircle, Plus, Trash2, X } from '@lucide/vue'
 import AppDialog from '~/components/base/AppDialog.vue'
+import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import type { QaPriority, TestCase, TestStep, TestSuite } from '~/types/api'
 
 const props = defineProps<{
@@ -43,7 +44,7 @@ watch(() => props.open, (v) => {
     form.priority = props.testCase.priority
     form.precondition = props.testCase.precondition ?? ''
     form.steps = props.testCase.steps.length > 0
-      ? props.testCase.steps.map((s) => ({ action: s.action, expected: s.expected }))
+      ? props.testCase.steps.map((s) => ({ action: s.action, expected: s.expected, image: s.image ?? null }))
       : [{ action: '', expected: '' }]
   } else {
     form.title = ''
@@ -70,12 +71,50 @@ function moveStep(idx: number, dir: -1 | 1) {
   form.steps.splice(to, 0, row!)
 }
 
+/* ─── 스텝 참고 이미지 (플로우 노드 이미지와 동일 개념 — 업로드/제거/확대) ─── */
+const upload = useUpload()
+const stepImageInput = ref<HTMLInputElement | null>(null)
+const uploadingStepIdx = ref<number | null>(null)
+const stepLightboxSrc = ref<string | null>(null)
+let pendingImageIdx = -1
+
+function pickStepImage(idx: number) {
+  pendingImageIdx = idx
+  stepImageInput.value?.click()
+}
+
+async function onStepImagePick(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  const idx = pendingImageIdx
+  pendingImageIdx = -1
+  if (!file || idx < 0 || !form.steps[idx]) return
+  uploadingStepIdx.value = idx
+  try {
+    const url = await upload.uploadFile(file, 'qa_image')
+    form.steps[idx]!.image = url
+  } catch (err: any) {
+    error.value = err?.data?.message ?? err?.message ?? t('testcase.modal.imageUploadFailed')
+  } finally {
+    uploadingStepIdx.value = null
+  }
+}
+
+function removeStepImage(idx: number) {
+  if (form.steps[idx]) form.steps[idx]!.image = null
+}
+
 async function onSubmit() {
   error.value = null
   // 빈 action 행은 저장에서 제외
-  const steps = form.steps
+  const steps: TestStep[] = form.steps
     .filter((s) => s.action.trim() !== '')
-    .map((s) => ({ action: s.action.trim(), expected: s.expected.trim() }))
+    .map((s) => ({
+      action: s.action.trim(),
+      expected: s.expected.trim(),
+      ...(s.image ? { image: s.image } : {}),
+    }))
   if (steps.length === 0) {
     error.value = t('testcase.modal.stepsRequired')
     return
@@ -169,7 +208,8 @@ async function onSubmit() {
       <div>
         <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('testcase.modal.stepsLabel') }}</span>
         <div class="mt-1 space-y-2">
-          <div v-for="(step, i) in form.steps" :key="i" class="flex items-start gap-2">
+          <div v-for="(step, i) in form.steps" :key="i">
+          <div class="flex items-start gap-2">
             <span class="mt-2 w-5 shrink-0 text-right text-xs tabular-nums text-slate-400 dark:text-slate-500">{{ i + 1 }}</span>
             <input
               v-model="step.action"
@@ -186,6 +226,21 @@ async function onSubmit() {
               class="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
             />
             <div class="flex shrink-0 items-center gap-0.5 pt-1">
+              <button
+                type="button"
+                :disabled="uploadingStepIdx != null"
+                :title="$t('testcase.modal.stepImage')"
+                :class="[
+                  'rounded p-1 disabled:opacity-30',
+                  step.image
+                    ? 'text-sky-500 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-500/10'
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300',
+                ]"
+                @click="pickStepImage(i)"
+              >
+                <LoaderCircle v-if="uploadingStepIdx === i" class="h-4 w-4 animate-spin" />
+                <ImagePlus v-else class="h-4 w-4" />
+              </button>
               <button
                 type="button"
                 :disabled="i === 0"
@@ -215,7 +270,27 @@ async function onSubmit() {
               </button>
             </div>
           </div>
+
+          <!-- 스텝 참고 이미지 미리보기 -->
+          <div v-if="step.image" class="relative mt-1.5 ml-7 inline-block">
+            <img
+              :src="step.image"
+              :alt="step.action"
+              class="h-16 max-w-[200px] cursor-zoom-in rounded-md border border-slate-200 object-cover dark:border-slate-700"
+              @click="stepLightboxSrc = step.image"
+            />
+            <button
+              type="button"
+              :title="$t('testflow.panel.removeImage')"
+              class="absolute -right-1.5 -top-1.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"
+              @click="removeStepImage(i)"
+            >
+              <X class="h-3 w-3" />
+            </button>
+          </div>
+          </div>
         </div>
+        <input ref="stepImageInput" type="file" accept="image/*" class="hidden" @change="onStepImagePick" />
         <button
           type="button"
           class="mt-2 inline-flex items-center gap-1 rounded-md border border-dashed border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:border-emerald-300 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-emerald-500/50 dark:hover:text-emerald-400"
@@ -227,6 +302,8 @@ async function onSubmit() {
 
       <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-400">{{ error }}</p>
     </form>
+
+    <ImageLightbox :src="stepLightboxSrc" @close="stepLightboxSrc = null" />
 
     <template #footer>
       <button

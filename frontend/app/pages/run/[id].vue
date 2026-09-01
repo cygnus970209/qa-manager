@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, Bug, Circle, CircleCheck, CircleMinus, CircleX, ExternalLink, Lock, LockOpen, OctagonAlert, RotateCcw } from '@lucide/vue'
+import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import NewQAModal from '~/components/feature/NewQAModal.vue'
 import type {
@@ -34,6 +35,9 @@ const cases = computed(() =>
 )
 const selectedId = ref<number | null>(null)
 const selectedCase = computed(() => cases.value.find((c) => c.id === selectedId.value) ?? null)
+
+/** 스텝 참고 이미지 확대 보기 */
+const stepLightboxSrc = ref<string | null>(null)
 
 /* ─── 플랫폼 (실행 항목별 PC/Android/iOS, null=공통) ─── */
 const PLATFORM_LABELS: Record<string, string> = { PC: 'PC', ANDROID: 'Android', IOS: 'iOS' }
@@ -417,7 +421,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
                   <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     <tr v-for="(s, i) in selectedCase.steps" :key="i" class="align-top">
                       <td class="px-3 py-2 tabular-nums text-slate-400 dark:text-slate-500">{{ i + 1 }}</td>
-                      <td class="whitespace-pre-wrap px-3 py-2 text-slate-700 dark:text-slate-200">{{ s.action }}</td>
+                      <td class="whitespace-pre-wrap px-3 py-2 text-slate-700 dark:text-slate-200">
+                        {{ s.action }}
+                        <!-- 스텝 참고 이미지 (플로우 노드에서 전달) — 클릭 시 확대 -->
+                        <img
+                          v-if="s.image"
+                          :src="s.image"
+                          :alt="s.action"
+                          class="mt-1.5 h-20 max-w-[240px] cursor-zoom-in rounded-md border border-slate-200 object-cover dark:border-slate-700"
+                          @click="stepLightboxSrc = s.image"
+                        />
+                      </td>
                       <td class="whitespace-pre-wrap px-3 py-2 text-slate-600 dark:text-slate-300">{{ s.expected }}</td>
                     </tr>
                   </tbody>
@@ -491,6 +505,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         @close="qaOpen = false"
         @created="onQaCreated"
       />
+
+      <!-- 스텝 참고 이미지 확대 보기 -->
+      <ImageLightbox :src="stepLightboxSrc" @close="stepLightboxSrc = null" />
     </template>
   </section>
 </template>

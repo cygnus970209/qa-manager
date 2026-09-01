@@ -36,7 +36,9 @@
       "moveUp": "Move up",
       "moveDown": "Move down",
       "stepsRequired": "At least one step with an action is required.",
-      "saveFailed": "Failed to save."
+      "saveFailed": "Failed to save.",
+      "stepImage": "Reference image",
+      "imageUploadFailed": "Failed to upload the image."
     }
   }
 }

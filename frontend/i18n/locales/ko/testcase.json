@@ -36,7 +36,9 @@
       "moveUp": "위로 이동",
       "moveDown": "아래로 이동",
       "stepsRequired": "행동이 입력된 스텝이 1개 이상 필요합니다.",
-      "saveFailed": "저장에 실패했습니다."
+      "saveFailed": "저장에 실패했습니다.",
+      "stepImage": "참고 이미지",
+      "imageUploadFailed": "이미지 업로드에 실패했습니다."
     }
   }
 }
