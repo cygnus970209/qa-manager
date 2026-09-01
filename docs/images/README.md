@@ -14,6 +14,8 @@ README 와 docs 문서에 쓰이는 이미지를 이 폴더에 모읍니다.
 | `notification-center.png` | 상단 알림센터 드롭다운 | 안읽음 배지 + 알림 목록 |
 | `github-commits.png` | QA 상세 | GitHub 이슈 배지 + 연결된 커밋 목록 |
 | `admin-settings.png` | `/admin` 설정 탭 | MS Teams 또는 GitHub 서브탭 |
+| `test-flow.jpg` | 테스트 케이스 탭 플로우 뷰 | 워크플로우 그래프(분기 라벨 포함) + 팔레트/툴바 |
+| `test-run.jpg` | `/run/:id` 실행 화면 | 플랫폼 필터·배지 + 스텝 테이블 + 결과 버튼 |
 | `login-otp.png` | `/auth/login` | OTP 입력 단계 (마스킹된 이메일 안내 박스) |
 | `demo-login.png` | 데모 로그인 화면 | 데모 계정 클릭 목록 + 데모 배너 |
 
