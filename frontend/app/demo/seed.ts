@@ -69,6 +69,29 @@ export function createSeed(): DemoState {
       ],
     },
 
+    /* 알림센터 시드 — 어느 데모 계정으로 로그인해도 알림이 보이도록 멤버별로 구성.
+     * 메시지 문구는 백엔드 NotificationService 형식과 동일하게 맞춘다. */
+    notifications: [
+      // 김민준(1) — FE 개발자
+      { id: 81, recipientId: 1, type: 'mention', message: '코멘트에서 언급되었습니다: 카드 결제 시 오류 메시지 미표시', projectId: 1, qaItemId: 1, actorId: 2, read: false, createdAt: '2026-05-14T10:20:00' },
+      { id: 82, recipientId: 1, type: 'qa', message: 'QA가 배정되었습니다: 푸시 클릭 시 앱 미실행', projectId: 1, qaItemId: 4, actorId: 4, read: false, createdAt: '2026-04-22T09:12:00' },
+      { id: 83, recipientId: 1, type: 'reply', message: '내 코멘트에 답글이 달렸습니다: 카드 결제 시 오류 메시지 미표시', projectId: 1, qaItemId: 1, actorId: 2, read: true, createdAt: '2026-04-09T11:00:00' },
+      // 박서연(2) — BE 개발자
+      { id: 84, recipientId: 2, type: 'qa', message: 'QA가 배정되었습니다: 간편결제(토스) 취소 후 재시도 불가', projectId: 1, qaItemId: 2, actorId: 4, read: false, createdAt: '2026-05-13T15:40:00' },
+      { id: 85, recipientId: 2, type: 'mention', message: '코멘트에서 언급되었습니다: 카드 결제 시 오류 메시지 미표시', projectId: 1, qaItemId: 1, actorId: 1, read: false, createdAt: '2026-04-08T13:05:00' },
+      { id: 86, recipientId: 2, type: 'comment', message: 'QA에 새 코멘트: AI 위젯 예측값 0으로 표시', projectId: 2, qaItemId: 6, actorId: 5, read: true, createdAt: '2026-05-13T09:30:00' },
+      // 이도윤(3) — DevOps
+      { id: 87, recipientId: 3, type: 'qa', message: 'QA가 배정되었습니다: 영수증 이메일 발송 지연', projectId: 1, qaItemId: 3, actorId: 4, read: false, createdAt: '2026-04-08T10:00:00' },
+      { id: 88, recipientId: 3, type: 'qa', message: 'QA 상태 변경: 카카오 친구 목록 동기화 실패 → 보류', projectId: 3, qaItemId: 8, actorId: 4, read: true, createdAt: '2026-03-25T17:20:00' },
+      // 최지우(4) — QA 엔지니어
+      { id: 89, recipientId: 4, type: 'comment', message: 'QA에 새 코멘트: 간편결제(토스) 취소 후 재시도 불가', projectId: 1, qaItemId: 2, actorId: 3, read: false, createdAt: '2026-05-14T14:10:00' },
+      { id: 90, recipientId: 4, type: 'qa', message: 'QA 상태 변경: 딥링크 파라미터 누락 → 수정완료', projectId: 1, qaItemId: 5, actorId: 2, read: false, createdAt: '2026-04-25T18:00:00' },
+      { id: 91, recipientId: 4, type: 'qa', message: '새 QA가 등록되었습니다: 위젯 새로고침 시 데이터 섞임', projectId: 2, qaItemId: 7, actorId: 5, read: true, createdAt: '2026-05-13T08:45:00' },
+      // 정현우(5) — 풀스택
+      { id: 92, recipientId: 5, type: 'qa', message: 'QA가 배정되었습니다: 위젯 새로고침 시 데이터 섞임', projectId: 2, qaItemId: 7, actorId: 4, read: false, createdAt: '2026-05-13T09:00:00' },
+      { id: 93, recipientId: 5, type: 'comment', message: 'QA에 새 코멘트: AI 위젯 예측값 0으로 표시', projectId: 2, qaItemId: 6, actorId: 2, read: true, createdAt: '2026-05-14T11:25:00' },
+    ],
+
     seq: 100,
     currentUserId: null,
   }

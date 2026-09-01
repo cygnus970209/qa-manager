@@ -548,10 +548,44 @@ const ROUTES: Route[] = [
     },
   },
 
-  /* ── Notifications (데모: 빈 목록) ── */
-  { method: 'GET', pattern: /^\/api\/notifications$/, handler: () => [] },
-  { method: 'PATCH', pattern: /^\/api\/notifications\/(\d+)\/read$/, handler: () => null },
-  { method: 'PATCH', pattern: /^\/api\/notifications\/read-all$/, handler: () => null },
+  /* ── Notifications (수신자 = 로그인 사용자 기준) ── */
+  {
+    method: 'GET',
+    pattern: /^\/api\/notifications$/,
+    handler: ({ db }) => {
+      const me = requireUser(db)
+      return (db.state.notifications ?? [])
+        .filter((n) => n.recipientId === me.id)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map((n) => db.notificationDto(n))
+    },
+  },
+  {
+    method: 'PATCH',
+    pattern: /^\/api\/notifications\/(\d+)\/read$/,
+    handler: ({ params, db }) => {
+      const me = requireUser(db)
+      const n = (db.state.notifications ?? []).find(
+        (x) => x.id === Number(params[0]) && x.recipientId === me.id,
+      )
+      if (!n) throw apiError(404, 'NOT_FOUND', '알림을 찾을 수 없습니다.')
+      n.read = true
+      db.save()
+      return db.notificationDto(n)
+    },
+  },
+  {
+    method: 'PATCH',
+    pattern: /^\/api\/notifications\/read-all$/,
+    handler: ({ db }) => {
+      const me = requireUser(db)
+      for (const n of db.state.notifications ?? []) {
+        if (n.recipientId === me.id) n.read = true
+      }
+      db.save()
+      return { unread: 0 }
+    },
+  },
 
   /* ── Files (데모: 업로드는 useUpload 에서 data URL 로 우회) ── */
   { method: 'POST', pattern: /^\/api\/files\/presigned$/, handler: () => { throw FORBIDDEN() } },

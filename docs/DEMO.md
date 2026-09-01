@@ -4,7 +4,7 @@
 
 **🔗 라이브 데모: https://qa-manager-demo.cygnus2.com**
 
-![데모 로그인](images/demo-login.png)
+![데모 로그인](images/demo-login.jpg)
 
 ## 사용 방법
 

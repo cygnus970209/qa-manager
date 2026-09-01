@@ -2,7 +2,7 @@
 
 QA 항목을 GitHub 이슈와 연결하고, 이슈를 참조한 커밋을 QA 상세에서 추적하는 기능입니다.
 
-![GitHub 커밋 추적](images/github-commits.png)
+![GitHub 커밋 추적](images/github-commits.jpg)
 
 ## 무엇이 되나
 

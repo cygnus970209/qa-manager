@@ -3,7 +3,7 @@
  * 관계는 모두 id 참조로 보관하고, API 응답 시 db.ts 의 *Dto 변환기가
  * ~/types/api 의 DTO 형태(AssigneeSummary 조립 등)로 바꾼다.
  */
-import type { GithubCommit, GithubIssueInfo, GithubRepo, QaPriority, QaStatus, ProjectStatus, UpdateStatus } from '~/types/api'
+import type { GithubCommit, GithubIssueInfo, GithubRepo, NotificationType, QaPriority, QaStatus, ProjectStatus, UpdateStatus } from '~/types/api'
 
 export interface DemoMember {
   id: number
@@ -71,6 +71,19 @@ export interface DemoComment {
   updatedAt: string
 }
 
+export interface DemoNotification {
+  id: number
+  /** 수신자 멤버 id — 알림은 로그인 사용자 기준으로 필터된다. */
+  recipientId: number
+  type: NotificationType
+  message: string
+  projectId: number | null
+  qaItemId: number | null
+  actorId: number | null
+  read: boolean
+  createdAt: string
+}
+
 export interface DemoState {
   members: DemoMember[]
   projects: DemoProject[]
@@ -81,6 +94,8 @@ export interface DemoState {
   githubRepos: GithubRepo[]
   /** QA id(문자열 키) → 연결된 가짜 커밋 목록. */
   githubCommits: Record<string, GithubCommit[]>
+  /** 알림센터 목록 (수신자별). */
+  notifications: DemoNotification[]
   /** 모든 엔티티 공용 id 시퀀스 (시드 최대 id 이후부터 증가) */
   seq: number
   /** 현재 로그인한 데모 사용자 id (없으면 미인증) */

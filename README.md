@@ -23,17 +23,17 @@
   권장 캡처 목록: docs/images/README.md 참고
 -->
 
-| 대시보드 | QA 상세 (3분할 뷰) |
-|---|---|
-| ![대시보드](docs/images/dashboard.png) | ![QA 상세](docs/images/qa-detail.png) |
+| 대시보드                             | QA 상세 (3분할 뷰)                    |
+|--------------------------------------|---------------------------------------|
+| ![대시보드](docs/images/dashboard.jpg) | ![QA 상세](docs/images/qa-detail.jpg) |
 
-| 코멘트 · 멘션 · 이모지 반응 | GitHub 이슈 · 커밋 추적 |
-|---|---|
-| ![코멘트](docs/images/qa-comments.png) | ![GitHub 연동](docs/images/github-commits.png) |
+| 코멘트 · 멘션 · 이모지 반응            | GitHub 이슈 · 커밋 추적                        |
+|----------------------------------------|------------------------------------------------|
+| ![코멘트](docs/images/qa-comments.jpg) | ![GitHub 연동](docs/images/github-commits.jpg) |
 
-| 실시간 알림센터 | 이메일 OTP 2단계 로그인 |
-|---|---|
-| ![알림센터](docs/images/notification-center.png) | ![OTP 로그인](docs/images/login-otp.png) |
+| 실시간 알림센터                                  | 이메일 OTP 2단계 로그인                  |
+|--------------------------------------------------|------------------------------------------|
+| ![알림센터](docs/images/notification-center.jpg) | ![OTP 로그인](docs/images/login-otp.jpg) |
 
 ---
 

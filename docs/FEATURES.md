@@ -22,7 +22,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 1. 대시보드
 
-![대시보드](images/dashboard.png)
+![대시보드](images/dashboard.jpg)
 
 `/` 첫 화면. 팀의 QA 현황을 한눈에 보여줍니다.
 
@@ -34,7 +34,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 2. 프로젝트 관리
 
-![프로젝트 상세](images/project-detail.png)
+![프로젝트 상세](images/project-detail.jpg)
 
 - 프로젝트 CRUD, 상태 3단계 (`active` 진행중 / `paused` 일시중지 / `completed` 완료)
 - 프로젝트 상세(`/project/:id`)
@@ -61,7 +61,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 5. QA 상세 페이지
 
-![QA 상세](images/qa-detail.png)
+![QA 상세](images/qa-detail.jpg)
 
 `/qa/:id`. 좌측 목록 사이드바 / 중앙 본문 + 코멘트 / 우측 변경 이력의 3분할 마스터-디테일 뷰입니다.
 
@@ -74,7 +74,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 6. 코멘트
 
-![코멘트](images/qa-comments.png)
+![코멘트](images/qa-comments.jpg)
 
 - 루트 코멘트 + 1-depth 답글 스레드, 본인 코멘트만 인라인 수정/삭제
 - **`@멘션`** — 이름 자동완성(아바타 · 역할 표시, 방향키/Enter), 멘션된 멤버에게 알림 발송. 전송 직전 본문에 실제로 남아있는 멘션만 집계
@@ -85,7 +85,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 7. 알림
 
-![알림센터](images/notification-center.png)
+![알림센터](images/notification-center.jpg)
 
 ### 인앱 실시간 알림 (SSE)
 
@@ -118,7 +118,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 9. 인증 · 보안
 
-![OTP 로그인](images/login-otp.png)
+![OTP 로그인](images/login-otp.jpg)
 
 - **JWT HttpOnly 쿠키** (access 15분 + refresh 14일), refresh rotation, 로그아웃/회전 시 Redis 블랙리스트
 - **IP 조건부 이메일 OTP 2FA** — 신뢰 IP(사무실 CIDR)에서는 비밀번호만으로, 그 외에서는 이메일 6자리 코드 검증 후 토큰 발급
@@ -131,7 +131,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 10. 관리자 페이지
 
-![관리자 설정](images/admin-settings.png)
+![관리자 설정](images/admin-settings.jpg)
 
 `/admin` — 상단 통계 카드 4종(전체 프로젝트 / 전체 QA / 진행중 프로젝트 / 긴급 QA) + 4개 탭:
 

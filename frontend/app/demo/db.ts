@@ -2,6 +2,7 @@ import type {
   AssigneeSummary,
   Me,
   Member,
+  Notification,
   Project,
   ProjectUpdate,
   QaComment,
@@ -10,6 +11,7 @@ import type {
 import type {
   DemoComment,
   DemoMember,
+  DemoNotification,
   DemoProject,
   DemoQa,
   DemoState,
@@ -17,8 +19,8 @@ import type {
 } from './types'
 import { createSeed } from './seed'
 
-// v2: GitHub 연동 데모 데이터(repo/issue/commit) 추가 — 구버전 상태는 버리고 재시드한다.
-const LS_KEY = 'qa-demo-state-v2'
+// v3: 다중 GitHub repo(githubRepos 배열) + 알림센터 시드 추가 — 구버전 상태는 버리고 재시드한다.
+const LS_KEY = 'qa-demo-state-v3'
 
 /**
  * 데모용 인메모리 + localStorage 백엔드.
@@ -119,6 +121,23 @@ export class DemoDb {
       updatedAt: p.updatedAt,
       // 구버전 localStorage 상태(단일 repo 필드)엔 배열이 없으므로 빈 배열로 폴백.
       githubRepos: p.githubRepos ?? [],
+    }
+  }
+
+  notificationDto(n: DemoNotification): Notification {
+    const project = n.projectId != null ? this.state.projects.find((p) => p.id === n.projectId) : undefined
+    const actor = n.actorId != null ? this.state.members.find((m) => m.id === n.actorId) : undefined
+    return {
+      id: n.id,
+      type: n.type,
+      message: n.message,
+      projectId: n.projectId,
+      projectName: project?.name ?? null,
+      qaItemId: n.qaItemId,
+      actorId: n.actorId,
+      actorName: actor?.name ?? null,
+      read: n.read,
+      createdAt: n.createdAt,
     }
   }
 
