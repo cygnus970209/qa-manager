@@ -4,7 +4,8 @@
       "message": "This is a demo — changes are saved only in this browser and never reach the server."
     },
     "accounts": {
-      "otpTag": "(email OTP demo)"
+      "otpTag": "(email OTP demo)",
+      "adminTag": "(Admin)"
     },
     "api": {
       "readonly": "This feature is not available in demo mode.",
@@ -19,7 +20,10 @@
       "qaNotFound": "QA item not found.",
       "commentNotFound": "Comment not found.",
       "notificationNotFound": "Notification not found.",
-      "notImplemented": "Demo mock route not implemented: {method} {path}"
+      "notImplemented": "Demo mock route not implemented: {method} {path}",
+      "adminOnly": "Only admins can use this feature.",
+      "cannotChangeOwnRole": "You cannot change your own permission.",
+      "invalidAccountRole": "Invalid permission value."
     }
   }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bell, Check, Globe, LogOut, Monitor, Moon, ShieldCheck, Sun, UserRound } from '@lucide/vue'
+import { Bell, Check, Globe, LogOut, Monitor, Moon, Settings, ShieldCheck, Sun, UserRound } from '@lucide/vue'
 import ProfileModal from '~/components/feature/ProfileModal.vue'
 import { timeAgo } from '~/utils/format'
 
@@ -85,7 +85,11 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
 
       <nav class="flex items-center gap-1 text-sm">
         <NuxtLink to="/" class="rounded px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800">{{ $t('shell.nav.dashboard') }}</NuxtLink>
-        <NuxtLink to="/admin" class="rounded px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800">{{ $t('shell.nav.admin') }}</NuxtLink>
+        <NuxtLink
+          v-if="auth.user?.accountRole === 'ADMIN'"
+          to="/admin"
+          class="rounded px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800"
+        >{{ $t('shell.nav.admin') }}</NuxtLink>
       </nav>
 
       <div class="flex items-center gap-2">
@@ -147,6 +151,15 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
             </button>
           </div>
         </div>
+
+        <NuxtLink
+          v-if="auth.isAuthenticated"
+          to="/settings"
+          class="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+          :aria-label="$t('common.actions.settings')"
+        >
+          <Settings class="h-4 w-4" />
+        </NuxtLink>
 
         <div ref="dropdownRef" class="relative">
           <button

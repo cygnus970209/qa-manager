@@ -54,11 +54,15 @@ export interface OtpResendRequest {
   challengeId: string
 }
 
+/** 계정 권한. 직무 표기용 role(자유 텍스트)과 별개의 접근 제어 개념. */
+export type AccountRole = 'ADMIN' | 'MEMBER'
+
 export interface Me {
   id: number
   username: string
   name: string
   role: string | null
+  accountRole: AccountRole
   avatarUrl: string | null
 }
 
@@ -79,6 +83,7 @@ export interface Member {
   name: string
   email?: string | null
   role: string | null
+  accountRole?: AccountRole
   avatarUrl: string | null
   teamsLinked?: boolean
   teamsNotifyEnabled?: boolean

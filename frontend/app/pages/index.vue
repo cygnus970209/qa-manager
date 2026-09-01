@@ -67,7 +67,7 @@ function maybeShowTeamsNotice() {
 
 function onTeamsNoticeConfirm() {
   teamsNoticeOpen.value = false
-  router.push('/admin?tab=settings&sub=ms-teams')
+  router.push('/settings?sub=ms-teams')
 }
 
 if (import.meta.client) {

@@ -1,4 +1,5 @@
 import type {
+  AccountRole,
   Member,
   MemberCreateRequest,
   MemberUpdateRequest,
@@ -24,5 +25,7 @@ export function useMembers() {
       api<TeamsTestResult>(`/api/members/${id}/teams-test`, { method: 'POST' }),
     resetPassword: (id: number) =>
       api(`/api/members/${id}/reset-password`, { method: 'POST' }),
+    updateAccountRole: (id: number, accountRole: AccountRole) =>
+      api<Member>(`/api/members/${id}/account-role`, { method: 'PUT', body: { accountRole } }),
   }
 }

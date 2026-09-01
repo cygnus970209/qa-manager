@@ -52,6 +52,10 @@
       "high": "High",
       "critical": "Critical"
     },
+    "accountRole": {
+      "admin": "Admin",
+      "member": "Member"
+    },
     "roles": {
       "tester": "Tester",
       "assignee": "Assignee",

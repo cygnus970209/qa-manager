@@ -14,6 +14,7 @@ public class MemberDto {
         String name,
         String email,
         String role,
+        AccountRole accountRole,
         String avatarUrl,
         boolean teamsLinked,
         boolean teamsNotifyEnabled
@@ -25,6 +26,7 @@ public class MemberDto {
                 m.getName(),
                 m.getEmail(),
                 m.getRole(),
+                m.getAccountRole(),
                 m.getAvatarUrl(),
                 m.getTeamsUserId() != null,
                 m.isTeamsNotifyEnabled()
@@ -54,6 +56,11 @@ public class MemberDto {
     /** Teams 알림 토글. */
     public record TeamsNotifyRequest(
         @NotNull Boolean enabled
+    ) {}
+
+    /** 계정 권한 변경 (관리자 전용). */
+    public record AccountRoleRequest(
+        @NotNull AccountRole accountRole
     ) {}
 
     /** 본인 알림 개인화 설정 (Teams 발송에만 적용). */

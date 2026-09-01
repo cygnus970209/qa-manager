@@ -1,5 +1,6 @@
 package com.qamanager.integration.github;
 
+import com.qamanager.auth.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,16 +32,19 @@ public class GithubController {
 
     @PostMapping("/app/manifest")
     public GithubDto.ManifestResponse manifest(@RequestBody @Valid GithubDto.ManifestRequest req) {
+        CurrentUser.requireAdmin();
         return appService.buildManifest(req.organization(), req.baseUrl());
     }
 
     @PostMapping("/app/conversion")
     public GithubDto.AppStatus convert(@RequestBody @Valid GithubDto.ConversionRequest req) {
+        CurrentUser.requireAdmin();
         return appService.convert(req.code());
     }
 
     @DeleteMapping("/app")
     public ResponseEntity<Void> disconnect() {
+        CurrentUser.requireAdmin();
         appService.disconnect();
         return ResponseEntity.noContent().build();
     }

@@ -59,6 +59,12 @@
         "role": "Role",
         "avatarUrl": "Avatar URL",
         "optional": "(optional)"
+      },
+      "accountRole": {
+        "header": "Permission",
+        "selfLocked": "You cannot change your own permission",
+        "confirm": "Change {name}'s permission to {role}?",
+        "failed": "Failed to change the permission."
       }
     },
     "settings": {

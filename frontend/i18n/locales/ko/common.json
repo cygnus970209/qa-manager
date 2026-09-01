@@ -52,6 +52,10 @@
       "high": "높음",
       "critical": "긴급"
     },
+    "accountRole": {
+      "admin": "관리자",
+      "member": "멤버"
+    },
     "roles": {
       "tester": "테스터",
       "assignee": "담당자",

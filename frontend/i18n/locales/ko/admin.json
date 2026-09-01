@@ -59,6 +59,12 @@
         "role": "역할",
         "avatarUrl": "아바타 URL",
         "optional": "(선택)"
+      },
+      "accountRole": {
+        "header": "권한",
+        "selfLocked": "자신의 권한은 변경할 수 없습니다",
+        "confirm": "'{name}' 님의 권한을 '{role}' 로 변경하시겠습니까?",
+        "failed": "권한 변경에 실패했습니다."
       }
     },
     "settings": {

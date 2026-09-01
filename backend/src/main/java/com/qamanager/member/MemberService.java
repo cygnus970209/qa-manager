@@ -125,6 +125,14 @@ public class MemberService {
         m.changePassword(passwordEncoder.encode("1234"));
     }
 
+    /** 계정 권한(ADMIN/MEMBER) 변경. 자기 자신 변경 차단은 컨트롤러에서 수행. */
+    @Transactional
+    public MemberDto.Response updateAccountRole(Long id, AccountRole accountRole) {
+        TeamMember m = findOrThrow(id);
+        m.changeAccountRole(accountRole);
+        return MemberDto.Response.from(m);
+    }
+
     /** Teams 알림 on/off. */
     @Transactional
     public MemberDto.Response updateTeamsNotify(Long id, boolean enabled) {

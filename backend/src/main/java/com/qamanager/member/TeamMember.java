@@ -3,6 +3,8 @@ package com.qamanager.member;
 import com.qamanager.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,6 +41,11 @@ public class TeamMember extends BaseEntity {
 
     @Column(name = "role", length = 50)
     private String role;
+
+    /** 계정 권한. 직무 표기(role)와 별개의 접근 제어 개념. 신규 멤버 기본 MEMBER. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_role", nullable = false, length = 20)
+    private AccountRole accountRole = AccountRole.MEMBER;
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
@@ -97,6 +104,10 @@ public class TeamMember extends BaseEntity {
 
     public void changePassword(String newPasswordHash) {
         this.passwordHash = newPasswordHash;
+    }
+
+    public void changeAccountRole(AccountRole accountRole) {
+        this.accountRole = accountRole;
     }
 
     public void softDelete() {
@@ -161,6 +172,8 @@ public class TeamMember extends BaseEntity {
     public String getName() { return name; }
     public String getEmail() { return email; }
     public String getRole() { return role; }
+    public AccountRole getAccountRole() { return accountRole; }
+    public boolean isAdmin() { return accountRole == AccountRole.ADMIN; }
     public String getAvatarUrl() { return avatarUrl; }
     public String getTeamsUserId() { return teamsUserId; }
     public String getTeamsChatId() { return teamsChatId; }

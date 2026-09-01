@@ -9,6 +9,7 @@ import {
   Loader2,
   Send,
   Settings,
+  ShieldCheck,
   Trash2,
   UserPlus,
   Users,
@@ -18,7 +19,7 @@ import MemberModal from '~/components/feature/MemberModal.vue'
 import SettingsPanel from '~/components/feature/SettingsPanel.vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
 import TeamsTestResultModal from '~/components/feature/TeamsTestResultModal.vue'
-import type { Member, Project, ProjectStatus, ProjectUpdate, QaItem, QaPriority, QaStatus, QaStatusUpper, TeamsTestResult } from '~/types/api'
+import type { AccountRole, Member, Project, ProjectStatus, ProjectUpdate, QaItem, QaPriority, QaStatus, QaStatusUpper, TeamsTestResult } from '~/types/api'
 
 const router = useRouter()
 const membersApi = useMembers()
@@ -27,6 +28,11 @@ const qaApi = useQa()
 const updatesApi = useUpdates()
 const auth = useAuthStore()
 const { t } = useI18n()
+
+// 관리자 전용 페이지 — 일반 멤버는 대시보드로 돌려보낸다 (API 는 백엔드 403 으로 별도 보호됨)
+watchEffect(() => {
+  if (auth.user && auth.user.accountRole !== 'ADMIN') router.replace('/')
+})
 
 type TabKey = 'projects' | 'qa' | 'members' | 'settings'
 const route = useRoute()
@@ -200,6 +206,26 @@ async function resetPassword(m: Member) {
     window.alert(t('admin.members.resetPasswordDone', { name: m.name }))
   } catch (e: unknown) {
     window.alert(e instanceof Error ? e.message : t('admin.members.resetPasswordFailed'))
+  }
+}
+
+/** 계정 권한(ADMIN/MEMBER) 변경. 실패/취소 시 select 를 원래 값으로 되돌린다. */
+async function onAccountRoleChange(m: Member, e: Event) {
+  const select = e.target as HTMLSelectElement
+  const next = select.value as AccountRole
+  const prev = m.accountRole ?? 'MEMBER'
+  if (next === prev) return
+  const roleLabel = t(`common.accountRole.${next.toLowerCase()}`)
+  if (!window.confirm(t('admin.members.accountRole.confirm', { name: m.name, role: roleLabel }))) {
+    select.value = prev
+    return
+  }
+  try {
+    const updated = await membersApi.updateAccountRole(m.id, next)
+    members.value = members.value.map((x) => (x.id === m.id ? updated : x))
+  } catch (err: any) {
+    select.value = prev
+    window.alert(err?.data?.message ?? t('admin.members.accountRole.failed'))
   }
 }
 </script>
@@ -430,6 +456,7 @@ async function resetPassword(m: Member) {
               <th class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.name') }}</th>
               <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.username') }}</th>
               <th class="w-40 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.role') }}</th>
+              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.accountRole.header') }}</th>
               <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.assignedHeader') }}</th>
               <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.table.actions') }}</th>
             </tr>
@@ -451,6 +478,31 @@ async function resetPassword(m: Member) {
               </td>
               <td class="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{{ m.username }}</td>
               <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ m.role ?? '-' }}</td>
+              <td class="px-4 py-3">
+                <!-- 자기 자신의 권한은 변경 불가(잠금 방지) — 배지로만 표시 -->
+                <span
+                  v-if="m.id === auth.user?.id"
+                  :class="[
+                    'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
+                    (m.accountRole ?? 'MEMBER') === 'ADMIN'
+                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+                      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+                  ]"
+                  :title="$t('admin.members.accountRole.selfLocked')"
+                >
+                  <ShieldCheck v-if="(m.accountRole ?? 'MEMBER') === 'ADMIN'" class="h-3 w-3" />
+                  {{ $t(`common.accountRole.${(m.accountRole ?? 'MEMBER').toLowerCase()}`) }}
+                </span>
+                <select
+                  v-else
+                  :value="m.accountRole ?? 'MEMBER'"
+                  class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                  @change="onAccountRoleChange(m, $event)"
+                >
+                  <option value="ADMIN">{{ $t('common.accountRole.admin') }}</option>
+                  <option value="MEMBER">{{ $t('common.accountRole.member') }}</option>
+                </select>
+              </td>
               <td class="px-4 py-3">
                 <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                   {{ $t('admin.members.assignedCount', memberAssignedCount(m.id)) }}
@@ -494,7 +546,7 @@ async function resetPassword(m: Member) {
               </td>
             </tr>
             <tr v-if="members.length === 0">
-              <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">{{ $t('admin.members.empty') }}</td>
+              <td colspan="7" class="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">{{ $t('admin.members.empty') }}</td>
             </tr>
           </tbody>
         </table>

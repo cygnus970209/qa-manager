@@ -11,6 +11,8 @@ export interface DemoMember {
   password: string
   name: string
   role: string | null
+  /** 계정 권한. ADMIN 만 관리 탭 접근 + 권한 부여 가능. */
+  accountRole: 'ADMIN' | 'MEMBER'
   email: string | null
   avatarUrl: string | null
   /** true 면 로그인 시 이메일 OTP 2단계를 요구한다 (데모 체험용, 코드 123456 고정). */

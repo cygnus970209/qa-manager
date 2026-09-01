@@ -20,9 +20,9 @@ import type {
 } from './types'
 import { createSeed } from './seed'
 
-// v5: 시드 다국어화(ko/en) — 방문자 언어에 맞는 시드를 새로 받도록 구버전 상태는 버리고 재시드한다.
-// (v4: OTP 체험 계정(hanboan) 추가, v3: 다중 GitHub repo + 알림센터 시드)
-const LS_KEY = 'qa-demo-state-v5'
+// v6: 계정 권한(accountRole) 추가 — 구버전 상태에는 필드가 없어 권한 판정이 깨지므로 재시드한다.
+// (v5: 시드 다국어화(ko/en), v4: OTP 체험 계정(hanboan) 추가, v3: 다중 GitHub repo + 알림센터 시드)
+const LS_KEY = 'qa-demo-state-v6'
 
 /** 호출 시점에 i18n 에 lazy 접근. nuxt 컨텍스트 밖(테스트 등)에서는 한국어 폴백. */
 function tr(key: string, fallback: string): string {
@@ -104,7 +104,7 @@ export class DemoDb {
   }
 
   meDto(m: DemoMember): Me {
-    return { id: m.id, username: m.username, name: m.name, role: m.role, avatarUrl: m.avatarUrl }
+    return { id: m.id, username: m.username, name: m.name, role: m.role, accountRole: m.accountRole, avatarUrl: m.avatarUrl }
   }
 
   memberDto(m: DemoMember): Member {
@@ -114,6 +114,7 @@ export class DemoDb {
       name: m.name,
       email: m.email,
       role: m.role,
+      accountRole: m.accountRole,
       avatarUrl: m.avatarUrl,
       teamsLinked: false,
       teamsNotifyEnabled: true,

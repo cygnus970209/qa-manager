@@ -29,7 +29,9 @@ export function useDemo() {
   const accounts = computed<DemoAccount[]>(() => {
     if (!enabled.value) return []
     return createSeed().members.map((m) => ({
-      label: [m.name, m.role].filter(Boolean).join(' · ') + (m.otpEnabled ? ' ' + tr('demo.accounts.otpTag', '(이메일 OTP 체험)') : ''),
+      label: [m.name, m.role].filter(Boolean).join(' · ')
+        + (m.accountRole === 'ADMIN' ? ' ' + tr('demo.accounts.adminTag', '(관리자)') : '')
+        + (m.otpEnabled ? ' ' + tr('demo.accounts.otpTag', '(이메일 OTP 체험)') : ''),
       username: m.username,
       password: m.password,
     }))

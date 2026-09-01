@@ -115,7 +115,7 @@ public class AuthService {
     public AuthDto.MeResponse me(Long memberId) {
         TeamMember m = memberRepository.findByIdAndDeletedAtIsNull(memberId)
             .orElseThrow(() -> ApiException.unauthorized("멤버가 존재하지 않습니다."));
-        return new AuthDto.MeResponse(m.getId(), m.getUsername(), m.getName(), m.getRole(), m.getAvatarUrl());
+        return new AuthDto.MeResponse(m.getId(), m.getUsername(), m.getName(), m.getRole(), m.getAccountRole(), m.getAvatarUrl());
     }
 
     @Transactional
@@ -124,7 +124,7 @@ public class AuthService {
             .orElseThrow(() -> ApiException.unauthorized("멤버가 존재하지 않습니다."));
         // 본인은 name, avatarUrl 만 수정 가능 (role 은 관리자 권한)
         m.update(req.name(), null, req.avatarUrl());
-        return new AuthDto.MeResponse(m.getId(), m.getUsername(), m.getName(), m.getRole(), m.getAvatarUrl());
+        return new AuthDto.MeResponse(m.getId(), m.getUsername(), m.getName(), m.getRole(), m.getAccountRole(), m.getAvatarUrl());
     }
 
     @Transactional
@@ -141,7 +141,7 @@ public class AuthService {
         String access = tokenProvider.createAccessToken(m.getId(), m.getUsername());
         String refresh = tokenProvider.createRefreshToken(m.getId(), m.getUsername());
         AuthDto.MeResponse user = new AuthDto.MeResponse(
-            m.getId(), m.getUsername(), m.getName(), m.getRole(), m.getAvatarUrl()
+            m.getId(), m.getUsername(), m.getName(), m.getRole(), m.getAccountRole(), m.getAvatarUrl()
         );
         return new AuthDto.IssuedTokens(access, refresh, tokenProvider.getAccessTtl().toSeconds(), user);
     }

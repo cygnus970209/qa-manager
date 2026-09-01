@@ -22,6 +22,13 @@ import TeamsTestResultModal from '~/components/feature/TeamsTestResultModal.vue'
 type SubTab = 'notifications' | 'ms-teams' | 'github'
 const SUB_KEYS: SubTab[] = ['notifications', 'ms-teams', 'github']
 
+/**
+ * scope
+ * - 'admin'    : 관리자 페이지 설정 탭 — 서브탭 전체(알림/MS Teams/GitHub)
+ * - 'personal' : 개인 설정 페이지(/settings) — 본인 설정만(알림/MS Teams), 전역 연동인 GitHub 은 숨김
+ */
+const props = withDefaults(defineProps<{ scope?: 'admin' | 'personal' }>(), { scope: 'admin' })
+
 const auth = useAuthStore()
 const { t } = useI18n()
 const api = useApi()
@@ -30,9 +37,8 @@ const github = useGithub()
 
 const route = useRoute()
 const router = useRouter()
-const subTab = ref<SubTab>(
-  SUB_KEYS.includes(route.query.sub as SubTab) ? (route.query.sub as SubTab) : 'notifications',
-)
+const initialSub = SUB_KEYS.includes(route.query.sub as SubTab) ? (route.query.sub as SubTab) : 'notifications'
+const subTab = ref<SubTab>(props.scope === 'personal' && initialSub === 'github' ? 'notifications' : initialSub)
 
 const settings = reactive<NotificationSettings>({
   teamsNotifyEnabled: true,
@@ -66,6 +72,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+
+  // GitHub 은 전역 연동(관리자 스코프)이라 개인 설정 페이지에서는 조회하지 않는다.
+  if (props.scope !== 'admin') return
 
   // GitHub 앱 생성 후 리다이렉트(?code=)면 code 를 교환하고, 아니면 상태만 조회.
   const code = route.query.code
@@ -255,6 +264,7 @@ async function removeGithubApp() {
         {{ $t('admin.settings.tabTeams') }}
       </button>
       <button
+        v-if="scope === 'admin'"
         type="button"
         :class="[
           'flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',

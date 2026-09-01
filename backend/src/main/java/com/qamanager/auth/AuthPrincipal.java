@@ -1,5 +1,6 @@
 package com.qamanager.auth;
 
+import com.qamanager.member.AccountRole;
 import com.qamanager.member.TeamMember;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,15 +13,22 @@ public record AuthPrincipal(
     Long id,
     String username,
     String passwordHash,
-    String displayName
+    String displayName,
+    AccountRole accountRole
 ) implements UserDetails {
 
     public static AuthPrincipal from(TeamMember m) {
-        return new AuthPrincipal(m.getId(), m.getUsername(), m.getPasswordHash(), m.getName());
+        return new AuthPrincipal(m.getId(), m.getUsername(), m.getPasswordHash(), m.getName(), m.getAccountRole());
+    }
+
+    public boolean isAdmin() {
+        return accountRole == AccountRole.ADMIN;
     }
 
     @Override public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return isAdmin()
+            ? List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"))
+            : List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
     @Override public String getPassword() { return passwordHash; }
     @Override public String getUsername() { return username; }

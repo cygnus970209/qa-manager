@@ -65,6 +65,14 @@ function requireUser(db: DemoDb) {
   return me
 }
 
+function requireAdmin(db: DemoDb) {
+  const me = requireUser(db)
+  if (me.accountRole !== 'ADMIN') {
+    throw apiError(403, 'FORBIDDEN', tr('demo.api.adminOnly', '관리자만 사용할 수 있는 기능입니다.'))
+  }
+  return me
+}
+
 /* ─────────────── 연쇄 삭제 ─────────────── */
 function cascadeDeleteUpdates(db: DemoDb, updateIds: number[]) {
   const s = db.state
@@ -187,6 +195,27 @@ const ROUTES: Route[] = [
   { method: 'PUT', pattern: /^\/api\/members\/(\d+)\/teams-notify$/, handler: () => { throw FORBIDDEN() } },
   { method: 'POST', pattern: /^\/api\/members\/(\d+)\/teams-test$/, handler: () => { throw FORBIDDEN() } },
   { method: 'POST', pattern: /^\/api\/members\/(\d+)\/reset-password$/, handler: () => { throw FORBIDDEN() } },
+  // 계정 권한 변경 — 데모에서도 실제로 동작 (이 브라우저의 localStorage 에만 반영).
+  {
+    method: 'PUT',
+    pattern: /^\/api\/members\/(\d+)\/account-role$/,
+    handler: ({ db, params, body }) => {
+      const me = requireAdmin(db)
+      const id = Number(params[0])
+      if (me.id === id) {
+        throw apiError(400, 'BAD_REQUEST', tr('demo.api.cannotChangeOwnRole', '자신의 권한은 변경할 수 없습니다.'))
+      }
+      const m = db.state.members.find((x) => x.id === id)
+      if (!m) throw apiError(404, 'NOT_FOUND', tr('demo.api.memberNotFound', '멤버를 찾을 수 없습니다.'))
+      const next = body?.accountRole
+      if (next !== 'ADMIN' && next !== 'MEMBER') {
+        throw apiError(400, 'BAD_REQUEST', tr('demo.api.invalidAccountRole', '올바르지 않은 권한 값입니다.'))
+      }
+      m.accountRole = next
+      db.save()
+      return db.memberDto(m)
+    },
+  },
 
   /* ── Projects ── */
   {

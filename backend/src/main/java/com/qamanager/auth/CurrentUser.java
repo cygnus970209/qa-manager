@@ -23,4 +23,13 @@ public final class CurrentUser {
     public static Long getIdOrThrow() {
         return getOrThrow().id();
     }
+
+    /** 관리자(ADMIN) 전용 기능 가드. 일반 멤버면 403. */
+    public static AuthPrincipal requireAdmin() {
+        AuthPrincipal p = getOrThrow();
+        if (!p.isAdmin()) {
+            throw ApiException.forbidden("관리자만 사용할 수 있는 기능입니다.");
+        }
+        return p;
+    }
 }

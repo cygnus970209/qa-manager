@@ -4,8 +4,10 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 # 의존성 캐싱
+# node:22-alpine 의 npm@10 은 로컬 npm@11 이 쓴 lockfile 을 읽지 못하는 케이스가 있어
+# (hoisting/dedupe 차이로 npm ci 가 "Missing: ..." EUSAGE 실패) npm 메이저를 로컬과 맞춘다.
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install -g npm@^11 --no-fund --no-audit && npm ci
 
 COPY . .
 RUN npm run build

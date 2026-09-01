@@ -1,5 +1,6 @@
 package com.qamanager.auth;
 
+import com.qamanager.member.AccountRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -72,6 +73,7 @@ public class AuthDto {
         String username,
         String name,
         String role,
+        AccountRole accountRole,
         String avatarUrl
     ) {}
 

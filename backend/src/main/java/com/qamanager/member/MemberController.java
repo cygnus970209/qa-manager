@@ -40,30 +40,48 @@ public class MemberController {
 
     @PostMapping
     public ResponseEntity<MemberDto.Response> create(@RequestBody @Valid MemberDto.CreateRequest req) {
+        CurrentUser.requireAdmin();
         MemberDto.Response created = memberService.create(req);
         return ResponseEntity.created(URI.create("/api/members/" + created.id())).body(created);
     }
 
     @PatchMapping("/{id}")
     public MemberDto.Response update(@PathVariable Long id, @RequestBody @Valid MemberDto.UpdateRequest req) {
+        CurrentUser.requireAdmin();
         return memberService.update(id, req);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        Long me = CurrentUser.requireAdmin().id();
+        if (me.equals(id)) {
+            throw ApiException.badRequest("자기 자신은 삭제할 수 없습니다.");
+        }
         memberService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * 관리자용 비밀번호 초기화 — 항상 "1234" 로 설정.
-     * 로그인 필요. role 기반 권한 체크는 시스템에 admin 개념이 없어 생략 (기존 패턴 유지).
-     */
+    /** 관리자용 비밀번호 초기화 — 항상 "1234" 로 설정. */
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<Void> resetPassword(@PathVariable Long id) {
-        CurrentUser.getIdOrThrow();
+        CurrentUser.requireAdmin();
         memberService.resetPassword(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 계정 권한(ADMIN/MEMBER) 변경 — 관리자 전용.
+     * 자기 자신의 권한 변경은 차단: 관리자 강등으로 인한 잠금(관리자 0명)을 구조적으로 방지한다.
+     * (강등은 항상 "다른" 관리자가 수행하므로 수행자 본인이 관리자로 남는다)
+     */
+    @PutMapping("/{id}/account-role")
+    public MemberDto.Response updateAccountRole(@PathVariable Long id,
+                                                @RequestBody @Valid MemberDto.AccountRoleRequest req) {
+        Long me = CurrentUser.requireAdmin().id();
+        if (me.equals(id)) {
+            throw ApiException.badRequest("자신의 권한은 변경할 수 없습니다.");
+        }
+        return memberService.updateAccountRole(id, req.accountRole());
     }
 
     /**
@@ -90,8 +108,11 @@ public class MemberController {
      */
     @PostMapping("/{id}/teams-test")
     public TestSendResult teamsTest(@PathVariable Long id) {
-        // 로그인 필요. role 기반 권한 체크는 시스템에 admin 개념이 없어 생략.
-        CurrentUser.getIdOrThrow();
+        // 본인 대상(내 설정의 "나에게 테스트 발송")은 누구나, 타인 대상(관리자 페이지 진단)은 관리자만.
+        Long me = CurrentUser.getIdOrThrow();
+        if (!me.equals(id)) {
+            CurrentUser.requireAdmin();
+        }
         return memberService.testTeamsSend(id);
     }
 

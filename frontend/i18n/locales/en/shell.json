@@ -17,6 +17,10 @@
       "imageOnly": "Only images can be uploaded: {name}",
       "imageOrPdfOnly": "Only images and PDFs can be uploaded: {name}",
       "s3Failed": "S3 upload failed ({status})"
+    },
+    "settings": {
+      "title": "My Settings",
+      "subtitle": "Manage how you receive notifications and your Teams connection"
     }
   }
 }
