@@ -1,0 +1,77 @@
+{
+  "testflow": {
+    "toolbar": {
+      "flowSelectLabel": "플로우 선택",
+      "newFlow": "새 플로우",
+      "newFlowNamePlaceholder": "플로우 이름",
+      "renameTitle": "플로우 이름 (Enter 또는 포커스 아웃 시 저장)",
+      "linkedUpdate": "연결 업데이트",
+      "noLinkedUpdate": "연결 안함",
+      "deleteFlow": "플로우 삭제",
+      "saved": "저장됨",
+      "generateCases": "케이스 생성"
+    },
+    "palette": {
+      "addScreen": "화면 추가",
+      "addAction": "행동 추가",
+      "addDecision": "분기 추가",
+      "defaultLabel": {
+        "screen": "새 화면",
+        "action": "새 행동",
+        "decision": "분기"
+      }
+    },
+    "node": {
+      "start": "시작",
+      "end": "종료",
+      "screen": "화면",
+      "action": "행동",
+      "decision": "분기"
+    },
+    "panel": {
+      "nodeTitle": "노드 편집",
+      "edgeTitle": "연결 편집",
+      "labelLabel": "이름",
+      "expectedLabel": "확인 포인트",
+      "expectedPlaceholder": "이 단계에서 확인할 내용 (기대 결과)",
+      "edgeLabelLabel": "분기 라벨",
+      "edgeLabelPlaceholder": "예 / 아니오, 조건 등",
+      "deleteNode": "노드 삭제",
+      "deleteEdge": "연결 삭제",
+      "emptyHint": "노드나 연결을 선택하면 여기서 편집할 수 있습니다."
+    },
+    "empty": {
+      "title": "플로우가 없습니다",
+      "description": "화면 이동과 분기를 그래프로 그리면 시나리오 케이스를 자동으로 만들 수 있습니다."
+    },
+    "deleteConfirm": {
+      "title": "플로우를 삭제하시겠습니까?",
+      "message": "이 플로우에서 생성된 케이스는 삭제되지 않고 연결만 해제됩니다."
+    },
+    "messages": {
+      "loadFailed": "플로우를 불러오지 못했습니다.",
+      "saveFailed": "저장에 실패했습니다.",
+      "createFailed": "플로우 생성에 실패했습니다.",
+      "deleteFailed": "플로우 삭제에 실패했습니다.",
+      "renameFailed": "이름 변경에 실패했습니다.",
+      "linkUpdateFailed": "업데이트 연결 변경에 실패했습니다.",
+      "discardConfirm": "저장하지 않은 변경사항이 있습니다. 계속하시겠습니까?",
+      "casesCreated": "케이스 {count}개가 생성되었습니다."
+    },
+    "pathModal": {
+      "title": "경로에서 케이스 생성",
+      "summary": "\"{name}\" 플로우에서 찾은 경로 {count}개",
+      "truncatedWarning": "경로가 {max}개를 넘어 일부만 표시됩니다. 분기 수를 줄여 주세요.",
+      "noPaths": "시작에서 종료까지 이어지는 경로가 없습니다. 시작 → 종료 연결을 확인해 주세요.",
+      "selectAll": "전체 선택",
+      "stepCount": "{count}스텝",
+      "targetSuite": "대상 스위트",
+      "newSuiteOption": "+ 새 스위트 만들기",
+      "newSuiteNamePlaceholder": "새 스위트 이름",
+      "createButton": "케이스 {count}개 생성",
+      "creating": "생성 중...",
+      "createFailed": "케이스 생성에 실패했습니다.",
+      "untitledPath": "{name} 경로 {index}"
+    }
+  }
+}

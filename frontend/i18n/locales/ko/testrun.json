@@ -1,0 +1,67 @@
+{
+  "testrun": {
+    "result": {
+      "pass": "통과",
+      "fail": "실패",
+      "blocked": "차단",
+      "skip": "건너뜀",
+      "pending": "대기"
+    },
+    "summary": {
+      "title": "테스트 런",
+      "newRun": "새 테스트 런",
+      "closedBadge": "종료",
+      "empty": "아직 테스트 런이 없습니다.",
+      "progressTitle": "실행 {executed}/{total}"
+    },
+    "modal": {
+      "title": "새 테스트 런",
+      "nameLabel": "런 이름",
+      "namePlaceholder": "예: v1.2.0 정기 테스트",
+      "casesLabel": "포함할 테스트 케이스",
+      "selectAll": "전체 선택",
+      "deselectAll": "전체 해제",
+      "selectedCount": "{n}개 선택됨",
+      "ungrouped": "미분류",
+      "emptyCases": "테스트 케이스 탭에서 먼저 케이스를 만드세요.",
+      "loadFailed": "테스트 케이스를 불러오지 못했습니다.",
+      "create": "생성",
+      "creating": "생성 중...",
+      "createFailed": "테스트 런 생성에 실패했습니다.",
+      "platformLabel": "실행 플랫폼",
+      "platformHint": "선택하지 않으면 플랫폼 구분 없이 1회 실행됩니다",
+      "itemCount": "실행 항목 {n}개"
+    },
+    "detail": {
+      "back": "프로젝트로",
+      "updateLabel": "{version} · {title}",
+      "loadFailed": "테스트 런을 불러오지 못했습니다.",
+      "saveFailed": "저장에 실패했습니다.",
+      "statTotal": "총",
+      "statExecuted": "실행",
+      "closeRun": "런 종료",
+      "reopenRun": "다시 열기",
+      "closedBadge": "종료됨",
+      "closedNotice": "종료된 런입니다. 결과를 변경하려면 다시 열어주세요.",
+      "caseListTitle": "케이스",
+      "emptyCases": "이 런에 포함된 케이스가 없습니다.",
+      "selectCase": "좌측 목록에서 케이스를 선택하세요.",
+      "precondition": "사전 조건",
+      "steps": "테스트 스텝",
+      "stepNo": "#",
+      "stepAction": "행동",
+      "stepExpected": "기대 결과",
+      "resetToPending": "대기로 되돌리기",
+      "note": "메모",
+      "notePlaceholder": "실행 중 발견한 내용을 메모하세요. 입력창을 벗어나면 저장됩니다.",
+      "viewQa": "QA #{id} 보기",
+      "createQa": "QA 항목 생성"
+    },
+    "qa": {
+      "noteLabel": "메모"
+    },
+    "platform": {
+      "common": "공통"
+    }
+  }
+}

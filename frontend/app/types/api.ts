@@ -399,3 +399,131 @@ export interface PresignResponse {
   publicUrl: string
   expiresInSeconds: number
 }
+
+/* ─────────────── 테스트 케이스 관리 (스위트/케이스/플로우/런) ─────────────── */
+
+export type TestCaseOrigin = 'MANUAL' | 'FLOW'
+export type TestRunCaseResult = 'PENDING' | 'PASS' | 'FAIL' | 'BLOCKED' | 'SKIP'
+/** 실행 플랫폼. 런 생성 시 다중 선택하면 케이스 × 플랫폼으로 실행 항목이 확장된다. */
+export type TestPlatform = 'PC' | 'ANDROID' | 'IOS'
+
+export interface TestStep {
+  action: string
+  expected: string
+}
+
+export interface TestSuite {
+  id: number
+  projectId: number
+  name: string
+  sortOrder: number
+}
+
+export interface TestCase {
+  id: number
+  projectId: number
+  suiteId: number | null
+  title: string
+  precondition: string | null
+  steps: TestStep[]
+  priority: QaPriority
+  origin: TestCaseOrigin
+  flowId: number | null
+  flowStale: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TestCaseCreateRequest {
+  suiteId?: number | null
+  title: string
+  precondition?: string | null
+  steps: TestStep[]
+  priority?: QaPriority
+}
+
+export interface TestCaseUpdateRequest {
+  /** 0 이면 미분류(스위트 해제)로 처리 */
+  suiteId?: number
+  title?: string
+  precondition?: string
+  steps?: TestStep[]
+  priority?: QaPriority
+}
+
+/* 플로우 그래프 — 스키마는 프론트 소유, 백엔드는 JSON 통짜 저장 */
+export type FlowNodeType = 'start' | 'end' | 'screen' | 'action' | 'decision'
+
+export interface FlowNode {
+  id: string
+  type: FlowNodeType
+  label: string
+  /** 확인 포인트(기대 결과) — 경로→케이스 생성 시 스텝의 expected 가 된다 */
+  expected?: string
+  position: { x: number; y: number }
+}
+
+export interface FlowEdge {
+  id: string
+  source: string
+  target: string
+  /** 분기 조건 라벨 (예/아니오 등) */
+  label?: string
+}
+
+export interface FlowGraph {
+  nodes: FlowNode[]
+  edges: FlowEdge[]
+}
+
+export interface TestFlowSummary {
+  id: number
+  projectId: number
+  updateId: number | null
+  name: string
+  updatedAt: string
+}
+
+export interface TestFlow extends TestFlowSummary {
+  graph: FlowGraph
+}
+
+export interface TestRunStats {
+  total: number
+  pass: number
+  fail: number
+  blocked: number
+  skip: number
+  pending: number
+}
+
+export interface TestRun {
+  id: number
+  updateId: number
+  name: string
+  closedAt: string | null
+  createdAt: string
+  stats: TestRunStats
+}
+
+export interface TestRunCase {
+  id: number
+  runId: number
+  caseId: number | null
+  /** 실행 플랫폼. null 이면 플랫폼 구분 없는 공통 실행. */
+  platform: TestPlatform | null
+  sortOrder: number
+  title: string
+  precondition: string | null
+  steps: TestStep[]
+  priority: QaPriority
+  result: TestRunCaseResult
+  note: string | null
+  qaItemId: number | null
+  executedAt: string | null
+}
+
+export interface TestRunDetail {
+  run: TestRun
+  cases: TestRunCase[]
+}

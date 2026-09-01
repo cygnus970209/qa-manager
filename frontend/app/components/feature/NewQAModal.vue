@@ -13,6 +13,9 @@ const props = defineProps<{
   members: Member[]
   defaultUpdateId?: number
   defaultProjectId?: number
+  /** 테스트 런 FAIL → QA 생성 시 프리필. open 시점에 폼 초기값으로 사용된다. */
+  defaultTitle?: string
+  defaultDescription?: string
 }>()
 const emit = defineEmits<{ close: []; created: [item: QaItem] }>()
 
@@ -76,8 +79,8 @@ watch(() => props.open, (v) => {
   if (!v) return
   form.projectId = null
   form.updateId = null
-  form.title = ''
-  form.description = ''
+  form.title = props.defaultTitle ?? ''
+  form.description = props.defaultDescription ?? ''
   form.category = ''
   form.status = 'NEEDS_FIX'
   form.priority = 'MEDIUM'

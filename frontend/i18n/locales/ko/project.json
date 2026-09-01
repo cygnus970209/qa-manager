@@ -81,6 +81,17 @@
       "dragHandle": "드래그하여 이동",
       "empty": "순서를 변경할 업데이트가 없습니다.",
       "saveFailed": "순서 저장에 실패했습니다."
+    },
+    "tabs": {
+      "qa": "QA 현황",
+      "tests": "테스트 케이스"
+    },
+    "testView": {
+      "list": "리스트",
+      "flow": "플로우"
+    },
+    "runs": {
+      "defaultRunName": "{version} 테스트"
     }
   }
 }

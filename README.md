@@ -48,6 +48,12 @@
 - 필드 단위 변경 이력 자동 기록, `#번호` QA 상호참조 태그(자동완성 + 링크 렌더링)
 - QA 상세는 목록 사이드바 / 본문·코멘트 / 변경 이력 3분할 뷰 — 필터와 이전/다음 내비게이션이 목록과 동기화
 
+### 테스트 케이스 관리
+- 프로젝트급 케이스 라이브러리 — 스위트(폴더) + 스텝(행동/기대 결과) 편집, **리스트 ↔ 플로우(그래프) 뷰 전환**
+- **워크플로우 그래프 에디터** — 기획 워크플로우를 노드(화면/행동/분기)로 그리면 시작→종료 경로를 열거해 시나리오 테스트 케이스 자동 생성 (모델 기반 테스팅). 그래프 변경 시 파생 케이스에 "플로우 변경됨" 표시
+- **테스트 런** — 업데이트(릴리즈)별 케이스 스냅샷 실행(통과/실패/차단/건너뜀), 진행률·통계, 실패 → QA 항목 원클릭 생성·연결
+- **플랫폼별 실행** — 런 생성 시 PC/Android/iOS 다중 선택 → 케이스 × 플랫폼으로 실행 항목 확장, 플랫폼별 결과·메모·QA 링크 독립 기록 + 플랫폼 필터
+
 ### 협업
 - 코멘트 + 1-depth 답글, `@멘션` 자동완성, 이모지 반응 8종, `Ctrl+Enter` 등록
 - 이미지·PDF 첨부(클립보드 붙여넣기 지원) + 휠 줌/드래그 라이트박스
@@ -81,7 +87,7 @@
 
 | 영역 | 스택 |
 |---|---|
-| Frontend | Nuxt 4 (SSR), Vue 3, Pinia, Tailwind CSS (다크모드), TypeScript strict, @nuxtjs/i18n (ko/en) |
+| Frontend | Nuxt 4 (SSR), Vue 3, Pinia, Tailwind CSS (다크모드), TypeScript strict, @nuxtjs/i18n (ko/en), Vue Flow (워크플로우 에디터) |
 | Backend | Spring Boot 4, Java 25 (가상 스레드), Spring Security, JPA/Hibernate |
 | DB / Cache | MariaDB 11 + Flyway (V1~V14), Redis 7 (토큰 블랙리스트 · OTP) |
 | Auth | JWT (HttpOnly 쿠키, access + refresh rotation), 이메일 OTP 2FA |

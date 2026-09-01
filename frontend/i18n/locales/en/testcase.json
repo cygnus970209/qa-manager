@@ -1,0 +1,42 @@
+{
+  "testcase": {
+    "suite": {
+      "unsorted": "Unsorted",
+      "add": "Add suite",
+      "namePlaceholder": "Type a suite name and press Enter",
+      "rename": "Rename",
+      "deleteTitle": "Delete this suite?",
+      "deleteMessage": "Its test cases will move to Unsorted. Continue?"
+    },
+    "list": {
+      "newCase": "New Case",
+      "colTitle": "Title",
+      "colSteps": "Steps",
+      "colPriority": "Priority",
+      "colUpdatedAt": "Updated",
+      "colActions": "Actions",
+      "flowBadge": "Flow",
+      "flowStaleBadge": "Flow changed",
+      "empty": "No test cases yet.",
+      "emptyHint": "Create a new case to get started.",
+      "loadFailed": "Failed to load the list."
+    },
+    "modal": {
+      "createTitle": "New Test Case",
+      "editTitle": "Edit Test Case",
+      "titleLabel": "Title",
+      "suiteLabel": "Suite",
+      "priorityLabel": "Priority",
+      "preconditionLabel": "Precondition",
+      "preconditionPlaceholder": "State required before testing (optional)",
+      "stepsLabel": "Steps",
+      "actionPlaceholder": "Action",
+      "expectedPlaceholder": "Expected result",
+      "addStep": "Add step",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "stepsRequired": "At least one step with an action is required.",
+      "saveFailed": "Failed to save."
+    }
+  }
+}

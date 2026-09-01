@@ -117,6 +117,80 @@ function createKoSeed(): DemoState {
       { id: 93, recipientId: 5, type: 'comment', message: 'QA에 새 코멘트: AI 위젯 예측값 0으로 표시', projectId: 2, qaItemId: 6, actorId: 2, read: true, createdAt: '2026-05-14T11:25:00' },
     ],
 
+    /* 테스트 케이스 관리 시드 — 모바일 쇼핑몰 앱(프로젝트 1) 기준. */
+    testSuites: [
+      { id: 1, projectId: 1, name: '결제', sortOrder: 0 },
+      { id: 2, projectId: 1, name: '공통', sortOrder: 1 },
+    ],
+
+    testCases: [
+      { id: 1, projectId: 1, suiteId: 1, title: '정상 카드 결제', precondition: '테스트 카드가 등록된 계정으로 로그인한 상태', steps: [
+        { action: '상품을 장바구니에 담고 결제 화면으로 이동한다', expected: '주문 금액과 결제 수단이 표시된다' },
+        { action: '등록된 카드로 결제 버튼을 누른다', expected: '결제가 승인되고 완료 화면이 표시된다' },
+        { action: '주문 내역을 확인한다', expected: '주문이 결제 완료 상태로 표시된다' },
+      ], priority: 'critical', origin: 'FLOW', flowId: 1, flowStale: false, createdAt: '2026-04-02T00:00:00', updatedAt: '2026-04-02T00:00:00' },
+      { id: 2, projectId: 1, suiteId: 1, title: '잔액 부족 카드 결제 거절', precondition: '잔액이 부족한 테스트 카드 보유', steps: [
+        { action: '잔액 부족 카드로 결제를 시도한다', expected: '결제가 거절된다' },
+        { action: '안내 문구를 확인한다', expected: '"잔액이 부족합니다" 문구가 한국어로 표시된다' },
+      ], priority: 'high', origin: 'MANUAL', flowId: null, flowStale: false, createdAt: '2026-04-02T00:00:00', updatedAt: '2026-04-02T00:00:00' },
+      { id: 3, projectId: 1, suiteId: 1, title: '간편결제 토스 결제', precondition: '토스 앱이 설치된 기기', steps: [
+        { action: '결제 수단에서 토스페이를 선택한다', expected: '토스 앱 인증 화면으로 이동한다' },
+        { action: '토스 앱에서 인증을 완료한다', expected: '앱으로 복귀하고 결제 완료 화면이 표시된다' },
+      ], priority: 'medium', origin: 'MANUAL', flowId: null, flowStale: false, createdAt: '2026-04-03T00:00:00', updatedAt: '2026-04-03T00:00:00' },
+      { id: 4, projectId: 1, suiteId: 2, title: '로그인/로그아웃', precondition: null, steps: [
+        { action: '데모 계정으로 로그인한다', expected: '홈 화면으로 이동한다' },
+        { action: '설정에서 로그아웃한다', expected: '로그인 화면으로 돌아간다' },
+      ], priority: 'medium', origin: 'MANUAL', flowId: null, flowStale: false, createdAt: '2026-04-03T00:00:00', updatedAt: '2026-04-03T00:00:00' },
+      { id: 5, projectId: 1, suiteId: 2, title: '다국어 전환', precondition: null, steps: [
+        { action: '설정에서 언어를 English 로 변경한다', expected: '모든 화면 텍스트가 영어로 표시된다' },
+        { action: '다시 한국어로 변경한다', expected: '텍스트가 한국어로 돌아온다' },
+      ], priority: 'low', origin: 'MANUAL', flowId: null, flowStale: false, createdAt: '2026-04-04T00:00:00', updatedAt: '2026-04-04T00:00:00' },
+    ],
+
+    testFlows: [
+      { id: 1, projectId: 1, updateId: 1, name: '결제 워크플로우', graph: {
+        nodes: [
+          { id: 'n1', type: 'start', label: '시작', position: { x: 40, y: 200 } },
+          { id: 'n2', type: 'screen', label: '결제 화면', expected: '주문 금액과 결제 수단이 표시된다', position: { x: 200, y: 200 } },
+          { id: 'n3', type: 'action', label: '결제 버튼 클릭', position: { x: 380, y: 200 } },
+          { id: 'n4', type: 'decision', label: 'OTP 인증 필요?', position: { x: 560, y: 200 } },
+          { id: 'n5', type: 'action', label: 'OTP 입력', expected: '인증 성공 시 결제가 진행된다', position: { x: 720, y: 120 } },
+          { id: 'n6', type: 'screen', label: '결제 완료', expected: '결제 완료 화면과 영수증 안내가 표시된다', position: { x: 880, y: 200 } },
+          { id: 'n7', type: 'end', label: '종료', position: { x: 1040, y: 200 } },
+        ],
+        edges: [
+          { id: 'e1', source: 'n1', target: 'n2' },
+          { id: 'e2', source: 'n2', target: 'n3' },
+          { id: 'e3', source: 'n3', target: 'n4' },
+          { id: 'e4', source: 'n4', target: 'n5', label: '예' },
+          { id: 'e5', source: 'n4', target: 'n6', label: '아니오' },
+          { id: 'e6', source: 'n5', target: 'n6' },
+          { id: 'e7', source: 'n6', target: 'n7' },
+        ],
+      }, updatedAt: '2026-04-05T00:00:00' },
+    ],
+
+    testRuns: [
+      { id: 1, updateId: 1, name: 'v2.3.0 결제 회귀', closedAt: null, createdAt: '2026-04-10T00:00:00' },
+    ],
+
+    /* 런 케이스는 생성 시점의 케이스 스냅샷(caseId 는 원본 참조용). */
+    testRunCases: [
+      { id: 1, runId: 1, caseId: 1, platform: 'PC', sortOrder: 0, title: '정상 카드 결제', precondition: '테스트 카드가 등록된 계정으로 로그인한 상태', steps: [
+        { action: '상품을 장바구니에 담고 결제 화면으로 이동한다', expected: '주문 금액과 결제 수단이 표시된다' },
+        { action: '등록된 카드로 결제 버튼을 누른다', expected: '결제가 승인되고 완료 화면이 표시된다' },
+        { action: '주문 내역을 확인한다', expected: '주문이 결제 완료 상태로 표시된다' },
+      ], priority: 'critical', result: 'PASS', note: null, qaItemId: null, executedAt: '2026-04-11T10:20:00' },
+      { id: 2, runId: 1, caseId: 2, platform: 'ANDROID', sortOrder: 1, title: '잔액 부족 카드 결제 거절', precondition: '잔액이 부족한 테스트 카드 보유', steps: [
+        { action: '잔액 부족 카드로 결제를 시도한다', expected: '결제가 거절된다' },
+        { action: '안내 문구를 확인한다', expected: '"잔액이 부족합니다" 문구가 한국어로 표시된다' },
+      ], priority: 'high', result: 'FAIL', note: '잔액 부족 문구가 영어로 나옴', qaItemId: 2, executedAt: '2026-04-11T10:35:00' },
+      { id: 3, runId: 1, caseId: 3, platform: 'IOS', sortOrder: 2, title: '간편결제 토스 결제', precondition: '토스 앱이 설치된 기기', steps: [
+        { action: '결제 수단에서 토스페이를 선택한다', expected: '토스 앱 인증 화면으로 이동한다' },
+        { action: '토스 앱에서 인증을 완료한다', expected: '앱으로 복귀하고 결제 완료 화면이 표시된다' },
+      ], priority: 'medium', result: 'PENDING', note: null, qaItemId: null, executedAt: null },
+    ],
+
     seq: 100,
     currentUserId: null,
   }
@@ -180,6 +254,72 @@ const EN_TEXTS = {
     c3d4e5f: { message: 'fix: reset Redis session TTL on payment cancel (#102)', authorName: 'Seoyeon Park' },
   } as Record<string, { message: string; authorName: string }>,
 
+  testSuites: {
+    1: { name: 'Payments' },
+    2: { name: 'Common' },
+  } as Record<number, { name: string }>,
+
+  testCases: {
+    1: { title: 'Successful card payment', precondition: 'Signed in with an account that has a registered test card', steps: [
+      { action: 'Add an item to the cart and go to checkout', expected: 'The order total and payment methods are shown' },
+      { action: 'Pay with the registered card', expected: 'The payment is approved and the completion screen is shown' },
+      { action: 'Check the order history', expected: 'The order is shown as paid' },
+    ] },
+    2: { title: 'Card declined on insufficient balance', precondition: 'A test card with insufficient balance', steps: [
+      { action: 'Attempt a payment with the low-balance card', expected: 'The payment is declined' },
+      { action: 'Check the notice message', expected: 'An "Insufficient balance" message is shown in the app language' },
+    ] },
+    3: { title: 'Express checkout with Toss Pay', precondition: 'A device with the Toss app installed', steps: [
+      { action: 'Select Toss Pay as the payment method', expected: 'The Toss app auth screen opens' },
+      { action: 'Complete authentication in the Toss app', expected: 'The app returns and shows the completion screen' },
+    ] },
+    4: { title: 'Sign in / sign out', steps: [
+      { action: 'Sign in with a demo account', expected: 'The home screen is shown' },
+      { action: 'Sign out from settings', expected: 'The sign-in screen is shown again' },
+    ] },
+    5: { title: 'Language switching', steps: [
+      { action: 'Change the language to English in settings', expected: 'All screen text is shown in English' },
+      { action: 'Switch back to Korean', expected: 'The text returns to Korean' },
+    ] },
+  } as Record<number, { title: string; precondition?: string; steps: { action: string; expected: string }[] }>,
+
+  /* 플로우: 이름 + 노드/엣지 id 기준 라벨·expected 오버레이 */
+  testFlows: {
+    1: {
+      name: 'Payment Workflow',
+      nodes: {
+        n1: { label: 'Start' },
+        n2: { label: 'Checkout Screen', expected: 'The order total and payment methods are shown' },
+        n3: { label: 'Tap Pay Button' },
+        n4: { label: 'OTP Required?' },
+        n5: { label: 'Enter OTP', expected: 'The payment proceeds after successful auth' },
+        n6: { label: 'Payment Complete', expected: 'The completion screen and receipt notice are shown' },
+        n7: { label: 'End' },
+      } as Record<string, { label: string; expected?: string }>,
+      edges: { e4: { label: 'Yes' }, e5: { label: 'No' } } as Record<string, { label: string }>,
+    },
+  } as Record<number, { name: string; nodes: Record<string, { label: string; expected?: string }>; edges: Record<string, { label: string }> }>,
+
+  testRuns: {
+    1: { name: 'v2.3.0 Payment Regression' },
+  } as Record<number, { name: string }>,
+
+  testRunCases: {
+    1: { title: 'Successful card payment', precondition: 'Signed in with an account that has a registered test card', steps: [
+      { action: 'Add an item to the cart and go to checkout', expected: 'The order total and payment methods are shown' },
+      { action: 'Pay with the registered card', expected: 'The payment is approved and the completion screen is shown' },
+      { action: 'Check the order history', expected: 'The order is shown as paid' },
+    ] },
+    2: { title: 'Card declined on insufficient balance', precondition: 'A test card with insufficient balance', steps: [
+      { action: 'Attempt a payment with the low-balance card', expected: 'The payment is declined' },
+      { action: 'Check the notice message', expected: 'An "Insufficient balance" message is shown in the app language' },
+    ], note: 'Insufficient-balance message shows in English' },
+    3: { title: 'Express checkout with Toss Pay', precondition: 'A device with the Toss app installed', steps: [
+      { action: 'Select Toss Pay as the payment method', expected: 'The Toss app auth screen opens' },
+      { action: 'Complete authentication in the Toss app', expected: 'The app returns and shows the completion screen' },
+    ] },
+  } as Record<number, { title: string; precondition?: string; steps: { action: string; expected: string }[]; note?: string }>,
+
   notifications: {
     81: 'You were mentioned in a comment: No error message on card payment failure',
     82: 'A QA item was assigned to you: App not opening from push tap',
@@ -213,4 +353,18 @@ function applyEnglishTexts(s: DemoState): void {
     const msg = EN_TEXTS.notifications[n.id]
     if (msg) n.message = msg
   }
+  for (const su of s.testSuites) Object.assign(su, EN_TEXTS.testSuites[su.id])
+  for (const tc of s.testCases) Object.assign(tc, EN_TEXTS.testCases[tc.id])
+  for (const f of s.testFlows) {
+    const t = EN_TEXTS.testFlows[f.id]
+    if (!t) continue
+    f.name = t.name
+    for (const n of f.graph.nodes) Object.assign(n, t.nodes[n.id])
+    for (const e of f.graph.edges) {
+      const et = t.edges[e.id]
+      if (et) e.label = et.label
+    }
+  }
+  for (const r of s.testRuns) Object.assign(r, EN_TEXTS.testRuns[r.id])
+  for (const rc of s.testRunCases) Object.assign(rc, EN_TEXTS.testRunCases[rc.id])
 }

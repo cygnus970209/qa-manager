@@ -81,6 +81,17 @@
       "dragHandle": "Drag to move",
       "empty": "No updates to reorder.",
       "saveFailed": "Failed to save the order."
+    },
+    "tabs": {
+      "qa": "QA Board",
+      "tests": "Test Cases"
+    },
+    "testView": {
+      "list": "List",
+      "flow": "Flow"
+    },
+    "runs": {
+      "defaultRunName": "{version} test run"
     }
   }
 }

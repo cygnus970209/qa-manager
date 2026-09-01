@@ -4,16 +4,19 @@ import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ExpandableText from '~/components/base/ExpandableText.vue'
 import { emptyQaFilter, saveQaFilter } from '~/utils/qaFilter'
-import type { ProjectUpdate, QaItem, QaStatus, QaStatusUpper, UpdateStatus } from '~/types/api'
+import TestRunSummary from '~/components/feature/testing/TestRunSummary.vue'
+import type { ProjectUpdate, QaItem, QaStatus, QaStatusUpper, TestRun, UpdateStatus } from '~/types/api'
 
 const props = defineProps<{
   update: ProjectUpdate
   items: QaItem[]
+  runs?: TestRun[]
   defaultOpen?: boolean
 }>()
 const emit = defineEmits<{
   changeStatus: [updateId: number, status: 'IN_PROGRESS' | 'TESTING' | 'RELEASED']
   addQa: [updateId: number]
+  newRun: [updateId: number]
   edit: [update: ProjectUpdate]
   remove: [update: ProjectUpdate]
   changeQaStatus: [qaId: number, status: QaStatusUpper]
@@ -129,6 +132,11 @@ function rememberFilter() {
         >
           <Trash2 class="h-3.5 w-3.5" />
         </button>
+      </div>
+
+      <!-- 테스트 런 요약 -->
+      <div class="mb-3">
+        <TestRunSummary :runs="runs ?? []" @new-run="emit('newRun', update.id)" />
       </div>
 
       <ul v-if="items.length > 0" class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">

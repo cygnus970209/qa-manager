@@ -1,0 +1,42 @@
+{
+  "testcase": {
+    "suite": {
+      "unsorted": "미분류",
+      "add": "스위트 추가",
+      "namePlaceholder": "스위트 이름 입력 후 Enter",
+      "rename": "이름 변경",
+      "deleteTitle": "스위트를 삭제하시겠습니까?",
+      "deleteMessage": "소속 케이스는 미분류로 이동합니다. 계속하시겠습니까?"
+    },
+    "list": {
+      "newCase": "새 케이스",
+      "colTitle": "제목",
+      "colSteps": "스텝 수",
+      "colPriority": "우선순위",
+      "colUpdatedAt": "수정일",
+      "colActions": "관리",
+      "flowBadge": "플로우",
+      "flowStaleBadge": "플로우 변경됨",
+      "empty": "테스트 케이스가 없습니다.",
+      "emptyHint": "새 케이스를 만들어 테스트를 준비하세요.",
+      "loadFailed": "목록을 불러오지 못했습니다."
+    },
+    "modal": {
+      "createTitle": "새 테스트 케이스",
+      "editTitle": "테스트 케이스 수정",
+      "titleLabel": "제목",
+      "suiteLabel": "스위트",
+      "priorityLabel": "우선순위",
+      "preconditionLabel": "사전 조건",
+      "preconditionPlaceholder": "테스트 전에 준비되어야 하는 상태 (선택)",
+      "stepsLabel": "스텝",
+      "actionPlaceholder": "행동",
+      "expectedPlaceholder": "기대 결과",
+      "addStep": "스텝 추가",
+      "moveUp": "위로 이동",
+      "moveDown": "아래로 이동",
+      "stepsRequired": "행동이 입력된 스텝이 1개 이상 필요합니다.",
+      "saveFailed": "저장에 실패했습니다."
+    }
+  }
+}

@@ -1,17 +1,21 @@
 import type {
   CommentCreateRequest,
   CommentUpdateRequest,
+  FlowGraph,
   ProjectCreateRequest,
   ProjectUpdateRequest,
   QaCreateRequest,
   QaPatchRequest,
   QaPriority,
   QaStatus,
+  TestCaseCreateRequest,
+  TestCaseUpdateRequest,
+  TestRunCaseResult,
   UpdateCreateRequest,
   UpdatePatchRequest,
 } from '~/types/api'
 import { useNuxtApp } from '#app'
-import type { DemoComment, DemoProject, DemoQa, DemoUpdate } from './types'
+import type { DemoComment, DemoProject, DemoQa, DemoTestCase, DemoTestFlow, DemoTestRun, DemoTestRunCase, DemoTestSuite, DemoUpdate } from './types'
 import { DemoDb, getDemoDb } from './db'
 
 /** ofetch 와 유사한 에러 객체. composable 들이 e.data(ApiErrorBody) / e.status 를 읽는다. */
@@ -36,6 +40,10 @@ function tr(key: string, fallback: string, params?: Record<string, unknown>): st
 
 const FORBIDDEN = () =>
   apiError(403, 'DEMO_READONLY', tr('demo.api.readonly', '데모 모드에서는 사용할 수 없는 기능입니다.'))
+
+// 테스트 엔티티(스위트/케이스/플로우/런) 404 — 신규 i18n 키 없이 근사 키(qaNotFound)를 재사용.
+const TESTING_NOT_FOUND = () =>
+  apiError(404, 'NOT_FOUND', tr('demo.api.qaNotFound', 'QA 항목을 찾을 수 없습니다.'))
 
 const lower = (v: string | undefined): string => (v ?? '').toLowerCase()
 
@@ -80,6 +88,13 @@ function cascadeDeleteUpdates(db: DemoDb, updateIds: number[]) {
   s.comments = s.comments.filter((c) => !qaIds.includes(c.qaItemId))
   s.qa = s.qa.filter((q) => !updateIds.includes(q.updateId))
   s.updates = s.updates.filter((u) => !updateIds.includes(u.id))
+  // 테스트 런은 업데이트 소속 — 함께 제거하고, 플로우는 연결만 해제.
+  const runIds = s.testRuns.filter((r) => updateIds.includes(r.updateId)).map((r) => r.id)
+  s.testRunCases = s.testRunCases.filter((c) => !runIds.includes(c.runId))
+  s.testRuns = s.testRuns.filter((r) => !updateIds.includes(r.updateId))
+  for (const f of s.testFlows) {
+    if (f.updateId != null && updateIds.includes(f.updateId)) f.updateId = null
+  }
 }
 
 interface Ctx {
@@ -290,6 +305,10 @@ const ROUTES: Route[] = [
       const id = Number(params[0])
       const updIds = db.state.updates.filter((u) => u.projectId === id).map((u) => u.id)
       cascadeDeleteUpdates(db, updIds)
+      // 프로젝트 소속 테스트 자산(스위트/케이스/플로우)도 함께 제거.
+      db.state.testSuites = db.state.testSuites.filter((s) => s.projectId !== id)
+      db.state.testCases = db.state.testCases.filter((t) => t.projectId !== id)
+      db.state.testFlows = db.state.testFlows.filter((f) => f.projectId !== id)
       db.state.projects = db.state.projects.filter((p) => p.id !== id)
       db.save()
       return null
@@ -626,6 +645,376 @@ const ROUTES: Route[] = [
       }
       db.save()
       return db.commentDto(c)
+    },
+  },
+
+  /* ── 테스트 케이스 관리: 스위트 ── */
+  {
+    method: 'GET',
+    pattern: /^\/api\/projects\/(\d+)\/test-suites$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      return db.state.testSuites
+        .filter((s) => s.projectId === Number(params[0]))
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/projects\/(\d+)\/test-suites$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const projectId = Number(params[0])
+      const maxOrder = db.state.testSuites
+        .filter((s) => s.projectId === projectId)
+        .reduce((mx, s) => Math.max(mx, s.sortOrder), -1)
+      const suite: DemoTestSuite = { id: db.nextId(), projectId, name: String(body?.name ?? ''), sortOrder: maxOrder + 1 }
+      db.state.testSuites.push(suite)
+      db.save()
+      return suite
+    },
+  },
+  {
+    method: 'PATCH',
+    pattern: /^\/api\/test-suites\/(\d+)$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const suite = db.state.testSuites.find((s) => s.id === Number(params[0]))
+      if (!suite) throw TESTING_NOT_FOUND()
+      if (typeof body?.name === 'string') suite.name = body.name
+      if (typeof body?.sortOrder === 'number') suite.sortOrder = body.sortOrder
+      db.save()
+      return suite
+    },
+  },
+  {
+    method: 'DELETE',
+    pattern: /^\/api\/test-suites\/(\d+)$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      const id = Number(params[0])
+      // 소속 케이스는 미분류로 이동.
+      for (const t of db.state.testCases) {
+        if (t.suiteId === id) t.suiteId = null
+      }
+      db.state.testSuites = db.state.testSuites.filter((s) => s.id !== id)
+      db.save()
+      return null
+    },
+  },
+
+  /* ── 테스트 케이스 관리: 케이스 (bulk 가 더 구체적이므로 먼저) ── */
+  {
+    method: 'POST',
+    pattern: /^\/api\/projects\/(\d+)\/test-cases\/bulk$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const projectId = Number(params[0])
+      const suiteId: number | null = body?.suiteId ?? null
+      const flowId: number | null = body?.flowId ?? null
+      const reqs = (Array.isArray(body?.cases) ? body.cases : []) as TestCaseCreateRequest[]
+      const now = db.nowIso()
+      const created = reqs.map((req) => {
+        const t: DemoTestCase = {
+          id: db.nextId(),
+          projectId,
+          suiteId: req.suiteId ?? suiteId,
+          title: req.title,
+          precondition: req.precondition ?? null,
+          steps: req.steps ?? [],
+          priority: (lower(req.priority) || 'medium') as QaPriority,
+          // 플로우에서 뽑아낸 케이스는 FLOW 오리진으로 연결.
+          origin: flowId != null ? 'FLOW' : 'MANUAL',
+          flowId,
+          flowStale: false,
+          createdAt: now,
+          updatedAt: now,
+        }
+        db.state.testCases.push(t)
+        return t
+      })
+      db.save()
+      return created
+    },
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/projects\/(\d+)\/test-cases$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      return db.state.testCases.filter((t) => t.projectId === Number(params[0]))
+    },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/projects\/(\d+)\/test-cases$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const req = body as TestCaseCreateRequest
+      const now = db.nowIso()
+      const t: DemoTestCase = {
+        id: db.nextId(),
+        projectId: Number(params[0]),
+        suiteId: req.suiteId ?? null,
+        title: req.title,
+        precondition: req.precondition ?? null,
+        steps: req.steps ?? [],
+        priority: (lower(req.priority) || 'medium') as QaPriority,
+        origin: 'MANUAL',
+        flowId: null,
+        flowStale: false,
+        createdAt: now,
+        updatedAt: now,
+      }
+      db.state.testCases.push(t)
+      db.save()
+      return t
+    },
+  },
+  {
+    method: 'PATCH',
+    pattern: /^\/api\/test-cases\/(\d+)$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const t = db.state.testCases.find((x) => x.id === Number(params[0]))
+      if (!t) throw TESTING_NOT_FOUND()
+      const req = body as TestCaseUpdateRequest
+      // suiteId 0 은 미분류(스위트 해제).
+      if (req.suiteId !== undefined) t.suiteId = req.suiteId === 0 ? null : req.suiteId
+      if (req.title !== undefined) t.title = req.title
+      if (req.precondition !== undefined) t.precondition = req.precondition || null
+      if (req.steps !== undefined) t.steps = req.steps
+      if (req.priority !== undefined) t.priority = lower(req.priority) as QaPriority
+      // 제목/스텝을 직접 수정하면 플로우 변경분을 반영한 것으로 보고 stale 해제.
+      if (req.title !== undefined || req.steps !== undefined) t.flowStale = false
+      t.updatedAt = db.nowIso()
+      db.save()
+      return t
+    },
+  },
+  {
+    method: 'DELETE',
+    pattern: /^\/api\/test-cases\/(\d+)$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      const id = Number(params[0])
+      db.state.testCases = db.state.testCases.filter((t) => t.id !== id)
+      // 런 스냅샷은 유지하고 원본 참조만 끊는다.
+      for (const rc of db.state.testRunCases) {
+        if (rc.caseId === id) rc.caseId = null
+      }
+      db.save()
+      return null
+    },
+  },
+
+  /* ── 테스트 케이스 관리: 플로우 ── */
+  {
+    method: 'GET',
+    pattern: /^\/api\/projects\/(\d+)\/test-flows$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      return db.state.testFlows
+        .filter((f) => f.projectId === Number(params[0]))
+        .map((f) => db.flowSummaryDto(f))
+    },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/projects\/(\d+)\/test-flows$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const f: DemoTestFlow = {
+        id: db.nextId(),
+        projectId: Number(params[0]),
+        updateId: body?.updateId ?? null,
+        name: String(body?.name ?? ''),
+        graph: { nodes: [], edges: [] },
+        updatedAt: db.nowIso(),
+      }
+      db.state.testFlows.push(f)
+      db.save()
+      return f
+    },
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/test-flows\/(\d+)$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      const f = db.state.testFlows.find((x) => x.id === Number(params[0]))
+      if (!f) throw TESTING_NOT_FOUND()
+      return f
+    },
+  },
+  {
+    method: 'PATCH',
+    pattern: /^\/api\/test-flows\/(\d+)$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const f = db.state.testFlows.find((x) => x.id === Number(params[0]))
+      if (!f) throw TESTING_NOT_FOUND()
+      if (typeof body?.name === 'string') f.name = body.name
+      // updateId 0 은 업데이트 연결 해제.
+      if (body?.updateId !== undefined) f.updateId = body.updateId === 0 ? null : body.updateId
+      if (body?.graph !== undefined) {
+        const next = body.graph as FlowGraph
+        // 그래프가 실제로 바뀐 경우에만 이 플로우에서 만든 케이스를 stale 처리.
+        if (JSON.stringify(f.graph) !== JSON.stringify(next)) {
+          for (const t of db.state.testCases) {
+            if (t.flowId === f.id) t.flowStale = true
+          }
+        }
+        f.graph = next
+      }
+      f.updatedAt = db.nowIso()
+      db.save()
+      return f
+    },
+  },
+  {
+    method: 'DELETE',
+    pattern: /^\/api\/test-flows\/(\d+)$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      const id = Number(params[0])
+      db.state.testFlows = db.state.testFlows.filter((f) => f.id !== id)
+      // 케이스는 남기고 플로우 연결만 해제.
+      for (const t of db.state.testCases) {
+        if (t.flowId === id) {
+          t.flowId = null
+          t.flowStale = false
+        }
+      }
+      db.save()
+      return null
+    },
+  },
+
+  /* ── 테스트 케이스 관리: 런 ── */
+  {
+    method: 'GET',
+    pattern: /^\/api\/updates\/(\d+)\/test-runs$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      return db.state.testRuns
+        .filter((r) => r.updateId === Number(params[0]))
+        .map((r) => db.runDto(r))
+    },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/updates\/(\d+)\/test-runs$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const updateId = Number(params[0])
+      const upd = db.state.updates.find((u) => u.id === updateId)
+      if (!upd) throw apiError(404, 'NOT_FOUND', tr('demo.api.updateNotFound', '업데이트를 찾을 수 없습니다.'))
+      const caseIds: number[] = Array.isArray(body?.caseIds) ? body.caseIds : []
+      // 플랫폼 다중 선택 시 케이스 × 플랫폼으로 실행 항목 확장. 비어 있으면 공통 1회(null).
+      const validPlatforms = ['PC', 'ANDROID', 'IOS']
+      const platforms: (string | null)[] = Array.isArray(body?.platforms) && body.platforms.length > 0
+        ? body.platforms.filter((p: string) => validPlatforms.includes(p))
+        : [null]
+      if (platforms.length === 0) platforms.push(null)
+      const run: DemoTestRun = {
+        id: db.nextId(),
+        updateId,
+        name: String(body?.name ?? ''),
+        closedAt: null,
+        createdAt: db.nowIso(),
+      }
+      db.state.testRuns.unshift(run)
+      // 선택한 케이스를 현재 내용 그대로 스냅샷 (이후 원본 수정과 분리).
+      let order = 0
+      for (const caseId of caseIds) {
+        const t = db.state.testCases.find((x) => x.id === caseId)
+        if (!t) continue
+        for (const platform of platforms) {
+          const rc: DemoTestRunCase = {
+            id: db.nextId(),
+            runId: run.id,
+            caseId: t.id,
+            platform: platform as DemoTestRunCase['platform'],
+            sortOrder: order++,
+            title: t.title,
+            precondition: t.precondition,
+            steps: JSON.parse(JSON.stringify(t.steps)),
+            priority: t.priority,
+            result: 'PENDING',
+            note: null,
+            qaItemId: null,
+            executedAt: null,
+          }
+          db.state.testRunCases.push(rc)
+        }
+      }
+      db.save()
+      return db.runDetailDto(run)
+    },
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/projects\/(\d+)\/test-runs$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      const updIds = db.state.updates.filter((u) => u.projectId === Number(params[0])).map((u) => u.id)
+      return db.state.testRuns
+        .filter((r) => updIds.includes(r.updateId))
+        .map((r) => db.runDto(r))
+    },
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/test-runs\/(\d+)$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      const run = db.state.testRuns.find((r) => r.id === Number(params[0]))
+      if (!run) throw TESTING_NOT_FOUND()
+      return db.runDetailDto(run)
+    },
+  },
+  {
+    method: 'PATCH',
+    pattern: /^\/api\/test-runs\/(\d+)$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const run = db.state.testRuns.find((r) => r.id === Number(params[0]))
+      if (!run) throw TESTING_NOT_FOUND()
+      // { closed } 로 마감/재개 토글.
+      if (body?.closed !== undefined) run.closedAt = body.closed ? db.nowIso() : null
+      db.save()
+      return db.runDto(run)
+    },
+  },
+  {
+    method: 'DELETE',
+    pattern: /^\/api\/test-runs\/(\d+)$/,
+    handler: ({ params, db }) => {
+      requireUser(db)
+      const id = Number(params[0])
+      db.state.testRunCases = db.state.testRunCases.filter((c) => c.runId !== id)
+      db.state.testRuns = db.state.testRuns.filter((r) => r.id !== id)
+      db.save()
+      return null
+    },
+  },
+  {
+    method: 'PATCH',
+    pattern: /^\/api\/test-run-cases\/(\d+)$/,
+    handler: ({ params, body, db }) => {
+      requireUser(db)
+      const rc = db.state.testRunCases.find((x) => x.id === Number(params[0]))
+      if (!rc) throw TESTING_NOT_FOUND()
+      if (body?.result !== undefined) {
+        rc.result = body.result as TestRunCaseResult
+        // PENDING 으로 되돌리면 실행 이력도 초기화.
+        rc.executedAt = rc.result === 'PENDING' ? null : db.nowIso()
+      }
+      if (body?.note !== undefined) rc.note = body.note === '' ? null : body.note
+      if (body?.qaItemId !== undefined) rc.qaItemId = body.qaItemId === 0 ? null : body.qaItemId
+      db.save()
+      return rc
     },
   },
 

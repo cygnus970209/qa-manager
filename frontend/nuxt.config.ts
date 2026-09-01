@@ -40,13 +40,13 @@ export default defineNuxtConfig({
         code: 'ko',
         language: 'ko-KR',
         name: '한국어',
-        files: ['ko/common.json', 'ko/shell.json', 'ko/auth.json', 'ko/dashboard.json', 'ko/project.json', 'ko/qa.json', 'ko/admin.json', 'ko/demo.json'],
+        files: ['ko/common.json', 'ko/shell.json', 'ko/auth.json', 'ko/dashboard.json', 'ko/project.json', 'ko/qa.json', 'ko/admin.json', 'ko/demo.json', 'ko/testcase.json', 'ko/testflow.json', 'ko/testrun.json'],
       },
       {
         code: 'en',
         language: 'en-US',
         name: 'English',
-        files: ['en/common.json', 'en/shell.json', 'en/auth.json', 'en/dashboard.json', 'en/project.json', 'en/qa.json', 'en/admin.json', 'en/demo.json'],
+        files: ['en/common.json', 'en/shell.json', 'en/auth.json', 'en/dashboard.json', 'en/project.json', 'en/qa.json', 'en/admin.json', 'en/demo.json', 'en/testcase.json', 'en/testflow.json', 'en/testrun.json'],
       },
     ],
     detectBrowserLanguage: {

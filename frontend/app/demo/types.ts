@@ -3,7 +3,7 @@
  * 관계는 모두 id 참조로 보관하고, API 응답 시 db.ts 의 *Dto 변환기가
  * ~/types/api 의 DTO 형태(AssigneeSummary 조립 등)로 바꾼다.
  */
-import type { GithubCommit, GithubIssueInfo, GithubRepo, NotificationType, QaPriority, QaStatus, ProjectStatus, UpdateStatus } from '~/types/api'
+import type { GithubCommit, GithubIssueInfo, GithubRepo, NotificationType, QaPriority, QaStatus, ProjectStatus, TestCase, TestFlow, TestRun, TestRunCase, TestSuite, UpdateStatus } from '~/types/api'
 
 export interface DemoMember {
   id: number
@@ -88,6 +88,15 @@ export interface DemoNotification {
   createdAt: string
 }
 
+/* ─────────────── 테스트 케이스 관리 ───────────────
+ * 응답 DTO(~/types/api)와 동일 구조로 저장(steps/graph 는 객체 그대로, 날짜는 ISO 문자열).
+ * 런의 stats 만 저장하지 않고 조회 시 runCases 에서 계산한다. */
+export type DemoTestSuite = TestSuite
+export type DemoTestCase = TestCase
+export type DemoTestFlow = TestFlow
+export type DemoTestRun = Omit<TestRun, 'stats'>
+export type DemoTestRunCase = TestRunCase
+
 export interface DemoState {
   members: DemoMember[]
   projects: DemoProject[]
@@ -100,6 +109,12 @@ export interface DemoState {
   githubCommits: Record<string, GithubCommit[]>
   /** 알림센터 목록 (수신자별). */
   notifications: DemoNotification[]
+  /* 테스트 케이스 관리 (스위트/케이스/플로우/런) */
+  testSuites: DemoTestSuite[]
+  testCases: DemoTestCase[]
+  testFlows: DemoTestFlow[]
+  testRuns: DemoTestRun[]
+  testRunCases: DemoTestRunCase[]
   /** 모든 엔티티 공용 id 시퀀스 (시드 최대 id 이후부터 증가) */
   seq: number
   /** 현재 로그인한 데모 사용자 id (없으면 미인증) */

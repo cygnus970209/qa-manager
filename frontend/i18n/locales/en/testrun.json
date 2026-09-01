@@ -1,0 +1,67 @@
+{
+  "testrun": {
+    "result": {
+      "pass": "Pass",
+      "fail": "Fail",
+      "blocked": "Blocked",
+      "skip": "Skip",
+      "pending": "Pending"
+    },
+    "summary": {
+      "title": "Test Runs",
+      "newRun": "New Test Run",
+      "closedBadge": "Closed",
+      "empty": "No test runs yet.",
+      "progressTitle": "Executed {executed}/{total}"
+    },
+    "modal": {
+      "title": "New Test Run",
+      "nameLabel": "Run name",
+      "namePlaceholder": "e.g. v1.2.0 regression run",
+      "casesLabel": "Test cases to include",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "selectedCount": "1 selected | {n} selected",
+      "ungrouped": "Uncategorized",
+      "emptyCases": "Create test cases in the Test Cases tab first.",
+      "loadFailed": "Failed to load test cases.",
+      "create": "Create",
+      "creating": "Creating...",
+      "createFailed": "Failed to create the test run.",
+      "platformLabel": "Platforms",
+      "platformHint": "If none is selected, each case runs once without a platform",
+      "itemCount": "1 run item | {n} run items"
+    },
+    "detail": {
+      "back": "Back to project",
+      "updateLabel": "{version} · {title}",
+      "loadFailed": "Failed to load the test run.",
+      "saveFailed": "Failed to save.",
+      "statTotal": "Total",
+      "statExecuted": "Executed",
+      "closeRun": "Close Run",
+      "reopenRun": "Reopen",
+      "closedBadge": "Closed",
+      "closedNotice": "This run is closed. Reopen it to change results.",
+      "caseListTitle": "Cases",
+      "emptyCases": "This run has no cases.",
+      "selectCase": "Select a case from the list.",
+      "precondition": "Precondition",
+      "steps": "Test Steps",
+      "stepNo": "#",
+      "stepAction": "Action",
+      "stepExpected": "Expected Result",
+      "resetToPending": "Reset to pending",
+      "note": "Note",
+      "notePlaceholder": "Write notes while executing. Saved when the field loses focus.",
+      "viewQa": "View QA #{id}",
+      "createQa": "Create QA Item"
+    },
+    "qa": {
+      "noteLabel": "Note"
+    },
+    "platform": {
+      "common": "Common"
+    }
+  }
+}

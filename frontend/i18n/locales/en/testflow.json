@@ -1,0 +1,77 @@
+{
+  "testflow": {
+    "toolbar": {
+      "flowSelectLabel": "Select flow",
+      "newFlow": "New flow",
+      "newFlowNamePlaceholder": "Flow name",
+      "renameTitle": "Flow name (saved on Enter or blur)",
+      "linkedUpdate": "Linked update",
+      "noLinkedUpdate": "Not linked",
+      "deleteFlow": "Delete flow",
+      "saved": "Saved",
+      "generateCases": "Generate cases"
+    },
+    "palette": {
+      "addScreen": "Add screen",
+      "addAction": "Add action",
+      "addDecision": "Add decision",
+      "defaultLabel": {
+        "screen": "New screen",
+        "action": "New action",
+        "decision": "Decision"
+      }
+    },
+    "node": {
+      "start": "Start",
+      "end": "End",
+      "screen": "Screen",
+      "action": "Action",
+      "decision": "Decision"
+    },
+    "panel": {
+      "nodeTitle": "Edit node",
+      "edgeTitle": "Edit connection",
+      "labelLabel": "Label",
+      "expectedLabel": "Checkpoint",
+      "expectedPlaceholder": "What to verify at this step (expected result)",
+      "edgeLabelLabel": "Branch label",
+      "edgeLabelPlaceholder": "Yes / No, condition, etc.",
+      "deleteNode": "Delete node",
+      "deleteEdge": "Delete connection",
+      "emptyHint": "Select a node or connection to edit it here."
+    },
+    "empty": {
+      "title": "No flows yet",
+      "description": "Draw screens, actions and branches as a graph to auto-generate scenario cases."
+    },
+    "deleteConfirm": {
+      "title": "Delete this flow?",
+      "message": "Cases generated from this flow are kept — only their link is removed."
+    },
+    "messages": {
+      "loadFailed": "Failed to load flows.",
+      "saveFailed": "Failed to save.",
+      "createFailed": "Failed to create the flow.",
+      "deleteFailed": "Failed to delete the flow.",
+      "renameFailed": "Failed to rename the flow.",
+      "linkUpdateFailed": "Failed to change the linked update.",
+      "discardConfirm": "You have unsaved changes. Continue?",
+      "casesCreated": "Created {count} case. | Created {count} cases."
+    },
+    "pathModal": {
+      "title": "Generate cases from paths",
+      "summary": "{count} path found in \"{name}\" | {count} paths found in \"{name}\"",
+      "truncatedWarning": "More than {max} paths — only the first {max} are shown. Reduce the number of branches.",
+      "noPaths": "No path from start to end. Check the start → end connections.",
+      "selectAll": "Select all",
+      "stepCount": "{count} step | {count} steps",
+      "targetSuite": "Target suite",
+      "newSuiteOption": "+ Create new suite",
+      "newSuiteNamePlaceholder": "New suite name",
+      "createButton": "Create {count} case | Create {count} cases",
+      "creating": "Creating...",
+      "createFailed": "Failed to create cases.",
+      "untitledPath": "{name} path {index}"
+    }
+  }
+}

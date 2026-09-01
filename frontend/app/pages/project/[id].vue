@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileText, Wrench, Loader, Check, CheckCheck, Pause, RotateCcw, AlertTriangle, Plus, ArrowUpDown } from '@lucide/vue'
+import { FileText, Wrench, Loader, Check, CheckCheck, Pause, RotateCcw, AlertTriangle, Plus, ArrowUpDown, ClipboardList, GitBranch, List, Bug } from '@lucide/vue'
 import ProjectHeader from '~/components/feature/ProjectHeader.vue'
 import UpdateAccordion from '~/components/feature/UpdateAccordion.vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
@@ -8,7 +8,10 @@ import ReorderUpdateModal from '~/components/feature/ReorderUpdateModal.vue'
 import NewProjectModal from '~/components/feature/NewProjectModal.vue'
 import NewQAModal from '~/components/feature/NewQAModal.vue'
 import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
-import type { Member, Project, ProjectUpdate, QaItem, QaStatusUpper } from '~/types/api'
+import TestCaseListView from '~/components/feature/testing/TestCaseListView.vue'
+import TestFlowView from '~/components/feature/testing/TestFlowView.vue'
+import NewTestRunModal from '~/components/feature/testing/NewTestRunModal.vue'
+import type { Member, Project, ProjectUpdate, QaItem, QaStatusUpper, TestRun, TestRunDetail } from '~/types/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -42,6 +45,48 @@ const updateEditTarget = ref<ProjectUpdate | null>(null)
 const updateDeleteOpen = ref(false)
 const updateDeleteTarget = ref<ProjectUpdate | null>(null)
 
+/* ─────────────── 탭: QA 현황 | 테스트 케이스 ─────────────── */
+type ProjectTab = 'qa' | 'tests'
+const activeTab = ref<ProjectTab>(route.query.tab === 'tests' ? 'tests' : 'qa')
+watch(activeTab, (v) => {
+  router.replace({ query: { ...route.query, tab: v === 'qa' ? undefined : v } })
+})
+/** 테스트 케이스 탭 내부 뷰: 리스트 | 플로우(그래프) */
+const testView = ref<'list' | 'flow'>('list')
+
+/* ─────────────── 테스트 런 (업데이트 아코디언 요약) ─────────────── */
+const testingApi = useTesting()
+const runs = ref<TestRun[]>([])
+const runsByUpdate = computed(() => {
+  const map = new Map<number, TestRun[]>()
+  for (const r of runs.value) {
+    const arr = map.get(r.updateId) ?? []
+    arr.push(r)
+    map.set(r.updateId, arr)
+  }
+  return map
+})
+async function loadRuns() {
+  try {
+    runs.value = await testingApi.listRunsByProject(projectId.value)
+  } catch {
+    runs.value = []
+  }
+}
+
+const runModalOpen = ref(false)
+const runModalUpdate = ref<ProjectUpdate | null>(null)
+function onNewRun(updateId: number) {
+  runModalUpdate.value = updates.value.find((u) => u.id === updateId) ?? null
+  if (runModalUpdate.value) runModalOpen.value = true
+}
+function onRunCreated(detail: TestRunDetail) {
+  runModalOpen.value = false
+  runModalUpdate.value = null
+  loadRuns()
+  router.push(`/run/${detail.run.id}`)
+}
+
 async function load() {
   loading.value = true
   error.value = null
@@ -54,6 +99,7 @@ async function load() {
     // 모달용 보조 데이터
     members.value = await membersApi.list()
     allProjects.value = await projectsApi.list()
+    await loadRuns()
   } catch (e: any) {
     error.value = e?.data?.message ?? t('project.errors.loadFailed')
   } finally {
@@ -235,6 +281,65 @@ async function confirmUpdateDelete() {
         @remove="projectDeleteOpen = true"
       />
 
+      <!-- 탭: QA 현황 | 테스트 케이스 -->
+      <div class="mt-6 inline-flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+        <button
+          type="button"
+          :class="[
+            'flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
+            activeTab === 'qa' ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+          ]"
+          @click="activeTab = 'qa'"
+        >
+          <Bug class="h-4 w-4" />
+          {{ $t('project.tabs.qa') }}
+        </button>
+        <button
+          type="button"
+          :class="[
+            'flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
+            activeTab === 'tests' ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+          ]"
+          @click="activeTab = 'tests'"
+        >
+          <ClipboardList class="h-4 w-4" />
+          {{ $t('project.tabs.tests') }}
+        </button>
+      </div>
+
+      <!-- 테스트 케이스 탭 -->
+      <section v-if="activeTab === 'tests'" class="mt-4">
+        <div class="mb-3 flex items-center justify-between">
+          <div class="inline-flex rounded-lg border border-slate-200 p-0.5 dark:border-slate-800">
+            <button
+              type="button"
+              :class="[
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                testView === 'list' ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+              ]"
+              @click="testView = 'list'"
+            >
+              <List class="h-3.5 w-3.5" />
+              {{ $t('project.testView.list') }}
+            </button>
+            <button
+              type="button"
+              :class="[
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                testView === 'flow' ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+              ]"
+              @click="testView = 'flow'"
+            >
+              <GitBranch class="h-3.5 w-3.5" />
+              {{ $t('project.testView.flow') }}
+            </button>
+          </div>
+        </div>
+        <TestCaseListView v-if="testView === 'list'" :project-id="project.id" />
+        <TestFlowView v-else :project-id="project.id" :updates="updates" />
+      </section>
+
+      <div v-show="activeTab === 'qa'">
       <section class="mt-6">
         <div class="mb-3 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('project.stats.title') }}</h2>
@@ -313,15 +418,28 @@ async function confirmUpdateDelete() {
             :key="u.id"
             :update="u"
             :items="itemsByUpdate.get(u.id) ?? []"
+            :runs="runsByUpdate.get(u.id) ?? []"
             :default-open="u === visibleUpdates[0]"
             @change-status="onUpdateStatus"
             @add-qa="onAddInlineQa"
+            @new-run="onNewRun"
             @edit="openUpdateEdit"
             @remove="openUpdateDelete"
             @change-qa-status="onQaStatusChange"
           />
         </div>
       </section>
+      </div>
+
+      <NewTestRunModal
+        v-if="runModalUpdate"
+        :open="runModalOpen"
+        :update-id="runModalUpdate.id"
+        :project-id="project.id"
+        :default-name="$t('project.runs.defaultRunName', { version: runModalUpdate.version })"
+        @close="runModalOpen = false; runModalUpdate = null"
+        @created="onRunCreated"
+      />
 
       <NewUpdateModal
         :open="updateModalOpen"

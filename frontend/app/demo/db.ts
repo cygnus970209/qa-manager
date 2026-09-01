@@ -8,6 +8,10 @@ import type {
   ProjectUpdate,
   QaComment,
   QaItem,
+  TestFlowSummary,
+  TestRun,
+  TestRunDetail,
+  TestRunStats,
 } from '~/types/api'
 import type {
   DemoComment,
@@ -16,13 +20,15 @@ import type {
   DemoProject,
   DemoQa,
   DemoState,
+  DemoTestFlow,
+  DemoTestRun,
   DemoUpdate,
 } from './types'
 import { createSeed } from './seed'
 
-// v6: 계정 권한(accountRole) 추가 — 구버전 상태에는 필드가 없어 권한 판정이 깨지므로 재시드한다.
-// (v5: 시드 다국어화(ko/en), v4: OTP 체험 계정(hanboan) 추가, v3: 다중 GitHub repo + 알림센터 시드)
-const LS_KEY = 'qa-demo-state-v6'
+// v8: 실행 항목 플랫폼(PC/ANDROID/IOS) 추가. (v7: 테스트 케이스 관리 시드)
+// (v6: 계정 권한(accountRole) 추가, v5: 시드 다국어화(ko/en), v4: OTP 체험 계정(hanboan) 추가, v3: 다중 GitHub repo + 알림센터 시드)
+const LS_KEY = 'qa-demo-state-v8'
 
 /** 호출 시점에 i18n 에 lazy 접근. nuxt 컨텍스트 밖(테스트 등)에서는 한국어 폴백. */
 function tr(key: string, fallback: string): string {
@@ -182,6 +188,38 @@ export class DemoDb {
       githubIssue: q.githubIssue ?? null,
       createdAt: q.createdAt,
       updatedAt: q.updatedAt,
+    }
+  }
+
+  /* ── 테스트 케이스 관리 — 저장 구조가 DTO 와 동일하므로 조립이 필요한 것만 변환 ── */
+  flowSummaryDto(f: DemoTestFlow): TestFlowSummary {
+    return { id: f.id, projectId: f.projectId, updateId: f.updateId, name: f.name, updatedAt: f.updatedAt }
+  }
+
+  /** 런 통계는 저장하지 않고 런 케이스 결과에서 계산한다. */
+  runStats(runId: number): TestRunStats {
+    const cases = this.state.testRunCases.filter((c) => c.runId === runId)
+    const count = (r: string) => cases.filter((c) => c.result === r).length
+    return {
+      total: cases.length,
+      pass: count('PASS'),
+      fail: count('FAIL'),
+      blocked: count('BLOCKED'),
+      skip: count('SKIP'),
+      pending: count('PENDING'),
+    }
+  }
+
+  runDto(r: DemoTestRun): TestRun {
+    return { id: r.id, updateId: r.updateId, name: r.name, closedAt: r.closedAt, createdAt: r.createdAt, stats: this.runStats(r.id) }
+  }
+
+  runDetailDto(r: DemoTestRun): TestRunDetail {
+    return {
+      run: this.runDto(r),
+      cases: this.state.testRunCases
+        .filter((c) => c.runId === r.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder),
     }
   }
 
