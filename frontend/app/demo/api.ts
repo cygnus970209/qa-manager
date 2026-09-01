@@ -10,6 +10,7 @@ import type {
   UpdateCreateRequest,
   UpdatePatchRequest,
 } from '~/types/api'
+import { useNuxtApp } from '#app'
 import type { DemoComment, DemoProject, DemoQa, DemoUpdate } from './types'
 import { DemoDb, getDemoDb } from './db'
 
@@ -24,8 +25,17 @@ function apiError(status: number, code: string, message: string, details?: unkno
   return err
 }
 
+/** 호출 시점에 i18n 에 lazy 접근. nuxt 컨텍스트 밖(테스트 등)에서는 한국어 폴백. */
+function tr(key: string, fallback: string, params?: Record<string, unknown>): string {
+  try {
+    const { $i18n } = useNuxtApp() as any
+    if ($i18n?.t) return params ? $i18n.t(key, params) : $i18n.t(key)
+  } catch { /* nuxt 컨텍스트 밖 */ }
+  return fallback
+}
+
 const FORBIDDEN = () =>
-  apiError(403, 'DEMO_READONLY', '데모 모드에서는 사용할 수 없는 기능입니다.')
+  apiError(403, 'DEMO_READONLY', tr('demo.api.readonly', '데모 모드에서는 사용할 수 없는 기능입니다.'))
 
 const lower = (v: string | undefined): string => (v ?? '').toLowerCase()
 
@@ -51,7 +61,7 @@ function maskEmail(email: string | null): string {
 
 function requireUser(db: DemoDb) {
   const me = db.currentMember()
-  if (!me) throw apiError(401, 'UNAUTHORIZED', '로그인이 필요합니다.')
+  if (!me) throw apiError(401, 'UNAUTHORIZED', tr('demo.api.loginRequired', '로그인이 필요합니다.'))
   return me
 }
 
@@ -88,7 +98,7 @@ const ROUTES: Route[] = [
       const username = String(body?.username ?? '')
       const member = db.state.members.find((m) => m.username === username)
       // 데모는 안내된 시드 계정만 허용(비밀번호는 검증하지 않음 — 실제 인증이 아님).
-      if (!member) throw apiError(401, 'INVALID_CREDENTIALS', '데모 계정이 아닙니다. 안내된 계정으로 로그인하세요.')
+      if (!member) throw apiError(401, 'INVALID_CREDENTIALS', tr('demo.api.invalidAccount', '데모 계정이 아닙니다. 안내된 계정으로 로그인하세요.'))
       // OTP 체험 계정: 2단계(이메일 OTP) 화면으로 진입시킨다.
       if (member.otpEnabled) {
         return {
@@ -110,18 +120,18 @@ const ROUTES: Route[] = [
     handler: ({ body, db }) => {
       const challengeId = String(body?.challengeId ?? '')
       const ch = otpChallenges.get(challengeId)
-      if (!ch) throw apiError(401, 'UNAUTHORIZED', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.')
+      if (!ch) throw apiError(401, 'UNAUTHORIZED', tr('demo.api.otpSessionExpired', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.'))
       if (String(body?.code ?? '') !== OTP_DEMO_CODE) {
         ch.attempts -= 1
         if (ch.attempts <= 0) {
           otpChallenges.delete(challengeId)
-          throw apiError(401, 'UNAUTHORIZED', '시도 횟수를 초과했습니다. 다시 로그인해 주세요.')
+          throw apiError(401, 'UNAUTHORIZED', tr('demo.api.otpTooManyAttempts', '시도 횟수를 초과했습니다. 다시 로그인해 주세요.'))
         }
-        throw apiError(400, 'OTP_INVALID', '인증 코드가 올바르지 않습니다.', { remainingAttempts: ch.attempts })
+        throw apiError(400, 'OTP_INVALID', tr('demo.api.otpInvalidCode', '인증 코드가 올바르지 않습니다.'), { remainingAttempts: ch.attempts })
       }
       otpChallenges.delete(challengeId)
       const member = db.member(ch.memberId)
-      if (!member) throw apiError(401, 'UNAUTHORIZED', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.')
+      if (!member) throw apiError(401, 'UNAUTHORIZED', tr('demo.api.otpSessionExpired', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.'))
       db.state.currentUserId = member.id
       db.save()
       return { authenticated: true, expiresInSeconds: 3600, user: db.meDto(member) }
@@ -133,7 +143,7 @@ const ROUTES: Route[] = [
     handler: ({ body }) => {
       const challengeId = String(body?.challengeId ?? '')
       const ch = otpChallenges.get(challengeId)
-      if (!ch) throw apiError(401, 'UNAUTHORIZED', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.')
+      if (!ch) throw apiError(401, 'UNAUTHORIZED', tr('demo.api.otpSessionExpired', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.'))
       otpChallenges.delete(challengeId)
       return {
         authenticated: false,
@@ -166,7 +176,7 @@ const ROUTES: Route[] = [
     pattern: /^\/api\/members\/(\d+)$/,
     handler: ({ params, db }) => {
       const m = db.member(Number(params[0]))
-      if (!m) throw apiError(404, 'NOT_FOUND', '멤버를 찾을 수 없습니다.')
+      if (!m) throw apiError(404, 'NOT_FOUND', tr('demo.api.memberNotFound', '멤버를 찾을 수 없습니다.'))
       return db.memberDto(m)
     },
   },
@@ -198,7 +208,7 @@ const ROUTES: Route[] = [
     pattern: /^\/api\/projects\/(\d+)$/,
     handler: ({ params, db }) => {
       const p = db.state.projects.find((x) => x.id === Number(params[0]))
-      if (!p) throw apiError(404, 'NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
+      if (!p) throw apiError(404, 'NOT_FOUND', tr('demo.api.projectNotFound', '프로젝트를 찾을 수 없습니다.'))
       return db.projectDto(p)
     },
   },
@@ -229,7 +239,7 @@ const ROUTES: Route[] = [
     pattern: /^\/api\/projects\/(\d+)$/,
     handler: ({ params, body, db }) => {
       const p = db.state.projects.find((x) => x.id === Number(params[0]))
-      if (!p) throw apiError(404, 'NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
+      if (!p) throw apiError(404, 'NOT_FOUND', tr('demo.api.projectNotFound', '프로젝트를 찾을 수 없습니다.'))
       const req = body as ProjectUpdateRequest
       if (req.name !== undefined) p.name = req.name
       if (req.description !== undefined) p.description = req.description ?? null
@@ -262,7 +272,7 @@ const ROUTES: Route[] = [
     handler: ({ params, db }) => {
       const me = requireUser(db)
       const p = db.state.projects.find((x) => x.id === Number(params[0]))
-      if (!p) throw apiError(404, 'NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
+      if (!p) throw apiError(404, 'NOT_FOUND', tr('demo.api.projectNotFound', '프로젝트를 찾을 수 없습니다.'))
       const i = p.pinnedBy.indexOf(me.id)
       if (i >= 0) p.pinnedBy.splice(i, 1)
       else p.pinnedBy.push(me.id)
@@ -328,7 +338,7 @@ const ROUTES: Route[] = [
   },
   { method: 'GET', pattern: /^\/api\/updates\/(\d+)$/, handler: ({ params, db }) => {
     const u = db.state.updates.find((x) => x.id === Number(params[0]))
-    if (!u) throw apiError(404, 'NOT_FOUND', '업데이트를 찾을 수 없습니다.')
+    if (!u) throw apiError(404, 'NOT_FOUND', tr('demo.api.updateNotFound', '업데이트를 찾을 수 없습니다.'))
     return db.updateDto(u)
   } },
   {
@@ -336,7 +346,7 @@ const ROUTES: Route[] = [
     pattern: /^\/api\/updates\/(\d+)$/,
     handler: ({ params, body, db }) => {
       const u = db.state.updates.find((x) => x.id === Number(params[0]))
-      if (!u) throw apiError(404, 'NOT_FOUND', '업데이트를 찾을 수 없습니다.')
+      if (!u) throw apiError(404, 'NOT_FOUND', tr('demo.api.updateNotFound', '업데이트를 찾을 수 없습니다.'))
       const req = body as UpdatePatchRequest
       if (req.version !== undefined) u.version = req.version
       if (req.title !== undefined) u.title = req.title
@@ -470,7 +480,7 @@ const ROUTES: Route[] = [
   },
   { method: 'GET', pattern: /^\/api\/qa\/(\d+)$/, handler: ({ params, db }) => {
     const q = db.state.qa.find((x) => x.id === Number(params[0]))
-    if (!q) throw apiError(404, 'NOT_FOUND', 'QA 항목을 찾을 수 없습니다.')
+    if (!q) throw apiError(404, 'NOT_FOUND', tr('demo.api.qaNotFound', 'QA 항목을 찾을 수 없습니다.'))
     return db.qaDto(q)
   } },
   {
@@ -478,7 +488,7 @@ const ROUTES: Route[] = [
     pattern: /^\/api\/qa\/(\d+)$/,
     handler: ({ params, body, db }) => {
       const q = db.state.qa.find((x) => x.id === Number(params[0]))
-      if (!q) throw apiError(404, 'NOT_FOUND', 'QA 항목을 찾을 수 없습니다.')
+      if (!q) throw apiError(404, 'NOT_FOUND', tr('demo.api.qaNotFound', 'QA 항목을 찾을 수 없습니다.'))
       const req = body as QaPatchRequest
       if (req.updateId !== undefined) q.updateId = req.updateId
       if (req.title !== undefined) q.title = req.title
@@ -549,7 +559,7 @@ const ROUTES: Route[] = [
     pattern: /^\/api\/comments\/(\d+)$/,
     handler: ({ params, body, db }) => {
       const c = db.state.comments.find((x) => x.id === Number(params[0]))
-      if (!c) throw apiError(404, 'NOT_FOUND', '댓글을 찾을 수 없습니다.')
+      if (!c) throw apiError(404, 'NOT_FOUND', tr('demo.api.commentNotFound', '댓글을 찾을 수 없습니다.'))
       const req = body as CommentUpdateRequest
       if (req.content !== undefined) c.content = req.content
       if (req.images !== undefined) c.images = req.images ?? []
@@ -575,7 +585,7 @@ const ROUTES: Route[] = [
     handler: ({ params, body, db }) => {
       const me = requireUser(db)
       const c = db.state.comments.find((x) => x.id === Number(params[0]))
-      if (!c) throw apiError(404, 'NOT_FOUND', '댓글을 찾을 수 없습니다.')
+      if (!c) throw apiError(404, 'NOT_FOUND', tr('demo.api.commentNotFound', '댓글을 찾을 수 없습니다.'))
       const emoji = String(body?.emoji ?? '')
       if (emoji) {
         const arr = c.reactions[emoji] ?? []
@@ -610,7 +620,7 @@ const ROUTES: Route[] = [
     pattern: /^\/api\/github\/qa\/(\d+)\/commits$/,
     handler: ({ params, db }) => {
       const q = db.state.qa.find((x) => x.id === Number(params[0]))
-      if (!q) throw apiError(404, 'NOT_FOUND', 'QA 항목을 찾을 수 없습니다.')
+      if (!q) throw apiError(404, 'NOT_FOUND', tr('demo.api.qaNotFound', 'QA 항목을 찾을 수 없습니다.'))
       // 이슈 미연결 QA 는 빈 배열 (백엔드 규칙과 동일).
       if (!q.githubIssue) return []
       return db.state.githubCommits?.[String(q.id)] ?? []
@@ -637,7 +647,7 @@ const ROUTES: Route[] = [
       const n = (db.state.notifications ?? []).find(
         (x) => x.id === Number(params[0]) && x.recipientId === me.id,
       )
-      if (!n) throw apiError(404, 'NOT_FOUND', '알림을 찾을 수 없습니다.')
+      if (!n) throw apiError(404, 'NOT_FOUND', tr('demo.api.notificationNotFound', '알림을 찾을 수 없습니다.'))
       n.read = true
       db.save()
       return db.notificationDto(n)
@@ -680,7 +690,7 @@ export function createDemoApi() {
       // 비동기 시그니처 유지(호출부가 await 한다).
       return Promise.resolve(r.handler({ params: m.slice(1), query, body, db }))
     }
-    return Promise.reject(apiError(404, 'NOT_FOUND', `데모 mock 미구현 경로: ${method} ${path}`))
+    return Promise.reject(apiError(404, 'NOT_FOUND', tr('demo.api.notImplemented', `데모 mock 미구현 경로: ${method} ${path}`, { method, path })))
   }
   return impl
 }

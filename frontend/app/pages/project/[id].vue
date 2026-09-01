@@ -19,6 +19,7 @@ const updatesApi = useUpdates()
 const qaApi = useQa()
 const membersApi = useMembers()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const project = ref<Project | null>(null)
 const updates = ref<ProjectUpdate[]>([])
@@ -54,7 +55,7 @@ async function load() {
     members.value = await membersApi.list()
     allProjects.value = await projectsApi.list()
   } catch (e: any) {
-    error.value = e?.data?.message ?? '프로젝트를 불러올 수 없습니다.'
+    error.value = e?.data?.message ?? t('project.errors.loadFailed')
   } finally {
     loading.value = false
   }
@@ -221,7 +222,7 @@ async function confirmUpdateDelete() {
     </template>
     <div v-else-if="error" class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
       {{ error }}
-      <button class="ml-2 underline" @click="router.push('/')">대시보드로</button>
+      <button class="ml-2 underline" @click="router.push('/')">{{ $t('project.errors.goToDashboard') }}</button>
     </div>
     <template v-else-if="project">
       <ProjectHeader
@@ -236,35 +237,35 @@ async function confirmUpdateDelete() {
 
       <section class="mt-6">
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-slate-700">QA 현황</h2>
+          <h2 class="text-sm font-semibold text-slate-700">{{ $t('project.stats.title') }}</h2>
           <label class="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500">
             <input
               v-model="myOnly"
               type="checkbox"
               class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
             />
-            내 작업만
+            {{ $t('project.stats.myOnly') }}
           </label>
         </div>
         <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-          <StatsCard title="전체 QA" :value="stats.total" :icon="FileText" icon-color="text-blue-500" icon-bg="bg-blue-50" />
-          <StatsCard title="수정필요" :value="stats.needsFix" :icon="Wrench" icon-color="text-rose-500" icon-bg="bg-rose-50" />
-          <StatsCard title="진행중" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500" icon-bg="bg-blue-50" />
-          <StatsCard title="수정완료" :value="stats.fixDone" :icon="Check" icon-color="text-amber-500" icon-bg="bg-amber-50" />
+          <StatsCard :title="$t('project.stats.totalQa')" :value="stats.total" :icon="FileText" icon-color="text-blue-500" icon-bg="bg-blue-50" />
+          <StatsCard :title="$t('common.qaStatus.needs_fix')" :value="stats.needsFix" :icon="Wrench" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+          <StatsCard :title="$t('common.qaStatus.in_progress')" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500" icon-bg="bg-blue-50" />
+          <StatsCard :title="$t('common.qaStatus.fix_done')" :value="stats.fixDone" :icon="Check" icon-color="text-amber-500" icon-bg="bg-amber-50" />
           <StatsCard
-            title="확인완료" :value="stats.confirmed" :icon="CheckCheck"
+            :title="$t('common.qaStatus.confirmed')" :value="stats.confirmed" :icon="CheckCheck"
             icon-color="text-emerald-500" icon-bg="bg-emerald-50"
-            :trend="`완료율 ${stats.total > 0 ? Math.round((stats.confirmed / stats.total) * 100) : 0}%`"
+            :trend="$t('project.stats.completionRate', { rate: stats.total > 0 ? Math.round((stats.confirmed / stats.total) * 100) : 0 })"
           />
-          <StatsCard title="보류" :value="stats.onHold" :icon="Pause" icon-color="text-slate-500" icon-bg="bg-slate-100" />
-          <StatsCard title="추가확인필요" :value="stats.needsRecheck" :icon="RotateCcw" icon-color="text-purple-500" icon-bg="bg-purple-50" />
-          <StatsCard title="긴급" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+          <StatsCard :title="$t('common.qaStatus.on_hold')" :value="stats.onHold" :icon="Pause" icon-color="text-slate-500" icon-bg="bg-slate-100" />
+          <StatsCard :title="$t('common.qaStatus.needs_recheck')" :value="stats.needsRecheck" :icon="RotateCcw" icon-color="text-purple-500" icon-bg="bg-purple-50" />
+          <StatsCard :title="$t('common.priority.critical')" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500" icon-bg="bg-rose-50" />
         </div>
       </section>
 
       <section class="mt-6">
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-slate-700">업데이트별 QA 항목</h2>
+          <h2 class="text-sm font-semibold text-slate-700">{{ $t('project.updates.title') }}</h2>
           <div class="flex items-center gap-2 text-xs text-slate-400">
             <label class="flex cursor-pointer select-none items-center gap-1.5 font-medium text-slate-500">
               <input
@@ -272,39 +273,39 @@ async function confirmUpdateDelete() {
                 type="checkbox"
                 class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
               />
-              배포완료 숨기기
+              {{ $t('project.updates.hideReleased') }}
             </label>
-            <span>{{ updates.length }}개 업데이트{{ hiddenReleasedCount > 0 ? ` (${hiddenReleasedCount}개 숨김)` : '' }} · {{ items.length }}개 QA</span>
+            <span>{{ $t('project.updates.updateCount', updates.length) }}{{ hiddenReleasedCount > 0 ? ` (${$t('project.updates.hiddenCount', { n: hiddenReleasedCount })})` : '' }} · {{ $t('project.updates.qaCount', items.length) }}</span>
             <button
               v-if="updates.length > 1"
               type="button"
               class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
               @click="reorderModalOpen = true"
             >
-              <ArrowUpDown class="h-3.5 w-3.5" /> 순서 변경
+              <ArrowUpDown class="h-3.5 w-3.5" /> {{ $t('project.updates.reorder') }}
             </button>
             <button
               type="button"
               class="inline-flex items-center gap-1 rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600"
               @click="updateModalOpen = true"
             >
-              <Plus class="h-3.5 w-3.5" /> 새 업데이트
+              <Plus class="h-3.5 w-3.5" /> {{ $t('project.updates.newUpdate') }}
             </button>
             <button
               type="button"
               class="inline-flex items-center gap-1 rounded-md bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600"
               @click="qaDefaultUpdateId = undefined; qaModalOpen = true"
             >
-              <Plus class="h-3.5 w-3.5" /> 새 QA
+              <Plus class="h-3.5 w-3.5" /> {{ $t('project.updates.newQa') }}
             </button>
           </div>
         </div>
 
         <div v-if="updates.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-400">
-          등록된 업데이트가 없습니다.
+          {{ $t('project.updates.empty') }}
         </div>
         <div v-else-if="visibleUpdates.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-400">
-          배포완료 업데이트 {{ hiddenReleasedCount }}개가 숨겨져 있습니다.
+          {{ $t('project.updates.hiddenNotice', hiddenReleasedCount) }}
         </div>
         <div v-else class="flex flex-col gap-3">
           <UpdateAccordion
@@ -352,15 +353,15 @@ async function confirmUpdateDelete() {
       />
       <DeleteConfirmModal
         :open="projectDeleteOpen"
-        :title="`'${project.name}' 프로젝트를 삭제하시겠습니까?`"
-        message="프로젝트에 속한 업데이트와 QA 항목까지 영향이 갈 수 있습니다. 정말 삭제하시겠습니까?"
+        :title="$t('project.deleteProject.title', { name: project.name })"
+        :message="$t('project.deleteProject.message')"
         @confirm="confirmProjectDelete"
         @cancel="projectDeleteOpen = false"
       />
       <DeleteConfirmModal
         :open="updateDeleteOpen"
-        :title="updateDeleteTarget ? `'${updateDeleteTarget.title}' 업데이트를 삭제하시겠습니까?` : undefined"
-        message="해당 업데이트에 속한 QA 항목까지 영향이 갈 수 있습니다. 정말 삭제하시겠습니까?"
+        :title="updateDeleteTarget ? $t('project.deleteUpdate.title', { title: updateDeleteTarget.title }) : undefined"
+        :message="$t('project.deleteUpdate.message')"
         @confirm="confirmUpdateDelete"
         @cancel="updateDeleteOpen = false; updateDeleteTarget = null"
       />

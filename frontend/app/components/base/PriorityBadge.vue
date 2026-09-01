@@ -4,14 +4,16 @@ import { ArrowDown, Minus, ArrowUp, Flame } from '@lucide/vue'
 
 const props = defineProps<{ priority: QaPriority }>()
 
-const config: Record<QaPriority, { label: string; cls: string; icon: any }> = {
-  low:      { label: '낮음', cls: 'bg-slate-100 text-slate-600', icon: ArrowDown },
-  medium:   { label: '보통', cls: 'bg-teal-50 text-teal-600',    icon: Minus },
-  high:     { label: '높음', cls: 'bg-amber-50 text-amber-600',  icon: ArrowUp },
-  critical: { label: '긴급', cls: 'bg-rose-50 text-rose-600',    icon: Flame },
+const { t } = useI18n()
+
+const config: Record<QaPriority, { cls: string; icon: any }> = {
+  low:      { cls: 'bg-slate-100 text-slate-600', icon: ArrowDown },
+  medium:   { cls: 'bg-teal-50 text-teal-600',    icon: Minus },
+  high:     { cls: 'bg-amber-50 text-amber-600',  icon: ArrowUp },
+  critical: { cls: 'bg-rose-50 text-rose-600',    icon: Flame },
 }
 
-const view = computed(() => config[props.priority])
+const view = computed(() => ({ ...config[props.priority], label: t(`common.priority.${props.priority}`) }))
 </script>
 
 <template>

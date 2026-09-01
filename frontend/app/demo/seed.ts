@@ -1,11 +1,34 @@
 import type { DemoState } from './types'
 
+export type SeedLocale = 'ko' | 'en'
+
+/**
+ * 시드 언어 결정: i18n 쿠키(qam_locale) → 브라우저 언어 → ko.
+ * (데모 db 는 클라이언트에서만 시드되므로 document/navigator 접근 가능)
+ */
+function resolveSeedLocale(): SeedLocale {
+  try {
+    const cookie = document.cookie.match(/(?:^|;\s*)qam_locale=([^;]+)/)?.[1]
+    const lang = cookie ?? navigator.language ?? 'ko'
+    return lang.toLowerCase().startsWith('ko') ? 'ko' : 'en'
+  } catch {
+    return 'ko'
+  }
+}
+
 /**
  * 데모 초기 상태. 백엔드 시드(V2/V3)를 현재 프론트 타입(6-state, tester/assignee1/2)에 맞춰 재작성.
  * 매 호출마다 새 객체를 만들어 반환하므로 reset 시 안전하게 재사용된다.
  * 비밀번호는 데모 안내용 평문(전부 1234) — 실제 인증이 아니므로 해시하지 않는다.
+ * 구조(ID·날짜·상태)는 한국어 원본 한 벌만 유지하고, 영어는 텍스트 필드만 id 기준으로 덮어쓴다.
  */
-export function createSeed(): DemoState {
+export function createSeed(locale?: SeedLocale): DemoState {
+  const state = createKoSeed()
+  if ((locale ?? resolveSeedLocale()) === 'en') applyEnglishTexts(state)
+  return state
+}
+
+function createKoSeed(): DemoState {
   return {
     members: [
       { id: 1, username: 'kimminjun', password: '1234', name: '김민준', role: 'FE 개발자', email: null, avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=kim' },
@@ -96,5 +119,98 @@ export function createSeed(): DemoState {
 
     seq: 100,
     currentUserId: null,
+  }
+}
+
+/* ─────────────── 영어 데모 텍스트 오버레이 ───────────────
+ * 구조는 위 한국어 시드가 원본. 여기는 사용자에게 보이는 텍스트 필드만 id 기준으로 덮어쓴다.
+ * 새 엔티티를 시드에 추가하면 이 오버레이에도 같은 id 로 영어 텍스트를 추가할 것. */
+
+const EN_TEXTS = {
+  members: {
+    1: { name: 'Minjun Kim', role: 'Frontend Engineer' },
+    2: { name: 'Seoyeon Park', role: 'Backend Engineer' },
+    3: { name: 'Doyoon Lee', role: 'DevOps' },
+    4: { name: 'Jiwoo Choi', role: 'QA Engineer' },
+    5: { name: 'Hyunwoo Jung', role: 'Full-stack' },
+    6: { name: 'Boan Han', role: 'Security Lead' },
+  } as Record<number, { name: string; role: string }>,
+
+  projects: {
+    1: { name: 'Mobile Shopping App', description: 'iOS/Android hybrid shopping app renewal — new payment system and UI/UX improvements.' },
+    2: { name: 'Admin Dashboard', description: 'Real-time analytics and monitoring dashboard for the internal operations team.' },
+    3: { name: 'Social Media API', description: 'Integration APIs for external social platforms such as KakaoTalk, Instagram, and Naver.' },
+    4: { name: 'Membership System v2', description: 'Complete overhaul of the legacy member auth system. OAuth2 + MFA rollout.' },
+  } as Record<number, { name: string; description: string }>,
+
+  updates: {
+    1: { title: 'Payment Module Revamp', description: 'Improved PG integration and new express-checkout options.' },
+    2: { title: 'Push Notification Upgrade', description: 'A/B-test-driven push personalization and deep link handling.' },
+    3: { title: 'Cart Bug Fixes', description: 'Fixed cart total not updating when item quantity changes.' },
+    4: { title: 'Initial Dashboard Release', description: 'Core KPI widgets and real-time data streaming.' },
+    5: { title: 'AI Anomaly Detection Widget', description: 'Automated anomaly alert widget.' },
+    6: { title: 'KakaoTalk Integration Beta', description: 'Beta test of the KakaoTalk message API integration.' },
+    7: { title: 'MFA Rollout', description: 'Multi-factor authentication with Google Authenticator.' },
+  } as Record<number, { title: string; description: string }>,
+
+  qa: {
+    1: { title: 'No error message on card payment failure', description: 'When an invalid card number is entered, no error message is shown — only an endless loading spinner.', category: 'Payments' },
+    2: { title: 'Express checkout (Toss) retry fails after cancel', description: '"Session expired" error when retrying a payment in the same session after canceling a Toss Pay payment.', category: 'Payments' },
+    3: { title: 'Receipt emails delayed', description: 'Receipt emails arrive 10+ minutes after payment; they should go out within 30 seconds.', category: 'Payments' },
+    4: { title: 'App not opening from push tap', description: 'Tapping a push notification while the app is in the background does not bring it to the foreground.', category: 'Notifications' },
+    5: { title: 'Missing deep link parameter', description: 'Push deep link URLs are missing the campaign_id parameter, breaking attribution.', category: 'Notifications' },
+    6: { title: 'AI widget prediction stuck at 0', description: 'During traffic spikes the anomaly-detection widget shows a constant 0 prediction.', category: 'Home Revamp' },
+    7: { title: 'Widget data mixed up after refresh', description: 'After a manual refresh, data bleeds between widgets. Likely a caching issue.', category: 'Home Revamp' },
+    8: { title: 'Kakao friend list sync fails', description: 'Friend list API returns a 500 error. Possible SDK version conflict.', category: 'Kakao Integration' },
+    9: { title: 'MFA QR code scan fails', description: 'Some Android devices cannot generate auth codes after scanning the QR code.', category: 'Auth' },
+  } as Record<number, { title: string; description: string; category: string }>,
+
+  comments: {
+    1: { content: 'The backend returns the 400 correctly — looks like the frontend is missing a catch block. Could you take a look?' },
+    2: { content: 'Confirmed. @Seoyeon Park — added handling to PaymentErrorBoundary and opened a PR. #2842' },
+    3: { content: 'Verified that the Redis session TTL gets set to 0 on cancel. The session re-creation logic needs review.' },
+    4: { content: 'Looks like the input schema changed when the AI model moved to v2.1. Checking backend logs.' },
+    5: { content: 'Reviewed the PR — thanks for the merge!' },
+  } as Record<number, { content: string }>,
+
+  /* shortSha → 커밋 메시지/작성자 */
+  commits: {
+    a1b2c3d: { message: 'fix: handle missing catch on card payment error response (#101)\n\nAdded 400 handling to PaymentErrorBoundary', authorName: 'Minjun Kim' },
+    b2c3d4e: { message: 'test: add regression test for payment error message (#101)', authorName: 'Minjun Kim' },
+    c3d4e5f: { message: 'fix: reset Redis session TTL on payment cancel (#102)', authorName: 'Seoyeon Park' },
+  } as Record<string, { message: string; authorName: string }>,
+
+  notifications: {
+    81: 'You were mentioned in a comment: No error message on card payment failure',
+    82: 'A QA item was assigned to you: App not opening from push tap',
+    83: 'New reply to your comment: No error message on card payment failure',
+    84: 'A QA item was assigned to you: Express checkout (Toss) retry fails after cancel',
+    85: 'You were mentioned in a comment: No error message on card payment failure',
+    86: 'New comment on QA: AI widget prediction stuck at 0',
+    87: 'A QA item was assigned to you: Receipt emails delayed',
+    88: 'QA status changed: Kakao friend list sync fails → On Hold',
+    89: 'New comment on QA: Express checkout (Toss) retry fails after cancel',
+    90: 'QA status changed: Missing deep link parameter → Fixed',
+    91: 'New QA item created: Widget data mixed up after refresh',
+    92: 'A QA item was assigned to you: Widget data mixed up after refresh',
+    93: 'New comment on QA: AI widget prediction stuck at 0',
+  } as Record<number, string>,
+}
+
+function applyEnglishTexts(s: DemoState): void {
+  for (const m of s.members) Object.assign(m, EN_TEXTS.members[m.id])
+  for (const p of s.projects) Object.assign(p, EN_TEXTS.projects[p.id])
+  for (const u of s.updates) Object.assign(u, EN_TEXTS.updates[u.id])
+  for (const q of s.qa) Object.assign(q, EN_TEXTS.qa[q.id])
+  for (const c of s.comments) Object.assign(c, EN_TEXTS.comments[c.id])
+  for (const commits of Object.values(s.githubCommits)) {
+    for (const c of commits) {
+      const t = EN_TEXTS.commits[c.shortSha]
+      if (t) Object.assign(c, t)
+    }
+  }
+  for (const n of s.notifications) {
+    const msg = EN_TEXTS.notifications[n.id]
+    if (msg) n.message = msg
   }
 }

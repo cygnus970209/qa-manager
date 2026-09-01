@@ -6,6 +6,15 @@ import type { PresignRequest, PresignResponse } from '~/types/api'
  * 2) uploadUrl 로 PUT (Content-Type/Content-Length 정확히 맞춰야 서명 검증 성공)
  * 3) publicUrl 반환
  */
+/** 호출 시점에 i18n 에 lazy 접근. nuxt 컨텍스트 밖(테스트 등)에서는 한국어 폴백. */
+function tr(key: string, params: Record<string, unknown>, fallback: string): string {
+  try {
+    const { $i18n } = useNuxtApp() as any
+    if ($i18n?.t) return $i18n.t(key, params)
+  } catch { /* nuxt 컨텍스트 밖 */ }
+  return fallback
+}
+
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -22,14 +31,14 @@ export function useUpload() {
 
   function assertUploadable(file: File, purpose: PresignRequest['purpose']) {
     if (file.size > maxFileSizeMb * 1024 * 1024) {
-      throw new Error(`파일 크기는 ${maxFileSizeMb}MB 이하만 업로드할 수 있습니다: ${file.name}`)
+      throw new Error(tr('shell.upload.fileTooLarge', { n: maxFileSizeMb, name: file.name }, `파일 크기는 ${maxFileSizeMb}MB 이하만 업로드할 수 있습니다: ${file.name}`))
     }
     const type = (file.type || '').toLowerCase()
     const isImage = type.startsWith('image/')
     if (purpose === 'avatar') {
-      if (!isImage) throw new Error(`이미지만 업로드할 수 있습니다: ${file.name}`)
+      if (!isImage) throw new Error(tr('shell.upload.imageOnly', { name: file.name }, `이미지만 업로드할 수 있습니다: ${file.name}`))
     } else if (!isImage && type !== 'application/pdf') {
-      throw new Error(`이미지 또는 PDF만 업로드할 수 있습니다: ${file.name}`)
+      throw new Error(tr('shell.upload.imageOrPdfOnly', { name: file.name }, `이미지 또는 PDF만 업로드할 수 있습니다: ${file.name}`))
     }
   }
 
@@ -54,7 +63,7 @@ export function useUpload() {
       body: file,
     })
     if (!res.ok) {
-      throw new Error(`S3 업로드 실패 (${res.status})`)
+      throw new Error(tr('shell.upload.s3Failed', { status: res.status }, `S3 업로드 실패 (${res.status})`))
     }
     return presign.publicUrl
   }

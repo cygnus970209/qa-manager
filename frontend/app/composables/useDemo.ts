@@ -7,6 +7,15 @@ export interface DemoAccount {
   password: string
 }
 
+/** 호출 시점에 i18n 에 lazy 접근. nuxt 컨텍스트 밖(테스트 등)에서는 한국어 폴백. */
+function tr(key: string, fallback: string): string {
+  try {
+    const { $i18n } = useNuxtApp() as any
+    if ($i18n?.t) return $i18n.t(key)
+  } catch { /* nuxt 컨텍스트 밖 */ }
+  return fallback
+}
+
 /**
  * 데모 모드 상태 / 로그인 계정 / 초기화를 제공한다.
  * - enabled: DEMO_BUILD 빌드에서 켜짐(runtimeConfig.public.demoMode).
@@ -20,7 +29,7 @@ export function useDemo() {
   const accounts = computed<DemoAccount[]>(() => {
     if (!enabled.value) return []
     return createSeed().members.map((m) => ({
-      label: [m.name, m.role].filter(Boolean).join(' · ') + (m.otpEnabled ? ' (이메일 OTP 체험)' : ''),
+      label: [m.name, m.role].filter(Boolean).join(' · ') + (m.otpEnabled ? ' ' + tr('demo.accounts.otpTag', '(이메일 OTP 체험)') : ''),
       username: m.username,
       password: m.password,
     }))

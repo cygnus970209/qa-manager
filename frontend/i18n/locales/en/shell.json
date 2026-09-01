@@ -1,0 +1,22 @@
+{
+  "shell": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "admin": "Admin"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "markAllRead": "Mark all as read",
+      "empty": "No notifications."
+    },
+    "user": {
+      "editProfile": "Edit profile"
+    },
+    "upload": {
+      "fileTooLarge": "Files must be {n}MB or smaller: {name}",
+      "imageOnly": "Only images can be uploaded: {name}",
+      "imageOrPdfOnly": "Only images and PDFs can be uploaded: {name}",
+      "s3Failed": "S3 upload failed ({status})"
+    }
+  }
+}

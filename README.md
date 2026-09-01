@@ -71,6 +71,7 @@
 - 관리자 페이지 4탭(프로젝트/QA/팀원/설정) + Teams 발송 단계별 진단 도구
 - Docker Compose 풀스택 배포(DB + Redis + BE + FE), Flyway 마이그레이션 자동 적용
 - 백엔드 없이 정적 호스팅되는 **데모 모드** 빌드 내장
+- **다국어 지원 (한국어/영어)** — 브라우저 언어 자동 감지 + 쿠키 기억, 네비바/로그인 화면에서 즉시 전환. 데모 시드 데이터까지 언어별 제공
 
 ---
 
@@ -78,7 +79,7 @@
 
 | 영역 | 스택 |
 |---|---|
-| Frontend | Nuxt 4 (SSR), Vue 3, Pinia, Tailwind CSS, TypeScript strict |
+| Frontend | Nuxt 4 (SSR), Vue 3, Pinia, Tailwind CSS, TypeScript strict, @nuxtjs/i18n (ko/en) |
 | Backend | Spring Boot 4, Java 25 (가상 스레드), Spring Security, JPA/Hibernate |
 | DB / Cache | MariaDB 11 + Flyway (V1~V14), Redis 7 (토큰 블랙리스트 · OTP) |
 | Auth | JWT (HttpOnly 쿠키, access + refresh rotation), 이메일 OTP 2FA |

@@ -1,3 +1,4 @@
+import { useNuxtApp } from '#app'
 import type {
   AssigneeSummary,
   Me,
@@ -19,9 +20,18 @@ import type {
 } from './types'
 import { createSeed } from './seed'
 
-// v4: OTP 체험 계정(hanboan) 추가 — 구버전 상태는 버리고 재시드한다.
-// (v3: 다중 GitHub repo + 알림센터 시드)
-const LS_KEY = 'qa-demo-state-v4'
+// v5: 시드 다국어화(ko/en) — 방문자 언어에 맞는 시드를 새로 받도록 구버전 상태는 버리고 재시드한다.
+// (v4: OTP 체험 계정(hanboan) 추가, v3: 다중 GitHub repo + 알림센터 시드)
+const LS_KEY = 'qa-demo-state-v5'
+
+/** 호출 시점에 i18n 에 lazy 접근. nuxt 컨텍스트 밖(테스트 등)에서는 한국어 폴백. */
+function tr(key: string, fallback: string): string {
+  try {
+    const { $i18n } = useNuxtApp() as any
+    if ($i18n?.t) return $i18n.t(key)
+  } catch { /* nuxt 컨텍스트 밖 */ }
+  return fallback
+}
 
 /**
  * 데모용 인메모리 + localStorage 백엔드.
@@ -175,7 +185,7 @@ export class DemoDb {
   }
 
   commentDto(c: DemoComment): QaComment {
-    const author = this.assigneeSummary(c.authorId) ?? { id: c.authorId, name: '알 수 없음', avatarUrl: null }
+    const author = this.assigneeSummary(c.authorId) ?? { id: c.authorId, name: tr('common.state.unknown', '알 수 없음'), avatarUrl: null }
     return {
       id: c.id,
       qaItemId: c.qaItemId,

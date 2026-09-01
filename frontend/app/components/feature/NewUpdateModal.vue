@@ -15,6 +15,7 @@ const emit = defineEmits<{
 }>()
 
 const updates = useUpdates()
+const { t } = useI18n()
 
 const mode = computed<'create' | 'edit'>(() => props.mode ?? 'create')
 
@@ -66,7 +67,7 @@ async function onSubmit() {
     }
     emit('close')
   } catch (e: any) {
-    error.value = e?.data?.message ?? (mode.value === 'edit' ? '업데이트 수정에 실패했습니다.' : '업데이트 생성에 실패했습니다.')
+    error.value = e?.data?.message ?? (mode.value === 'edit' ? t('project.updateModal.updateFailed') : t('project.updateModal.createFailed'))
   } finally {
     submitting.value = false
   }
@@ -74,11 +75,11 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AppDialog :open="open" :title="mode === 'edit' ? '업데이트 수정' : '새 업데이트'" @close="emit('close')">
+  <AppDialog :open="open" :title="mode === 'edit' ? $t('project.updateModal.editTitle') : $t('project.updateModal.createTitle')" @close="emit('close')">
     <form id="new-update-form" class="space-y-4" @submit.prevent="onSubmit">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">버전</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('project.updateModal.version') }}</span>
           <input
             v-model="form.version"
             type="text"
@@ -89,19 +90,19 @@ async function onSubmit() {
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">상태</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('project.updateModal.status') }}</span>
           <select
             v-model="form.status"
             class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           >
-            <option value="IN_PROGRESS">진행중</option>
-            <option value="TESTING">테스트</option>
-            <option value="RELEASED">배포완료</option>
+            <option value="IN_PROGRESS">{{ $t('common.updateStatus.in_progress') }}</option>
+            <option value="TESTING">{{ $t('common.updateStatus.testing') }}</option>
+            <option value="RELEASED">{{ $t('common.updateStatus.released') }}</option>
           </select>
         </label>
       </div>
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">제목</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('project.updateModal.title') }}</span>
         <input
           v-model="form.title"
           type="text"
@@ -111,7 +112,7 @@ async function onSubmit() {
         />
       </label>
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">설명</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('project.updateModal.description') }}</span>
         <textarea
           v-model="form.description"
           rows="3"
@@ -122,9 +123,9 @@ async function onSubmit() {
       <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
     </form>
     <template #footer>
-      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="emit('close')">취소</button>
+      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="emit('close')">{{ $t('common.actions.cancel') }}</button>
       <button type="submit" form="new-update-form" :disabled="submitting" class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
-        {{ submitting ? (mode === 'edit' ? '저장 중…' : '생성 중…') : (mode === 'edit' ? '저장' : '생성') }}
+        {{ submitting ? (mode === 'edit' ? $t('common.state.saving') : $t('project.form.creating')) : (mode === 'edit' ? $t('common.actions.save') : $t('project.form.create')) }}
       </button>
     </template>
   </AppDialog>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bell, LogOut, ShieldCheck, UserRound } from '@lucide/vue'
+import { Bell, Check, Globe, LogOut, ShieldCheck, UserRound } from '@lucide/vue'
 import ProfileModal from '~/components/feature/ProfileModal.vue'
 import { timeAgo } from '~/utils/format'
 
@@ -10,6 +10,15 @@ const router = useRouter()
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const profileOpen = ref(false)
+
+const { locale, locales, setLocale } = useI18n()
+const langOpen = ref(false)
+const langRef = ref<HTMLElement | null>(null)
+
+async function onSelectLocale(code: 'ko' | 'en') {
+  langOpen.value = false
+  if (code !== locale.value) await setLocale(code)
+}
 
 onMounted(async () => {
   if (auth.isAuthenticated) {
@@ -29,8 +38,9 @@ onBeforeUnmount(() => notifs.disconnect())
 
 // 바깥 클릭으로 드롭다운 닫기
 function onDocClick(e: MouseEvent) {
-  if (!dropdownRef.value) return
-  if (!dropdownRef.value.contains(e.target as Node)) dropdownOpen.value = false
+  const t = e.target as Node
+  if (dropdownRef.value && !dropdownRef.value.contains(t)) dropdownOpen.value = false
+  if (langRef.value && !langRef.value.contains(t)) langOpen.value = false
 }
 onMounted(() => document.addEventListener('mousedown', onDocClick))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
@@ -55,20 +65,47 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
     <div class="mx-auto flex h-[53px] max-w-7xl items-center justify-between px-4">
       <NuxtLink to="/" class="flex items-center gap-2">
         <ShieldCheck class="h-5 w-5 text-emerald-600" />
-        <span class="text-sm font-semibold tracking-tight">QA Manager</span>
+        <span class="text-sm font-semibold tracking-tight">{{ $t('common.appName') }}</span>
       </NuxtLink>
 
       <nav class="flex items-center gap-1 text-sm">
-        <NuxtLink to="/" class="rounded px-2 py-1 hover:bg-slate-100">대시보드</NuxtLink>
-        <NuxtLink to="/admin" class="rounded px-2 py-1 hover:bg-slate-100">관리</NuxtLink>
+        <NuxtLink to="/" class="rounded px-2 py-1 hover:bg-slate-100">{{ $t('shell.nav.dashboard') }}</NuxtLink>
+        <NuxtLink to="/admin" class="rounded px-2 py-1 hover:bg-slate-100">{{ $t('shell.nav.admin') }}</NuxtLink>
       </nav>
 
       <div class="flex items-center gap-2">
+        <div ref="langRef" class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-1 rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            :aria-label="$t('common.actions.language')"
+            @click="langOpen = !langOpen"
+          >
+            <Globe class="h-4 w-4" />
+            <span class="text-[11px] font-medium uppercase">{{ locale }}</span>
+          </button>
+          <div
+            v-if="langOpen"
+            class="absolute right-0 mt-2 w-36 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+          >
+            <button
+              v-for="l in locales"
+              :key="l.code"
+              type="button"
+              class="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50"
+              @click="onSelectLocale(l.code as 'ko' | 'en')"
+            >
+              <span>{{ l.name }}</span>
+              <Check v-if="l.code === locale" class="h-3.5 w-3.5 text-emerald-500" />
+            </button>
+          </div>
+        </div>
+
         <div ref="dropdownRef" class="relative">
           <button
             type="button"
             class="relative rounded p-2 hover:bg-slate-100"
-            aria-label="알림"
+            :aria-label="$t('shell.notifications.title')"
             @click="dropdownOpen = !dropdownOpen"
           >
             <Bell class="h-4 w-4" />
@@ -84,14 +121,14 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
             class="absolute right-0 mt-2 w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
           >
             <div class="flex items-center justify-between border-b border-slate-100 px-3 py-2">
-              <span class="text-xs font-medium text-slate-500">알림</span>
+              <span class="text-xs font-medium text-slate-500">{{ $t('shell.notifications.title') }}</span>
               <button
                 v-if="notifs.unreadCount > 0"
                 type="button"
                 class="text-xs font-medium text-emerald-600 hover:text-emerald-700"
                 @click="notifs.markAllRead()"
               >
-                모두 읽기
+                {{ $t('shell.notifications.markAllRead') }}
               </button>
             </div>
             <ul v-if="notifs.items.length > 0" class="max-h-80 overflow-y-auto divide-y divide-slate-100">
@@ -112,7 +149,7 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
                 </p>
               </li>
             </ul>
-            <p v-else class="px-3 py-6 text-center text-xs text-slate-400">알림이 없습니다.</p>
+            <p v-else class="px-3 py-6 text-center text-xs text-slate-400">{{ $t('shell.notifications.empty') }}</p>
           </div>
         </div>
 
@@ -120,7 +157,7 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
           <button
             type="button"
             class="flex items-center gap-2 rounded px-1.5 py-1 hover:bg-slate-100"
-            aria-label="내 정보 수정"
+            :aria-label="$t('shell.user.editProfile')"
             @click="profileOpen = true"
           >
             <img
@@ -143,7 +180,7 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
           <button
             type="button"
             class="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-            aria-label="로그아웃"
+            :aria-label="$t('common.actions.logout')"
             @click="onLogout"
           >
             <LogOut class="h-4 w-4" />

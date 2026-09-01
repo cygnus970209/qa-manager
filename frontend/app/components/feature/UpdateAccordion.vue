@@ -22,13 +22,13 @@ const emit = defineEmits<{
 const open = ref(!!props.defaultOpen)
 
 /** 헤더에 표시할 상태별 QA 개수 (0건인 상태는 생략). 색상은 StatusBadge 와 동일. */
-const STATUS_META: { key: QaStatus; label: string; cls: string }[] = [
-  { key: 'needs_fix',     label: '수정필요',     cls: 'bg-rose-50 text-rose-600' },
-  { key: 'in_progress',   label: '진행중',       cls: 'bg-blue-50 text-blue-600' },
-  { key: 'fix_done',      label: '수정완료',     cls: 'bg-amber-50 text-amber-600' },
-  { key: 'confirmed',     label: '확인완료',     cls: 'bg-emerald-50 text-emerald-600' },
-  { key: 'on_hold',       label: '보류',         cls: 'bg-slate-100 text-slate-600' },
-  { key: 'needs_recheck', label: '추가확인필요', cls: 'bg-purple-50 text-purple-600' },
+const STATUS_META: { key: QaStatus; cls: string }[] = [
+  { key: 'needs_fix',     cls: 'bg-rose-50 text-rose-600' },
+  { key: 'in_progress',   cls: 'bg-blue-50 text-blue-600' },
+  { key: 'fix_done',      cls: 'bg-amber-50 text-amber-600' },
+  { key: 'confirmed',     cls: 'bg-emerald-50 text-emerald-600' },
+  { key: 'on_hold',       cls: 'bg-slate-100 text-slate-600' },
+  { key: 'needs_recheck', cls: 'bg-purple-50 text-purple-600' },
 ]
 const statusCounts = computed(() =>
   STATUS_META
@@ -82,13 +82,13 @@ function rememberFilter() {
         <StatusBadge :status="update.status" />
       </div>
       <div class="flex shrink-0 flex-wrap items-center justify-end gap-1.5 text-xs text-slate-400">
-        <span>QA {{ items.length }}건</span>
+        <span>{{ $t('project.accordion.qaCount', items.length) }}</span>
         <span
           v-for="sc in statusCounts"
           :key="sc.key"
           :class="['inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 font-medium', sc.cls]"
         >
-          {{ sc.label }} {{ sc.count }}
+          {{ $t('common.qaStatus.' + sc.key) }} {{ sc.count }}
         </span>
       </div>
     </button>
@@ -102,21 +102,21 @@ function rememberFilter() {
           @change="onChangeStatus"
           @click.stop
         >
-          <option value="IN_PROGRESS">상태: 진행중</option>
-          <option value="TESTING">상태: 테스트</option>
-          <option value="RELEASED">상태: 배포완료</option>
+          <option value="IN_PROGRESS">{{ $t('project.accordion.statusOption', { status: $t('common.updateStatus.in_progress') }) }}</option>
+          <option value="TESTING">{{ $t('project.accordion.statusOption', { status: $t('common.updateStatus.testing') }) }}</option>
+          <option value="RELEASED">{{ $t('project.accordion.statusOption', { status: $t('common.updateStatus.released') }) }}</option>
         </select>
         <button
           type="button"
           class="ml-auto inline-flex items-center gap-1 rounded-md bg-blue-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-600"
           @click.stop="emit('addQa', update.id)"
         >
-          <Plus class="h-3.5 w-3.5" /> QA 추가
+          <Plus class="h-3.5 w-3.5" /> {{ $t('project.accordion.addQa') }}
         </button>
         <button
           type="button"
           class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
-          title="업데이트 수정"
+          :title="$t('project.accordion.editUpdate')"
           @click.stop="emit('edit', update)"
         >
           <Pencil class="h-3.5 w-3.5" />
@@ -124,7 +124,7 @@ function rememberFilter() {
         <button
           type="button"
           class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
-          title="업데이트 삭제"
+          :title="$t('project.accordion.deleteUpdate')"
           @click.stop="emit('remove', update)"
         >
           <Trash2 class="h-3.5 w-3.5" />
@@ -150,12 +150,12 @@ function rememberFilter() {
                 @click.stop
                 @change="onChangeQaStatus(q.id, $event)"
               >
-                <option value="NEEDS_FIX">수정필요</option>
-                <option value="IN_PROGRESS">진행중</option>
-                <option value="FIX_DONE">수정완료</option>
-                <option value="CONFIRMED">확인완료</option>
-                <option value="ON_HOLD">보류</option>
-                <option value="NEEDS_RECHECK">추가확인필요</option>
+                <option value="NEEDS_FIX">{{ $t('common.qaStatus.needs_fix') }}</option>
+                <option value="IN_PROGRESS">{{ $t('common.qaStatus.in_progress') }}</option>
+                <option value="FIX_DONE">{{ $t('common.qaStatus.fix_done') }}</option>
+                <option value="CONFIRMED">{{ $t('common.qaStatus.confirmed') }}</option>
+                <option value="ON_HOLD">{{ $t('common.qaStatus.on_hold') }}</option>
+                <option value="NEEDS_RECHECK">{{ $t('common.qaStatus.needs_recheck') }}</option>
               </select>
               <PriorityBadge :priority="q.priority" />
             </div>
@@ -163,7 +163,7 @@ function rememberFilter() {
         </li>
       </ul>
       <div v-else class="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
-        등록된 QA 항목이 없습니다.
+        {{ $t('project.accordion.emptyQa') }}
       </div>
     </div>
   </div>

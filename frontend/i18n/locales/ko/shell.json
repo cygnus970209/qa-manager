@@ -1,0 +1,22 @@
+{
+  "shell": {
+    "nav": {
+      "dashboard": "대시보드",
+      "admin": "관리"
+    },
+    "notifications": {
+      "title": "알림",
+      "markAllRead": "모두 읽기",
+      "empty": "알림이 없습니다."
+    },
+    "user": {
+      "editProfile": "내 정보 수정"
+    },
+    "upload": {
+      "fileTooLarge": "파일 크기는 {n}MB 이하만 업로드할 수 있습니다: {name}",
+      "imageOnly": "이미지만 업로드할 수 있습니다: {name}",
+      "imageOrPdfOnly": "이미지 또는 PDF만 업로드할 수 있습니다: {name}",
+      "s3Failed": "S3 업로드 실패 ({status})"
+    }
+  }
+}

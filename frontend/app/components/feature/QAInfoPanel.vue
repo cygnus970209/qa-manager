@@ -26,6 +26,7 @@ const emit = defineEmits<{
 const qaApi = useQa()
 const upload = useUpload()
 const github = useGithub()
+const { t } = useI18n()
 
 const editing = ref(false)
 const saving = ref(false)
@@ -105,7 +106,7 @@ async function onSave() {
     emit('updated', updated)
     editing.value = false
   } catch (e: any) {
-    error.value = e?.data?.message ?? '저장 실패'
+    error.value = e?.data?.message ?? t('qa.info.saveFailed')
   } finally {
     saving.value = false
   }
@@ -127,7 +128,7 @@ async function uploadFiles(files: Iterable<File>) {
     }
   } catch (e: any) {
     console.error('QAInfoPanel upload failed', e)
-    error.value = e?.data?.message ?? e?.message ?? '업로드 실패'
+    error.value = e?.data?.message ?? e?.message ?? t('qa.upload.failed')
   } finally {
     uploading.value = false
   }
@@ -172,7 +173,7 @@ function removeImage(idx: number) {
 }
 
 async function onDelete() {
-  if (!confirm('정말 삭제하시겠습니까?')) return
+  if (!confirm(t('qa.info.deleteConfirm'))) return
   await qaApi.remove(props.item.id)
   emit('removed')
 }
@@ -190,7 +191,7 @@ async function onMoveUpdate(updateId: number) {
     const updated = await qaApi.update(props.item.id, { updateId })
     emit('updated', updated)
   } catch (e: any) {
-    error.value = e?.data?.message ?? '업데이트 이동 실패'
+    error.value = e?.data?.message ?? t('qa.info.moveUpdateFailed')
   } finally {
     saving.value = false
   }
@@ -206,7 +207,7 @@ async function onQuickStatusChange(next: QaItem['status']) {
     emit('updated', updated)
     form.status = next
   } catch (e: any) {
-    error.value = e?.data?.message ?? '상태 변경 실패'
+    error.value = e?.data?.message ?? t('qa.info.statusChangeFailed')
   } finally {
     saving.value = false
   }
@@ -267,7 +268,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
     else if (slot === 'assignee1') form.assignee1Id = id
     else form.assignee2Id = id
   } catch (e: any) {
-    error.value = e?.data?.message ?? '담당자 변경 실패'
+    error.value = e?.data?.message ?? t('qa.info.assigneeChangeFailed')
   } finally {
     saving.value = false
   }
@@ -286,10 +287,10 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           class="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600"
           @click="emit('addQa')"
         >
-          <Plus class="h-3.5 w-3.5" /> 새 QA
+          <Plus class="h-3.5 w-3.5" /> {{ $t('qa.info.newQa') }}
         </button>
-        <button v-if="!editing" type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = true">편집</button>
-        <button v-else type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = false">취소</button>
+        <button v-if="!editing" type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = true">{{ $t('common.actions.edit') }}</button>
+        <button v-else type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = false">{{ $t('common.actions.cancel') }}</button>
         <button
           v-if="editing"
           type="button"
@@ -297,7 +298,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           class="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
           @click="onSave"
         >
-          <Save class="h-3.5 w-3.5" /> {{ saving ? '저장 중…' : '저장' }}
+          <Save class="h-3.5 w-3.5" /> {{ saving ? $t('common.state.saving') : $t('common.actions.save') }}
         </button>
         <button
           v-if="!editing"
@@ -305,7 +306,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           class="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-100"
           @click="onDelete"
         >
-          <Trash2 class="h-3.5 w-3.5" /> 삭제
+          <Trash2 class="h-3.5 w-3.5" /> {{ $t('common.actions.delete') }}
         </button>
       </div>
     </div>
@@ -323,7 +324,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       <span v-if="item.category" class="rounded-md bg-slate-100 px-2 py-0.5">{{ item.category }}</span>
       <!-- 업데이트(버전) 이동: 같은 프로젝트의 다른 버전으로 즉시 이동 -->
       <div v-if="(updates?.length ?? 0) > 0" class="inline-flex items-center gap-1">
-        <span class="text-slate-400">업데이트</span>
+        <span class="text-slate-400">{{ $t('qa.fields.update') }}</span>
         <select
           :value="item.updateId"
           :disabled="saving"
@@ -341,12 +342,12 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50"
         @change="onQuickStatusChange(($event.target as HTMLSelectElement).value as any)"
       >
-        <option value="needs_fix">수정필요</option>
-        <option value="in_progress">진행중</option>
-        <option value="fix_done">수정완료</option>
-        <option value="confirmed">확인완료</option>
-        <option value="on_hold">보류</option>
-        <option value="needs_recheck">추가확인필요</option>
+        <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
+        <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
+        <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
+        <option value="confirmed">{{ $t('common.qaStatus.confirmed') }}</option>
+        <option value="on_hold">{{ $t('common.qaStatus.on_hold') }}</option>
+        <option value="needs_recheck">{{ $t('common.qaStatus.needs_recheck') }}</option>
       </select>
       <PriorityBadge :priority="item.priority" />
       <!-- GitHub 이슈 배지 (open=초록, closed=보라) -->
@@ -369,7 +370,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       <!-- 비편집 모드에서 담당자도 즉시 변경 가능 (상태와 동일한 패턴) -->
       <template v-if="!editing">
         <div class="inline-flex items-center gap-1">
-          <span class="text-slate-400">테스터</span>
+          <span class="text-slate-400">{{ $t('common.roles.tester') }}</span>
           <SearchableSelect
             class="w-32"
             :model-value="item.tester?.id ?? null"
@@ -377,15 +378,15 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="검색"
-            empty-label="미지정"
+            :placeholder="$t('common.actions.search')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             :disabled="saving"
             @update:model-value="(v) => onQuickMemberChange('tester', v as number | null)"
           />
         </div>
         <div class="inline-flex items-center gap-1">
-          <span class="text-slate-400">담당자1</span>
+          <span class="text-slate-400">{{ $t('common.roles.assignee1') }}</span>
           <SearchableSelect
             class="w-32"
             :model-value="item.assignee1?.id ?? null"
@@ -393,15 +394,15 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="검색"
-            empty-label="미지정"
+            :placeholder="$t('common.actions.search')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             :disabled="saving"
             @update:model-value="(v) => onQuickMemberChange('assignee1', v as number | null)"
           />
         </div>
         <div class="inline-flex items-center gap-1">
-          <span class="text-slate-400">담당자2</span>
+          <span class="text-slate-400">{{ $t('common.roles.assignee2') }}</span>
           <SearchableSelect
             class="w-32"
             :model-value="item.assignee2?.id ?? null"
@@ -409,8 +410,8 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="검색"
-            empty-label="미지정"
+            :placeholder="$t('common.actions.search')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             :disabled="saving"
             @update:model-value="(v) => onQuickMemberChange('assignee2', v as number | null)"
@@ -418,28 +419,28 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         </div>
       </template>
       <template v-else>
-        <span>테스터 {{ item.tester?.name ?? '미지정' }}</span>
+        <span>{{ $t('common.roles.tester') }} {{ item.tester?.name ?? $t('qa.common.unassigned') }}</span>
         <span>·</span>
         <span>
-          담당자
+          {{ $t('common.roles.assignee') }}
           <template v-if="item.assignee1 || item.assignee2">
             {{ [item.assignee1?.name, item.assignee2?.name].filter(Boolean).join(', ') }}
           </template>
-          <template v-else>미지정</template>
+          <template v-else>{{ $t('qa.common.unassigned') }}</template>
         </span>
       </template>
     </div>
 
     <!-- 본문 -->
     <div class="mt-5">
-      <h2 class="mb-2 text-xs font-medium text-slate-500">설명</h2>
+      <h2 class="mb-2 text-xs font-medium text-slate-500">{{ $t('qa.fields.description') }}</h2>
       <QaTagTextarea
         v-if="editing"
         v-model="form.description"
         :qa-items="qaItems"
         :exclude-id="item.id"
         rows="5"
-        placeholder="설명을 입력하세요 (이미지 붙여넣기 가능, #번호 로 QA 태그)"
+        :placeholder="$t('qa.info.descriptionPlaceholder')"
         class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         @paste="onPaste"
       />
@@ -453,33 +454,33 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
     <div v-if="editing" class="mt-5 space-y-3">
       <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
         <label class="block">
-          <span class="block text-xs text-slate-500">상태</span>
+          <span class="block text-xs text-slate-500">{{ $t('qa.fields.status') }}</span>
           <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
-            <option value="needs_fix">수정필요</option>
-            <option value="in_progress">진행중</option>
-            <option value="fix_done">수정완료</option>
-            <option value="confirmed">확인완료</option>
-            <option value="on_hold">보류</option>
-            <option value="needs_recheck">추가확인필요</option>
+            <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
+            <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
+            <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
+            <option value="confirmed">{{ $t('common.qaStatus.confirmed') }}</option>
+            <option value="on_hold">{{ $t('common.qaStatus.on_hold') }}</option>
+            <option value="needs_recheck">{{ $t('common.qaStatus.needs_recheck') }}</option>
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs text-slate-500">우선순위</span>
+          <span class="block text-xs text-slate-500">{{ $t('qa.fields.priority') }}</span>
           <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
-            <option value="low">낮음</option>
-            <option value="medium">보통</option>
-            <option value="high">높음</option>
-            <option value="critical">긴급</option>
+            <option value="low">{{ $t('common.priority.low') }}</option>
+            <option value="medium">{{ $t('common.priority.medium') }}</option>
+            <option value="high">{{ $t('common.priority.high') }}</option>
+            <option value="critical">{{ $t('common.priority.critical') }}</option>
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs text-slate-500">카테고리</span>
+          <span class="block text-xs text-slate-500">{{ $t('qa.fields.category') }}</span>
           <input v-model="form.category" maxlength="50" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs" />
         </label>
       </div>
       <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
         <div>
-          <span class="block text-xs text-slate-500">테스터 (작성자)</span>
+          <span class="block text-xs text-slate-500">{{ $t('qa.fields.testerAuthor') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.testerId"
@@ -487,14 +488,14 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="이름/역할로 검색"
-            empty-label="미지정"
+            :placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             @update:model-value="(v) => form.testerId = v as number | null"
           />
         </div>
         <div>
-          <span class="block text-xs text-slate-500">담당자 1</span>
+          <span class="block text-xs text-slate-500">{{ $t('common.roles.assignee1') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.assignee1Id"
@@ -502,14 +503,14 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="이름/역할로 검색"
-            empty-label="미지정"
+            :placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             @update:model-value="(v) => form.assignee1Id = v as number | null"
           />
         </div>
         <div>
-          <span class="block text-xs text-slate-500">담당자 2</span>
+          <span class="block text-xs text-slate-500">{{ $t('common.roles.assignee2') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.assignee2Id"
@@ -517,8 +518,8 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="이름/역할로 검색"
-            empty-label="미지정"
+            :placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             @update:model-value="(v) => form.assignee2Id = v as number | null"
           />
@@ -528,7 +529,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
 
     <!-- 첨부 파일 -->
     <div class="mt-5">
-      <h2 class="mb-2 text-xs font-medium text-slate-500">첨부 파일</h2>
+      <h2 class="mb-2 text-xs font-medium text-slate-500">{{ $t('qa.fields.attachments') }}</h2>
       <div class="flex flex-wrap gap-2">
         <div
           v-for="(img, i) in attachments"
@@ -565,22 +566,22 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           class="flex h-24 w-24 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500"
         >
           <input type="file" accept="image/*,application/pdf" multiple class="hidden" @change="onPickFile" />
-          {{ uploading ? '업로드…' : '+ 추가' }}
+          {{ uploading ? $t('qa.upload.uploading') : $t('qa.upload.add') }}
         </label>
-        <p v-if="attachments.length === 0 && !editing" class="text-xs text-slate-400">첨부 파일 없음</p>
+        <p v-if="attachments.length === 0 && !editing" class="text-xs text-slate-400">{{ $t('qa.info.noAttachments') }}</p>
       </div>
     </div>
 
     <!-- GitHub 연결 커밋 (이슈가 연결된 QA 에서만) -->
     <div v-if="item.githubIssue" class="mt-5">
       <h2 class="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
-        <GitCommitHorizontal class="h-3.5 w-3.5" /> 연결된 커밋
+        <GitCommitHorizontal class="h-3.5 w-3.5" /> {{ $t('qa.info.linkedCommits') }}
       </h2>
       <div v-if="commitsLoading" class="flex items-center gap-2 py-2 text-xs text-slate-400">
-        <Loader2 class="h-3.5 w-3.5 animate-spin" /> 커밋을 불러오는 중...
+        <Loader2 class="h-3.5 w-3.5 animate-spin" /> {{ $t('qa.info.loadingCommits') }}
       </div>
       <p v-else-if="commits.length === 0" class="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400">
-        커밋 메시지에 #이슈번호를 남기면 여기에 표시됩니다
+        {{ $t('qa.info.commitsHint') }}
       </p>
       <ul v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-100">
         <li v-for="c in commits" :key="c.sha" class="flex items-center gap-3 px-3 py-2">
@@ -602,7 +603,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
 
     <!-- 생성/수정 날짜 (보조 정보, 본문 하단) -->
     <div class="mt-4 text-[11px] text-slate-400">
-      생성 {{ item.createdAt?.slice(0, 10) }} · 수정 {{ item.updatedAt?.slice(0, 10) }}
+      {{ $t('qa.info.dates', { created: item.createdAt?.slice(0, 10) ?? '', updated: item.updatedAt?.slice(0, 10) ?? '' }) }}
     </div>
 
     <p v-if="error" class="mt-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>

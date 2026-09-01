@@ -42,9 +42,11 @@ const selected = computed<T | null>(() => {
   return props.options.find((o) => props.keyFn(o) === props.modelValue) ?? null
 })
 
+const { t } = useI18n()
+
 const displayText = computed(() => {
   if (selected.value) return props.labelFn(selected.value)
-  return props.emptyLabel ?? '선택 안함'
+  return props.emptyLabel ?? t('common.select.notSelected')
 })
 
 const filtered = computed<T[]>(() => {
@@ -177,7 +179,7 @@ onBeforeUnmount(() => {
           v-if="clearable && selected && !disabled"
           type="button"
           class="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-          aria-label="선택 해제"
+          :aria-label="$t('common.select.clearSelection')"
           @click.stop="clear"
         >
           <X class="h-3 w-3" />
@@ -197,12 +199,12 @@ onBeforeUnmount(() => {
           ref="inputEl"
           v-model="query"
           type="text"
-          :placeholder="placeholder ?? '검색...'"
+          :placeholder="placeholder ?? $t('common.select.searchPlaceholder')"
           class="w-full shrink-0 border-b border-slate-100 px-3 py-2 text-xs focus:outline-none"
           @keydown="onKey"
         />
         <ul class="flex-1 overflow-y-auto py-1">
-          <li v-if="filtered.length === 0" class="px-3 py-2 text-xs text-slate-400">결과 없음</li>
+          <li v-if="filtered.length === 0" class="px-3 py-2 text-xs text-slate-400">{{ $t('common.select.noResults') }}</li>
           <li v-for="(o, i) in filtered" :key="String(keyFn(o))">
             <button
               type="button"

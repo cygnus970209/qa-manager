@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShieldCheck, Mail, ArrowLeft } from '@lucide/vue'
+import { ShieldCheck, Mail, ArrowLeft, Globe } from '@lucide/vue'
 import type { ApiErrorBody } from '~/types/api'
 import type { DemoAccount } from '~/composables/useDemo'
 
@@ -7,6 +7,12 @@ definePageMeta({ layout: 'blank' })
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale, setLocale } = useI18n()
+
+// 로그인 화면(네비바 없음)에도 언어 전환 제공 — 데모 방문자의 첫 화면
+async function toggleLocale() {
+  await setLocale(locale.value === 'ko' ? 'en' : 'ko')
+}
 const auth = useAuthStore()
 const { enabled: demoEnabled, accounts: demoAccounts } = useDemo()
 
@@ -75,7 +81,7 @@ async function onSubmitCredentials() {
     }
   } catch (e: any) {
     const body = e?.data as ApiErrorBody | undefined
-    errorMessage.value = body?.message ?? '로그인에 실패했습니다.'
+    errorMessage.value = body?.message ?? t('auth.login.failed')
   } finally {
     submitting.value = false
   }
@@ -92,10 +98,10 @@ async function onVerifyOtp() {
     if (body?.code === 'OTP_INVALID') {
       const details = body.details as { remainingAttempts?: number } | undefined
       remainingAttempts.value = details?.remainingAttempts ?? null
-      otpError.value = body.message ?? '인증 코드가 올바르지 않습니다.'
+      otpError.value = body.message ?? t('auth.otp.invalidCode')
     } else {
       // 세션 만료/시도 초과 → 처음부터 다시
-      otpError.value = body?.message ?? '인증에 실패했습니다. 다시 로그인해 주세요.'
+      otpError.value = body?.message ?? t('auth.otp.failed')
       backToCredentials()
     }
   } finally {
@@ -115,10 +121,10 @@ async function onResend() {
   } catch (e: any) {
     const body = e?.data as ApiErrorBody | undefined
     if (body?.code === 'UNAUTHORIZED') {
-      otpError.value = body.message ?? '인증 세션이 만료되었습니다.'
+      otpError.value = body.message ?? t('auth.otp.sessionExpired')
       backToCredentials()
     } else {
-      otpError.value = body?.message ?? '재전송에 실패했습니다.'
+      otpError.value = body?.message ?? t('auth.otp.resendFailed')
     }
   }
 }
@@ -141,17 +147,26 @@ function loginAs(acc: DemoAccount) {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center px-4">
+  <div class="relative flex min-h-screen items-center justify-center px-4">
+    <button
+      type="button"
+      class="absolute right-4 top-4 flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50"
+      :aria-label="$t('common.actions.language')"
+      @click="toggleLocale"
+    >
+      <Globe class="h-3.5 w-3.5" />
+      {{ locale === 'ko' ? 'English' : '한국어' }}
+    </button>
     <div class="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
       <div class="mb-6 flex items-center gap-2">
         <ShieldCheck class="h-6 w-6 text-emerald-600" />
-        <h1 class="text-lg font-semibold tracking-tight">QA Manager 로그인</h1>
+        <h1 class="text-lg font-semibold tracking-tight">{{ $t('auth.login.title') }}</h1>
       </div>
 
       <!-- 1단계: 아이디/비밀번호 -->
       <form v-if="step === 'credentials'" class="space-y-4" @submit.prevent="onSubmitCredentials">
         <label class="block">
-          <span class="block text-xs font-medium text-gray-600">아이디</span>
+          <span class="block text-xs font-medium text-gray-600">{{ $t('auth.login.username') }}</span>
           <input
             v-model="username"
             type="text"
@@ -161,7 +176,7 @@ function loginAs(acc: DemoAccount) {
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-gray-600">비밀번호</span>
+          <span class="block text-xs font-medium text-gray-600">{{ $t('auth.login.password') }}</span>
           <input
             v-model="password"
             type="password"
@@ -180,7 +195,7 @@ function loginAs(acc: DemoAccount) {
           :disabled="submitting"
           class="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
         >
-          {{ submitting ? '로그인 중…' : '로그인' }}
+          {{ submitting ? $t('auth.login.submitting') : $t('auth.login.submit') }}
         </button>
       </form>
 
@@ -190,7 +205,7 @@ function loginAs(acc: DemoAccount) {
         class="mt-6 border-t border-dashed border-gray-200 pt-4"
       >
         <p class="mb-2 text-xs font-medium text-gray-500">
-          데모 계정 <span class="text-gray-400">(클릭하면 바로 로그인)</span>
+          {{ $t('auth.login.demoAccounts') }} <span class="text-gray-400">{{ $t('auth.login.demoAccountsHint') }}</span>
         </p>
         <ul class="space-y-1.5">
           <li v-for="acc in demoAccounts" :key="acc.username">
@@ -212,17 +227,21 @@ function loginAs(acc: DemoAccount) {
         <div class="flex items-start gap-2.5 rounded-lg bg-emerald-50 px-3.5 py-3">
           <Mail class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
           <p class="text-xs text-emerald-800">
-            보안을 위해 추가 인증이 필요합니다.<br />
-            <span class="font-semibold">{{ maskedEmail }}</span> 로 보낸 6자리 인증 코드를 입력하세요.
+            {{ $t('auth.otp.notice') }}<br />
+            <i18n-t keypath="auth.otp.sentTo" scope="global">
+              <template #email><span class="font-semibold">{{ maskedEmail }}</span></template>
+            </i18n-t>
           </p>
         </div>
 
         <p v-if="demoEnabled" class="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          데모 모드: 실제 이메일은 발송되지 않습니다. 인증 코드 <span class="font-mono font-semibold">123456</span> 을 입력하세요.
+          <i18n-t keypath="auth.otp.demoNotice" scope="global">
+            <template #code><span class="font-mono font-semibold">123456</span></template>
+          </i18n-t>
         </p>
 
         <label class="block">
-          <span class="block text-xs font-medium text-gray-600">인증 코드</span>
+          <span class="block text-xs font-medium text-gray-600">{{ $t('auth.otp.codeLabel') }}</span>
           <input
             v-model="code"
             type="text"
@@ -237,7 +256,7 @@ function loginAs(acc: DemoAccount) {
 
         <p v-if="otpError" class="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
           {{ otpError }}
-          <span v-if="remainingAttempts !== null"> (남은 시도 {{ remainingAttempts }}회)</span>
+          <span v-if="remainingAttempts !== null"> {{ $t('auth.otp.remainingAttempts', remainingAttempts) }}</span>
         </p>
 
         <button
@@ -245,7 +264,7 @@ function loginAs(acc: DemoAccount) {
           :disabled="submitting || code.length < 6"
           class="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
         >
-          {{ submitting ? '확인 중…' : '인증 후 로그인' }}
+          {{ submitting ? $t('auth.otp.verifying') : $t('auth.otp.submit') }}
         </button>
 
         <div class="flex items-center justify-between text-xs">
@@ -254,7 +273,7 @@ function loginAs(acc: DemoAccount) {
             class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700"
             @click="backToCredentials"
           >
-            <ArrowLeft class="h-3.5 w-3.5" /> 처음으로
+            <ArrowLeft class="h-3.5 w-3.5" /> {{ $t('auth.otp.backToStart') }}
           </button>
           <button
             type="button"
@@ -262,7 +281,7 @@ function loginAs(acc: DemoAccount) {
             class="text-emerald-600 hover:text-emerald-700 disabled:text-gray-400"
             @click="onResend"
           >
-            {{ resendCooldown > 0 ? `재전송 (${resendCooldown}초)` : '코드 재전송' }}
+            {{ resendCooldown > 0 ? $t('auth.otp.resendCooldown', { n: resendCooldown }) : $t('auth.otp.resend') }}
           </button>
         </div>
       </form>

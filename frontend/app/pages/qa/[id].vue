@@ -15,6 +15,7 @@ definePageMeta({ key: 'qa-detail' })
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const qaId = computed(() => Number(route.params.id))
 
 const qaApi = useQa()
@@ -105,7 +106,7 @@ async function load() {
       initialFilter.value = resolveInitialFilter(allItems.value, item.value)
     }
   } catch (e: any) {
-    error.value = e?.data?.message ?? 'QA 항목을 불러올 수 없습니다.'
+    error.value = e?.data?.message ?? t('qa.detail.loadError')
   } finally {
     loading.value = false
   }
@@ -176,7 +177,7 @@ function goNext() {
   <section>
     <div class="mb-3 flex items-center justify-between">
       <button class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900" type="button" @click="router.back()">
-        <ArrowLeft class="h-3.5 w-3.5" /> 뒤로
+        <ArrowLeft class="h-3.5 w-3.5" /> {{ $t('qa.detail.back') }}
       </button>
       <div v-if="navIds.length > 0 && currentIdx >= 0" class="flex items-center gap-1 text-xs">
         <span class="mr-1 text-slate-400 tabular-nums">{{ currentIdx + 1 }} / {{ navIds.length }}</span>
@@ -186,7 +187,7 @@ function goNext() {
           class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
           @click="goPrev"
         >
-          <ChevronLeft class="h-3.5 w-3.5" /> 이전
+          <ChevronLeft class="h-3.5 w-3.5" /> {{ $t('qa.detail.prev') }}
         </button>
         <button
           type="button"
@@ -194,7 +195,7 @@ function goNext() {
           class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
           @click="goNext"
         >
-          다음 <ChevronRight class="h-3.5 w-3.5" />
+          {{ $t('qa.detail.next') }} <ChevronRight class="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
@@ -207,7 +208,7 @@ function goNext() {
           <!-- 박스 우측 가장자리에 붙은 접기 핸들 -->
           <button
             type="button"
-            title="목록 접기"
+            :title="$t('qa.detail.collapseList')"
             class="absolute -right-3 top-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
             @click="leftOpen = false"
           >
@@ -231,12 +232,12 @@ function goNext() {
       <button
         v-show="!leftOpen"
         type="button"
-        title="목록 펼치기"
+        :title="$t('qa.detail.expandList')"
         class="sticky top-20 hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
         @click="leftOpen = true"
       >
         <ChevronRight class="h-3.5 w-3.5" />
-        <span class="text-[10px] [writing-mode:vertical-rl]">목록</span>
+        <span class="text-[10px] [writing-mode:vertical-rl]">{{ $t('qa.detail.listLabel') }}</span>
       </button>
 
       <div class="min-w-0 flex-1">
@@ -312,19 +313,19 @@ function goNext() {
         <button
           v-show="!rightOpen"
           type="button"
-          title="이력 펼치기"
+          :title="$t('qa.detail.expandHistory')"
           class="hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex lg:sticky lg:top-20"
           @click="rightOpen = true"
         >
           <ChevronLeft class="h-3.5 w-3.5" />
-          <span class="text-[10px] [writing-mode:vertical-rl]">이력</span>
+          <span class="text-[10px] [writing-mode:vertical-rl]">{{ $t('qa.detail.historyLabel') }}</span>
         </button>
         <aside v-show="rightOpen" class="relative w-full shrink-0 lg:w-80">
           <div class="lg:sticky lg:top-20">
             <!-- 박스 좌측 가장자리에 붙은 접기 핸들 -->
             <button
               type="button"
-              title="이력 접기"
+              :title="$t('qa.detail.collapseHistory')"
               class="absolute -left-3 top-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
               @click="rightOpen = false"
             >

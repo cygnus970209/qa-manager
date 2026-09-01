@@ -14,6 +14,7 @@ const emit = defineEmits<{
 }>()
 
 const membersApi = useMembers()
+const { t } = useI18n()
 
 const form = reactive({
   name: '',
@@ -45,9 +46,9 @@ watch(() => props.open, (v) => {
 
 async function onSubmit() {
   error.value = null
-  if (!form.name.trim()) { error.value = '이름을 입력해주세요'; return }
-  if (props.mode === 'create' && !form.username.trim()) { error.value = '아이디를 입력해주세요'; return }
-  if (props.mode === 'create' && !form.password) { error.value = '비밀번호를 입력해주세요'; return }
+  if (!form.name.trim()) { error.value = t('admin.members.nameRequired'); return }
+  if (props.mode === 'create' && !form.username.trim()) { error.value = t('admin.members.usernameRequired'); return }
+  if (props.mode === 'create' && !form.password) { error.value = t('admin.members.passwordRequired'); return }
 
   submitting.value = true
   try {
@@ -70,7 +71,7 @@ async function onSubmit() {
     }
     emit('close')
   } catch (e: any) {
-    error.value = e?.data?.message ?? '저장에 실패했습니다.'
+    error.value = e?.data?.message ?? t('admin.members.saveFailed')
   } finally {
     submitting.value = false
   }
@@ -78,27 +79,27 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AppDialog :open="open" :title="mode === 'create' ? '팀원 추가' : '팀원 수정'" max-width="max-w-sm" @close="emit('close')">
+  <AppDialog :open="open" :title="mode === 'create' ? $t('admin.members.addMember') : $t('admin.members.editMember')" max-width="max-w-sm" @close="emit('close')">
     <form id="member-form" class="space-y-4" @submit.prevent="onSubmit">
       <p v-if="error" class="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{{ error }}</p>
 
       <label class="block">
-        <span class="block text-xs font-semibold text-slate-600">이름</span>
+        <span class="block text-xs font-semibold text-slate-600">{{ $t('admin.members.fields.name') }}</span>
         <input
           v-model="form.name"
           type="text"
-          placeholder="홍길동"
+          :placeholder="$t('admin.members.namePlaceholder')"
           maxlength="50"
           class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
         />
       </label>
 
       <label class="block">
-        <span class="block text-xs font-semibold text-slate-600">아이디</span>
+        <span class="block text-xs font-semibold text-slate-600">{{ $t('admin.members.fields.username') }}</span>
         <input
           v-model="form.username"
           type="text"
-          placeholder="honggildong"
+          :placeholder="$t('admin.members.usernamePlaceholder')"
           maxlength="50"
           :disabled="mode === 'edit'"
           :class="[
@@ -111,7 +112,7 @@ async function onSubmit() {
       </label>
 
       <label v-if="mode === 'create'" class="block">
-        <span class="block text-xs font-semibold text-slate-600">비밀번호</span>
+        <span class="block text-xs font-semibold text-slate-600">{{ $t('admin.members.fields.password') }}</span>
         <input
           v-model="form.password"
           type="password"
@@ -123,18 +124,18 @@ async function onSubmit() {
       </label>
 
       <label class="block">
-        <span class="block text-xs font-semibold text-slate-600">역할</span>
+        <span class="block text-xs font-semibold text-slate-600">{{ $t('admin.members.fields.role') }}</span>
         <input
           v-model="form.role"
           type="text"
-          placeholder="FE 개발자, 디자이너, PM ..."
+          :placeholder="$t('admin.members.rolePlaceholder')"
           maxlength="50"
           class="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
         />
       </label>
 
       <label class="block">
-        <span class="block text-xs font-semibold text-slate-600">아바타 URL <span class="font-normal text-slate-400">(선택)</span></span>
+        <span class="block text-xs font-semibold text-slate-600">{{ $t('admin.members.fields.avatarUrl') }} <span class="font-normal text-slate-400">{{ $t('admin.members.fields.optional') }}</span></span>
         <input
           v-model="form.avatarUrl"
           type="url"
@@ -149,13 +150,13 @@ async function onSubmit() {
         type="button"
         class="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200"
         @click="emit('close')"
-      >취소</button>
+      >{{ $t('common.actions.cancel') }}</button>
       <button
         type="submit"
         form="member-form"
         :disabled="submitting"
         class="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-      >{{ submitting ? '저장 중…' : (mode === 'create' ? '추가' : '저장') }}</button>
+      >{{ submitting ? $t('common.state.saving') : (mode === 'create' ? $t('common.actions.add') : $t('common.actions.save')) }}</button>
     </template>
   </AppDialog>
 </template>

@@ -60,7 +60,7 @@ watch(() => props.text, () => {
       class="mt-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
       @click="expanded = !expanded"
     >
-      {{ expanded ? '접기' : '더보기' }}
+      {{ expanded ? $t('qa.expandable.less') : $t('qa.expandable.more') }}
     </button>
   </div>
 </template>

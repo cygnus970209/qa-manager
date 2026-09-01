@@ -29,6 +29,7 @@ const emit = defineEmits<{ refreshed: [comments: QaComment[]] }>()
 const qaApi = useQa()
 const upload = useUpload()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const EMOJIS = ['👍', '👎', '👀', '🎉', '😄', '❤️', '🤔', '🚀']
 const MAX_LEN = 500
@@ -189,7 +190,7 @@ async function uploadFiles(files: FileList | File[] | null, target: 'new' | 'edi
     else if (target === 'edit') editImages.value.push(...urls)
     else replyImages.value.push(...urls)
   } catch (e: any) {
-    error.value = e?.message ?? '파일 업로드 실패'
+    error.value = e?.message ?? t('qa.comments.uploadFailed')
   } finally {
     uploading.value = false
   }
@@ -228,7 +229,7 @@ async function submitNew() {
     newMentionIds.value = new Set()
     await refresh()
   } catch (e: any) {
-    error.value = e?.data?.message ?? '댓글 등록 실패'
+    error.value = e?.data?.message ?? t('qa.comments.submitFailed')
   } finally {
     submitting.value = false
   }
@@ -475,8 +476,8 @@ function memberInitial(name: string) {
   <section class="rounded-xl border border-slate-200 bg-white">
     <header class="border-b border-slate-100 p-4 md:p-5">
       <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        <MessageSquare class="h-4 w-4" /> 코멘트
-        <span class="ml-1 text-xs font-normal text-slate-400">{{ comments.length }}개</span>
+        <MessageSquare class="h-4 w-4" /> {{ $t('qa.comments.title') }}
+        <span class="ml-1 text-xs font-normal text-slate-400">{{ $t('qa.comments.count', comments.length) }}</span>
       </h3>
     </header>
 
@@ -484,7 +485,7 @@ function memberInitial(name: string) {
     <div class="max-h-[600px] overflow-y-auto">
       <div v-if="tree.top.length === 0" class="py-10 text-center">
         <MessageSquare class="mx-auto mb-2 h-6 w-6 text-slate-300" />
-        <p class="text-sm text-slate-400">아직 코멘트가 없습니다</p>
+        <p class="text-sm text-slate-400">{{ $t('qa.comments.empty') }}</p>
       </div>
 
       <div v-else class="space-y-5 p-4 md:p-5">
@@ -499,7 +500,7 @@ function memberInitial(name: string) {
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm font-medium text-slate-700">{{ root.author.name }}</span>
                 <span class="text-xs text-slate-400">{{ timeAgo(root.createdAt) }}</span>
-                <span v-if="editingId === root.id" class="text-xs font-medium text-emerald-500">편집 중</span>
+                <span v-if="editingId === root.id" class="text-xs font-medium text-emerald-500">{{ $t('qa.comments.editing') }}</span>
               </div>
 
               <!-- 수정 모드 -->
@@ -553,10 +554,10 @@ function memberInitial(name: string) {
                   <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
                     <Paperclip class="h-3.5 w-3.5" />
                     <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'edit'); ($event.target as HTMLInputElement).value = ''" />
-                    {{ uploading ? '업로드…' : '파일' }}
+                    {{ uploading ? $t('qa.upload.uploading') : $t('qa.comments.file') }}
                   </label>
-                  <button type="button" :disabled="!editContent.trim() || editContent.length > MAX_LEN" class="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40" @click="saveEdit">저장</button>
-                  <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200" @click="cancelEdit">취소</button>
+                  <button type="button" :disabled="!editContent.trim() || editContent.length > MAX_LEN" class="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40" @click="saveEdit">{{ $t('common.actions.save') }}</button>
+                  <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200" @click="cancelEdit">{{ $t('common.actions.cancel') }}</button>
                   <span :class="['text-xs', editContent.length > MAX_LEN ? 'text-rose-500' : 'text-slate-400']">{{ editContent.length }}/{{ MAX_LEN }}</span>
                 </div>
               </div>
@@ -594,7 +595,7 @@ function memberInitial(name: string) {
                     <span class="font-medium">{{ reactionCount(root, emoji) }}</span>
                   </button>
                   <div class="relative">
-                    <button type="button" class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-400 hover:bg-slate-200" title="반응 추가" @click="reactionPickerId = (reactionPickerId === root.id ? null : root.id)">
+                    <button type="button" class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-400 hover:bg-slate-200" :title="$t('qa.comments.addReaction')" @click="reactionPickerId = (reactionPickerId === root.id ? null : root.id)">
                       <Plus class="h-3 w-3" />
                     </button>
                     <div v-if="reactionPickerId === root.id" ref="pickerRef" class="absolute bottom-full left-0 z-20 mb-1 flex gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
@@ -606,20 +607,20 @@ function memberInitial(name: string) {
                 <!-- 액션 -->
                 <div class="mt-1.5 flex items-center gap-2">
                   <button v-if="replyToId !== root.id" type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-emerald-500" @click="startReply(root.id)">
-                    <Reply class="h-3 w-3" /> 답글
+                    <Reply class="h-3 w-3" /> {{ $t('qa.comments.reply') }}
                   </button>
                   <template v-if="isMine(root)">
                     <template v-if="deletingId === root.id">
-                      <span class="text-xs text-rose-500">삭제할까요?</span>
-                      <button type="button" class="text-xs font-medium text-rose-500 hover:text-rose-700" @click="confirmDelete(root.id)">확인</button>
-                      <button type="button" class="text-xs font-medium text-slate-400 hover:text-slate-600" @click="deletingId = null">취소</button>
+                      <span class="text-xs text-rose-500">{{ $t('qa.comments.deletePrompt') }}</span>
+                      <button type="button" class="text-xs font-medium text-rose-500 hover:text-rose-700" @click="confirmDelete(root.id)">{{ $t('common.actions.confirm') }}</button>
+                      <button type="button" class="text-xs font-medium text-slate-400 hover:text-slate-600" @click="deletingId = null">{{ $t('common.actions.cancel') }}</button>
                     </template>
                     <template v-else>
                       <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-slate-600" @click="startEdit(root)">
-                        <Edit3 class="h-3 w-3" /> 수정
+                        <Edit3 class="h-3 w-3" /> {{ $t('common.actions.edit') }}
                       </button>
                       <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-rose-500" @click="deletingId = root.id">
-                        <Trash2 class="h-3 w-3" /> 삭제
+                        <Trash2 class="h-3 w-3" /> {{ $t('common.actions.delete') }}
                       </button>
                     </template>
                   </template>
@@ -657,13 +658,13 @@ function memberInitial(name: string) {
                 </div>
                 <div v-if="isMine(child)" class="mt-1.5 flex items-center gap-2">
                   <template v-if="deletingId === child.id">
-                    <span class="text-xs text-rose-500">삭제할까요?</span>
-                    <button type="button" class="text-xs font-medium text-rose-500 hover:text-rose-700" @click="confirmDelete(child.id)">확인</button>
-                    <button type="button" class="text-xs font-medium text-slate-400 hover:text-slate-600" @click="deletingId = null">취소</button>
+                    <span class="text-xs text-rose-500">{{ $t('qa.comments.deletePrompt') }}</span>
+                    <button type="button" class="text-xs font-medium text-rose-500 hover:text-rose-700" @click="confirmDelete(child.id)">{{ $t('common.actions.confirm') }}</button>
+                    <button type="button" class="text-xs font-medium text-slate-400 hover:text-slate-600" @click="deletingId = null">{{ $t('common.actions.cancel') }}</button>
                   </template>
                   <template v-else>
                     <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-rose-500" @click="deletingId = child.id">
-                      <Trash2 class="h-3 w-3" /> 삭제
+                      <Trash2 class="h-3 w-3" /> {{ $t('common.actions.delete') }}
                     </button>
                   </template>
                 </div>
@@ -685,7 +686,7 @@ function memberInitial(name: string) {
                     v-model="replyContent"
                     rows="2"
                     :maxlength="MAX_LEN"
-                    :placeholder="`${root.author.name}님에게 답글...`"
+                    :placeholder="$t('qa.comments.replyPlaceholder', { name: root.author.name })"
                     class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                     @input="checkMention($event.target as HTMLTextAreaElement, 'reply')"
                     @keydown="onEditorKey($event, 'reply')"
@@ -729,10 +730,10 @@ function memberInitial(name: string) {
                   <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
                     <Paperclip class="h-3.5 w-3.5" />
                     <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'reply'); ($event.target as HTMLInputElement).value = ''" />
-                    {{ uploading ? '업로드…' : '파일' }}
+                    {{ uploading ? $t('qa.upload.uploading') : $t('qa.comments.file') }}
                   </label>
-                  <button type="button" :disabled="(!replyContent.trim() && replyImages.length === 0) || replyContent.length > MAX_LEN" class="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40" @click="submitReply">답글 작성</button>
-                  <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200" @click="cancelReply">취소</button>
+                  <button type="button" :disabled="(!replyContent.trim() && replyImages.length === 0) || replyContent.length > MAX_LEN" class="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40" @click="submitReply">{{ $t('qa.comments.submitReply') }}</button>
+                  <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200" @click="cancelReply">{{ $t('common.actions.cancel') }}</button>
                   <span :class="['text-xs', replyContent.length > MAX_LEN ? 'text-rose-500' : 'text-slate-400']">{{ replyContent.length }}/{{ MAX_LEN }}</span>
                 </div>
               </div>
@@ -757,7 +758,7 @@ function memberInitial(name: string) {
                 v-model="newContent"
                 rows="2"
                 :maxlength="MAX_LEN"
-                placeholder="코멘트를 입력하세요... (@ 멘션, # QA 태그, 이미지 붙여넣기, Ctrl+Enter 등록)"
+                :placeholder="$t('qa.comments.newPlaceholder')"
                 class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                 @input="checkMention($event.target as HTMLTextAreaElement, 'new')"
                 @keydown="onEditorKey($event, 'new')"
@@ -802,7 +803,7 @@ function memberInitial(name: string) {
               <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
                 <Paperclip class="h-3.5 w-3.5" />
                 <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'new'); ($event.target as HTMLInputElement).value = ''" />
-                {{ uploading ? '업로드…' : '파일 추가' }}
+                {{ uploading ? $t('qa.upload.uploading') : $t('qa.comments.addFile') }}
               </label>
               <div class="flex items-center gap-2">
                 <span :class="['text-xs', newContent.length > MAX_LEN ? 'text-rose-500' : 'text-slate-400']">{{ newContent.length }}/{{ MAX_LEN }}</span>
@@ -810,7 +811,7 @@ function memberInitial(name: string) {
                   type="submit"
                   :disabled="submitting || uploading || (!newContent.trim() && newImages.length === 0) || newContent.length > MAX_LEN"
                   class="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"
-                >{{ submitting ? '등록 중…' : '코멘트 작성' }}</button>
+                >{{ submitting ? $t('qa.comments.submitting') : $t('qa.comments.submit') }}</button>
               </div>
             </div>
             <p v-if="error" class="mt-2 rounded bg-red-50 px-2 py-1 text-xs text-red-700">{{ error }}</p>

@@ -1,0 +1,138 @@
+{
+  "qa": {
+    "common": {
+      "unassigned": "Unassigned",
+      "memberSearchPlaceholder": "Search by name or role"
+    },
+    "upload": {
+      "uploading": "Uploading…",
+      "add": "+ Add",
+      "failed": "Upload failed"
+    },
+    "filter": {
+      "allStatuses": "All statuses",
+      "allPriorities": "All priorities",
+      "allUpdates": "All updates",
+      "allProjects": "All projects",
+      "hideReleased": "Hide released",
+      "hideReleasedUpdates": "Hide released updates",
+      "noMatch": "No QA items match the current filters."
+    },
+    "fields": {
+      "project": "Project",
+      "update": "Update",
+      "title": "Title",
+      "description": "Description",
+      "category": "Category",
+      "status": "Status",
+      "priority": "Priority",
+      "attachments": "Attachments",
+      "image": "Image",
+      "testerAuthor": "Tester (reporter)"
+    },
+    "detail": {
+      "back": "Back",
+      "prev": "Previous",
+      "next": "Next",
+      "collapseList": "Collapse list",
+      "expandList": "Expand list",
+      "listLabel": "List",
+      "collapseHistory": "Collapse history",
+      "expandHistory": "Expand history",
+      "historyLabel": "History",
+      "loadError": "Could not load the QA item."
+    },
+    "list": {
+      "searchPlaceholder": "Search QA items...",
+      "membersLabel": "Members:",
+      "testerOption": "Tester: {name}",
+      "assigneeOption": "Assignee: {name}",
+      "searchTester": "Search testers",
+      "searchAssignee": "Search assignees",
+      "allTesters": "All testers",
+      "allAssignees": "All assignees",
+      "mineOnly": "Mine only",
+      "totalCount": "{n} result | {n} results",
+      "colUpdatedAt": "Updated"
+    },
+    "sidebar": {
+      "filters": "Filters",
+      "refresh": "Refresh list",
+      "count": "{n} result | {n} results",
+      "searchPlaceholder": "Search by title or assignee",
+      "clearExtraFilters": "Extra filters active · Show all"
+    },
+    "info": {
+      "newQa": "New QA",
+      "saveFailed": "Failed to save",
+      "deleteConfirm": "Are you sure you want to delete this QA item?",
+      "moveUpdateFailed": "Failed to move to another update",
+      "statusChangeFailed": "Failed to change status",
+      "assigneeChangeFailed": "Failed to change assignee",
+      "descriptionPlaceholder": "Enter a description (paste images, use #number to tag a QA item)",
+      "noAttachments": "No attachments",
+      "linkedCommits": "Linked commits",
+      "loadingCommits": "Loading commits...",
+      "commitsHint": "Commits that mention #issue-number will show up here",
+      "dates": "Created {created} · Updated {updated}"
+    },
+    "history": {
+      "title": "History",
+      "system": "System",
+      "addedImage": "added an image",
+      "removedImage": "removed an image",
+      "addedImageAlt": "Added image",
+      "removedImageAlt": "Removed image",
+      "changedBy": "changed",
+      "fieldObjectParticle": "",
+      "changedTo": "",
+      "empty": "No changes yet."
+    },
+    "comments": {
+      "title": "Comments",
+      "count": "{n}",
+      "empty": "No comments yet",
+      "editing": "Editing",
+      "uploadFailed": "File upload failed",
+      "submitFailed": "Failed to post comment",
+      "file": "File",
+      "addFile": "Add file",
+      "reply": "Reply",
+      "replyPlaceholder": "Reply to {name}...",
+      "submitReply": "Post reply",
+      "deletePrompt": "Delete this comment?",
+      "addReaction": "Add reaction",
+      "newPlaceholder": "Write a comment... ({'@'} to mention, # to tag a QA item, paste images, Ctrl+Enter to post)",
+      "submitting": "Posting…",
+      "submit": "Post comment"
+    },
+    "modal": {
+      "title": "New QA Item",
+      "selectProject": "Select a project",
+      "selectUpdate": "Select an update",
+      "selectUpdateError": "Please select an update.",
+      "createGithubIssue": "Also create a GitHub issue",
+      "descriptionPlaceholder": "Enter a description (click here and paste to attach images, use #number to tag a QA item)",
+      "closeConfirm": "You have unsaved changes. Close anyway?",
+      "createFailed": "Failed to create the QA item.",
+      "create": "Create",
+      "creating": "Creating…"
+    },
+    "expandable": {
+      "more": "Show more",
+      "less": "Show less"
+    },
+    "lightbox": {
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "resetZoom": "Reset zoom",
+      "prevImage": "Previous image",
+      "nextImage": "Next image",
+      "imageAlt": "Enlarged image",
+      "help": "Scroll to zoom · Drag to pan · ←/→ previous/next · Esc to close · 0 to reset"
+    },
+    "attachments": {
+      "pdfDocument": "PDF document"
+    }
+  }
+}

@@ -127,8 +127,8 @@ async function onQaCreated() {
   <section>
     <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-xl font-bold text-slate-800 md:text-2xl">QA 현황 대시보드</h1>
-        <p class="mt-1 text-sm text-slate-500">프로젝트별 QA 진행 상황을 한눈에 확인하세요</p>
+        <h1 class="text-xl font-bold text-slate-800 md:text-2xl">{{ $t('dashboard.header.title') }}</h1>
+        <p class="mt-1 text-sm text-slate-500">{{ $t('dashboard.header.subtitle') }}</p>
       </div>
       <div class="flex gap-2">
         <button
@@ -137,7 +137,7 @@ async function onQaCreated() {
           @click="projectModalOpen = true"
         >
           <FolderPlus class="h-4 w-4" />
-          새 프로젝트
+          {{ $t('dashboard.header.newProject') }}
         </button>
         <button
           type="button"
@@ -145,17 +145,17 @@ async function onQaCreated() {
           @click="qaModalOpen = true"
         >
           <Plus class="h-4 w-4" />
-          새 QA 항목
+          {{ $t('dashboard.header.newQaItem') }}
         </button>
       </div>
     </header>
 
     <section class="mb-6">
       <div class="mb-3 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-slate-700">프로젝트</h2>
+        <h2 class="text-sm font-semibold text-slate-700">{{ $t('dashboard.projects.title') }}</h2>
         <span class="text-xs text-slate-400">
-          <template v-if="loading">불러오는 중…</template>
-          <template v-else>총 {{ projects.length }}개 · 고정 {{ projects.filter(p => p.pinned).length }}개</template>
+          <template v-if="loading">{{ $t('common.state.loading') }}</template>
+          <template v-else>{{ $t('dashboard.projects.summary', { total: projects.length, pinned: projects.filter(p => p.pinned).length }) }}</template>
         </span>
       </div>
       <div v-if="loading" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 md:gap-4">
@@ -190,14 +190,14 @@ async function onQaCreated() {
 
     <section class="mb-6">
       <div class="mb-3 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-slate-700">QA 현황</h2>
+        <h2 class="text-sm font-semibold text-slate-700">{{ $t('dashboard.stats.title') }}</h2>
         <label class="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500">
           <input
             v-model="myOnly"
             type="checkbox"
             class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
           />
-          내 작업만
+          {{ $t('dashboard.stats.myOnly') }}
         </label>
       </div>
       <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
@@ -214,27 +214,27 @@ async function onQaCreated() {
           </div>
         </template>
         <template v-else>
-          <StatsCard title="전체 QA" :value="stats.total" :icon="FileText" icon-color="text-blue-500" icon-bg="bg-blue-50" />
-          <StatsCard title="수정필요" :value="stats.needsFix" :icon="Wrench" icon-color="text-rose-500" icon-bg="bg-rose-50" />
-          <StatsCard title="진행중" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500" icon-bg="bg-blue-50" />
-          <StatsCard title="수정완료" :value="stats.fixDone" :icon="Check" icon-color="text-amber-500" icon-bg="bg-amber-50" />
+          <StatsCard :title="$t('dashboard.stats.totalQa')" :value="stats.total" :icon="FileText" icon-color="text-blue-500" icon-bg="bg-blue-50" />
+          <StatsCard :title="$t('common.qaStatus.needs_fix')" :value="stats.needsFix" :icon="Wrench" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+          <StatsCard :title="$t('common.qaStatus.in_progress')" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500" icon-bg="bg-blue-50" />
+          <StatsCard :title="$t('common.qaStatus.fix_done')" :value="stats.fixDone" :icon="Check" icon-color="text-amber-500" icon-bg="bg-amber-50" />
           <StatsCard
-            title="확인완료"
+            :title="$t('common.qaStatus.confirmed')"
             :value="stats.confirmed"
             :icon="CheckCheck"
             icon-color="text-emerald-500"
             icon-bg="bg-emerald-50"
-            :trend="`완료율 ${stats.total > 0 ? Math.round((stats.confirmed / stats.total) * 100) : 0}%`"
+            :trend="$t('dashboard.stats.completionRate', { rate: stats.total > 0 ? Math.round((stats.confirmed / stats.total) * 100) : 0 })"
           />
-          <StatsCard title="보류" :value="stats.onHold" :icon="Pause" icon-color="text-slate-500" icon-bg="bg-slate-100" />
-          <StatsCard title="추가확인필요" :value="stats.needsRecheck" :icon="RotateCcw" icon-color="text-purple-500" icon-bg="bg-purple-50" />
-          <StatsCard title="긴급" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500" icon-bg="bg-rose-50" />
+          <StatsCard :title="$t('common.qaStatus.on_hold')" :value="stats.onHold" :icon="Pause" icon-color="text-slate-500" icon-bg="bg-slate-100" />
+          <StatsCard :title="$t('common.qaStatus.needs_recheck')" :value="stats.needsRecheck" :icon="RotateCcw" icon-color="text-purple-500" icon-bg="bg-purple-50" />
+          <StatsCard :title="$t('common.priority.critical')" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500" icon-bg="bg-rose-50" />
         </template>
       </div>
     </section>
 
     <section>
-      <h2 class="mb-3 text-sm font-semibold text-slate-700">전체 QA 항목</h2>
+      <h2 class="mb-3 text-sm font-semibold text-slate-700">{{ $t('dashboard.qaList.title') }}</h2>
       <div v-if="loading" class="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div v-for="i in 5" :key="i" class="flex animate-pulse items-center gap-4 border-b border-slate-100 px-4 py-4 last:border-0">
           <div class="h-3 w-16 rounded bg-slate-100" />
@@ -247,16 +247,16 @@ async function onQaCreated() {
         <QAList :items="qaPage?.content ?? []" :updates="updates" :members="members" />
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2 text-xs text-slate-500">
-            <span>페이지당</span>
+            <span>{{ $t('dashboard.qaList.perPage') }}</span>
             <select
               v-model.number="pageSize"
               class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
             >
-              <option :value="10">10개</option>
-              <option :value="50">50개</option>
-              <option :value="100">100개</option>
+              <option :value="10">{{ $t('dashboard.qaList.pageSizeOption', { n: 10 }) }}</option>
+              <option :value="50">{{ $t('dashboard.qaList.pageSizeOption', { n: 50 }) }}</option>
+              <option :value="100">{{ $t('dashboard.qaList.pageSizeOption', { n: 100 }) }}</option>
             </select>
-            <span v-if="qaPage">총 {{ qaPage.totalElements.toLocaleString() }}건</span>
+            <span v-if="qaPage">{{ $t('dashboard.qaList.totalCount', { count: qaPage.totalElements.toLocaleString() }) }}</span>
           </div>
           <div class="flex items-center gap-1">
             <button
@@ -265,7 +265,7 @@ async function onQaCreated() {
               :disabled="pageNum === 0"
               @click="goPage(pageNum - 1)"
             >
-              이전
+              {{ $t('dashboard.qaList.prev') }}
             </button>
             <span class="px-2 text-xs text-slate-500">{{ pageNum + 1 }} / {{ qaPage?.totalPages || 1 }}</span>
             <button
@@ -274,7 +274,7 @@ async function onQaCreated() {
               :disabled="!qaPage || pageNum >= qaPage.totalPages - 1"
               @click="goPage(pageNum + 1)"
             >
-              다음
+              {{ $t('dashboard.qaList.next') }}
             </button>
           </div>
         </div>

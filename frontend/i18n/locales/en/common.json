@@ -1,0 +1,75 @@
+{
+  "common": {
+    "appName": "QA Manager",
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "close": "Close",
+      "confirm": "Confirm",
+      "create": "Create",
+      "add": "Add",
+      "search": "Search",
+      "reset": "Reset",
+      "retry": "Retry",
+      "change": "Change",
+      "settings": "Settings",
+      "logout": "Sign out",
+      "language": "Language"
+    },
+    "state": {
+      "loading": "Loading...",
+      "saving": "Saving...",
+      "processing": "Processing...",
+      "empty": "No data.",
+      "error": "Something went wrong.",
+      "unknown": "Unknown",
+      "none": "None",
+      "all": "All"
+    },
+    "qaStatus": {
+      "needs_fix": "Needs Fix",
+      "in_progress": "In Progress",
+      "fix_done": "Fixed",
+      "confirmed": "Verified",
+      "on_hold": "On Hold",
+      "needs_recheck": "Recheck"
+    },
+    "updateStatus": {
+      "in_progress": "In Progress",
+      "testing": "Testing",
+      "released": "Released"
+    },
+    "projectStatus": {
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "roles": {
+      "tester": "Tester",
+      "assignee": "Assignee",
+      "assignee1": "Assignee 1",
+      "assignee2": "Assignee 2"
+    },
+    "time": {
+      "justNow": "just now"
+    },
+    "deleteConfirm": {
+      "title": "Delete this item?",
+      "message": "This action cannot be undone. Continue?"
+    },
+    "select": {
+      "notSelected": "Not selected",
+      "searchPlaceholder": "Search...",
+      "clearSelection": "Clear selection",
+      "noResults": "No results"
+    }
+  }
+}

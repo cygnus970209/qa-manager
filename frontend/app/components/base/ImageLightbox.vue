@@ -147,7 +147,7 @@ function onBackdrop(e: MouseEvent) {
           type="button"
           class="rounded-full p-1.5 text-white hover:bg-white/20 disabled:opacity-40"
           :disabled="scale <= MIN"
-          aria-label="축소"
+          :aria-label="$t('qa.lightbox.zoomOut')"
           @click.stop="zoomOut"
         >
           <Minus class="h-4 w-4" />
@@ -157,7 +157,7 @@ function onBackdrop(e: MouseEvent) {
           type="button"
           class="rounded-full p-1.5 text-white hover:bg-white/20 disabled:opacity-40"
           :disabled="scale >= MAX"
-          aria-label="확대"
+          :aria-label="$t('qa.lightbox.zoomIn')"
           @click.stop="zoomIn"
         >
           <Plus class="h-4 w-4" />
@@ -166,7 +166,7 @@ function onBackdrop(e: MouseEvent) {
         <button
           type="button"
           class="rounded-full p-1.5 text-white hover:bg-white/20"
-          aria-label="원래 크기"
+          :aria-label="$t('qa.lightbox.resetZoom')"
           @click.stop="reset"
         >
           <RotateCcw class="h-4 w-4" />
@@ -180,7 +180,7 @@ function onBackdrop(e: MouseEvent) {
       <button
         type="button"
         class="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-        aria-label="닫기"
+        :aria-label="$t('common.actions.close')"
         @click.stop="emit('close')"
       >
         <X class="h-5 w-5" />
@@ -191,7 +191,7 @@ function onBackdrop(e: MouseEvent) {
         v-if="hasPrev"
         type="button"
         class="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-        aria-label="이전 이미지"
+        :aria-label="$t('qa.lightbox.prevImage')"
         @click.stop="goPrev"
       >
         <ChevronLeft class="h-6 w-6" />
@@ -200,7 +200,7 @@ function onBackdrop(e: MouseEvent) {
         v-if="hasNext"
         type="button"
         class="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-        aria-label="다음 이미지"
+        :aria-label="$t('qa.lightbox.nextImage')"
         @click.stop="goNext"
       >
         <ChevronRight class="h-6 w-6" />
@@ -208,7 +208,7 @@ function onBackdrop(e: MouseEvent) {
 
       <img
         :src="currentSrc"
-        alt="확대 이미지"
+        :alt="$t('qa.lightbox.imageAlt')"
         :style="{
           transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
           cursor: scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default',
@@ -221,7 +221,7 @@ function onBackdrop(e: MouseEvent) {
       />
 
       <p class="absolute bottom-3 left-1/2 -translate-x-1/2 text-[11px] text-white/60">
-        휠로 확대/축소 · 드래그로 이동 · ←/→ 이전/다음 · ESC 닫기 · 0 키 리셋
+        {{ $t('qa.lightbox.help') }}
       </p>
     </div>
   </Teleport>

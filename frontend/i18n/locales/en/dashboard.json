@@ -1,0 +1,34 @@
+{
+  "dashboard": {
+    "header": {
+      "title": "QA Dashboard",
+      "subtitle": "See QA progress across your projects at a glance",
+      "newProject": "New Project",
+      "newQaItem": "New QA Item"
+    },
+    "projects": {
+      "title": "Projects",
+      "summary": "{total} total · {pinned} pinned"
+    },
+    "projectCard": {
+      "pin": "Pin to top",
+      "unpin": "Unpin",
+      "total": "Total {count}",
+      "resolved": "Done {count}"
+    },
+    "stats": {
+      "title": "QA Overview",
+      "myOnly": "My items only",
+      "totalQa": "Total QA",
+      "completionRate": "{rate}% complete"
+    },
+    "qaList": {
+      "title": "All QA Items",
+      "perPage": "Per page",
+      "pageSizeOption": "{n}",
+      "totalCount": "{count} total",
+      "prev": "Previous",
+      "next": "Next"
+    }
+  }
+}

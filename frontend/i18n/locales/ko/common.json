@@ -1,0 +1,75 @@
+{
+  "common": {
+    "appName": "QA Manager",
+    "actions": {
+      "save": "저장",
+      "cancel": "취소",
+      "delete": "삭제",
+      "edit": "수정",
+      "close": "닫기",
+      "confirm": "확인",
+      "create": "등록",
+      "add": "추가",
+      "search": "검색",
+      "reset": "초기화",
+      "retry": "재시도",
+      "change": "변경",
+      "settings": "설정",
+      "logout": "로그아웃",
+      "language": "언어"
+    },
+    "state": {
+      "loading": "불러오는 중...",
+      "saving": "저장 중...",
+      "processing": "처리 중...",
+      "empty": "데이터가 없습니다.",
+      "error": "오류가 발생했습니다.",
+      "unknown": "알 수 없음",
+      "none": "없음",
+      "all": "전체"
+    },
+    "qaStatus": {
+      "needs_fix": "수정필요",
+      "in_progress": "진행중",
+      "fix_done": "수정완료",
+      "confirmed": "확인완료",
+      "on_hold": "보류",
+      "needs_recheck": "추가확인필요"
+    },
+    "updateStatus": {
+      "in_progress": "진행중",
+      "testing": "테스트",
+      "released": "배포완료"
+    },
+    "projectStatus": {
+      "active": "진행중",
+      "paused": "일시중지",
+      "completed": "완료"
+    },
+    "priority": {
+      "low": "낮음",
+      "medium": "보통",
+      "high": "높음",
+      "critical": "긴급"
+    },
+    "roles": {
+      "tester": "테스터",
+      "assignee": "담당자",
+      "assignee1": "담당자1",
+      "assignee2": "담당자2"
+    },
+    "time": {
+      "justNow": "방금 전"
+    },
+    "deleteConfirm": {
+      "title": "정말 삭제하시겠습니까?",
+      "message": "삭제하면 복구할 수 없습니다. 계속하시겠습니까?"
+    },
+    "select": {
+      "notSelected": "선택 안함",
+      "searchPlaceholder": "검색...",
+      "clearSelection": "선택 해제",
+      "noResults": "결과 없음"
+    }
+  }
+}

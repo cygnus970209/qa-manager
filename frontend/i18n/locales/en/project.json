@@ -1,0 +1,86 @@
+{
+  "project": {
+    "errors": {
+      "loadFailed": "Could not load the project.",
+      "goToDashboard": "Go to dashboard"
+    },
+    "header": {
+      "dashboard": "Dashboard",
+      "createdAt": "Created {date}",
+      "updateCount": "1 update | {n} updates",
+      "qaSummary": "{total} QA ({resolved} done)",
+      "statusOption": "Status: {status}",
+      "editProject": "Edit project",
+      "deleteProject": "Delete project"
+    },
+    "stats": {
+      "title": "QA Overview",
+      "myOnly": "My items only",
+      "totalQa": "Total QA",
+      "completionRate": "{rate}% complete"
+    },
+    "updates": {
+      "title": "QA Items by Update",
+      "hideReleased": "Hide released",
+      "updateCount": "1 update | {n} updates",
+      "hiddenCount": "{n} hidden",
+      "qaCount": "1 QA item | {n} QA items",
+      "reorder": "Reorder",
+      "newUpdate": "New Update",
+      "newQa": "New QA",
+      "empty": "No updates yet.",
+      "hiddenNotice": "1 released update is hidden. | {n} released updates are hidden."
+    },
+    "accordion": {
+      "qaCount": "1 QA item | {n} QA items",
+      "statusOption": "Status: {status}",
+      "addQa": "Add QA",
+      "editUpdate": "Edit update",
+      "deleteUpdate": "Delete update",
+      "emptyQa": "No QA items yet."
+    },
+    "deleteProject": {
+      "title": "Delete project '{name}'?",
+      "message": "Updates and QA items in this project may also be affected. Are you sure you want to delete it?"
+    },
+    "deleteUpdate": {
+      "title": "Delete update '{title}'?",
+      "message": "QA items in this update may also be affected. Are you sure you want to delete it?"
+    },
+    "form": {
+      "create": "Create",
+      "creating": "Creating…"
+    },
+    "projectModal": {
+      "createTitle": "New Project",
+      "editTitle": "Edit Project",
+      "name": "Project name",
+      "description": "Description",
+      "status": "Status",
+      "githubSection": "Link GitHub repositories",
+      "githubMultiple": "(multiple allowed)",
+      "githubLoading": "Loading repositories…",
+      "githubEmpty": "No installed repositories.",
+      "githubHint": "Once linked, new QA items can also create GitHub issues in the selected repositories.",
+      "createFailed": "Failed to create the project.",
+      "updateFailed": "Failed to save changes."
+    },
+    "updateModal": {
+      "createTitle": "New Update",
+      "editTitle": "Edit Update",
+      "version": "Version",
+      "status": "Status",
+      "title": "Title",
+      "description": "Description",
+      "createFailed": "Failed to create the update.",
+      "updateFailed": "Failed to save changes."
+    },
+    "reorderModal": {
+      "title": "Reorder Updates",
+      "hint": "Drag items to change their display order, then save.",
+      "dragHandle": "Drag to move",
+      "empty": "No updates to reorder.",
+      "saveFailed": "Failed to save the order."
+    }
+  }
+}

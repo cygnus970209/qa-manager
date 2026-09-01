@@ -5,6 +5,7 @@ import AppDialog from '~/components/base/AppDialog.vue'
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const upload = useUpload()
 
@@ -37,7 +38,7 @@ function onPickAvatar(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
   if (!file.type.startsWith('image/')) {
-    error.value = '이미지 파일만 업로드할 수 있습니다.'
+    error.value = t('auth.profile.imageOnly')
     return
   }
   avatarFile.value = file
@@ -64,15 +65,15 @@ async function onSubmit() {
 
   if (wantsPasswordChange.value) {
     if (!form.currentPassword || !form.newPassword) {
-      error.value = '비밀번호를 변경하려면 현재 비밀번호와 새 비밀번호를 모두 입력하세요.'
+      error.value = t('auth.profile.passwordBothRequired')
       return
     }
     if (form.newPassword.length < 4) {
-      error.value = '새 비밀번호는 4자 이상이어야 합니다.'
+      error.value = t('auth.profile.passwordTooShort')
       return
     }
     if (form.newPassword !== form.newPasswordConfirm) {
-      error.value = '새 비밀번호 확인이 일치하지 않습니다.'
+      error.value = t('auth.profile.passwordMismatch')
       return
     }
   }
@@ -103,10 +104,10 @@ async function onSubmit() {
       form.newPasswordConfirm = ''
     }
 
-    success.value = '저장되었습니다.'
+    success.value = t('auth.profile.saved')
     avatarFile.value = null
   } catch (e: any) {
-    error.value = e?.data?.message ?? '저장 중 오류가 발생했습니다.'
+    error.value = e?.data?.message ?? t('auth.profile.saveFailed')
   } finally {
     submitting.value = false
   }
@@ -114,17 +115,17 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AppDialog :open="open" title="내 정보" @close="emit('close')">
+  <AppDialog :open="open" :title="$t('auth.profile.title')" @close="emit('close')">
     <form id="profile-form" class="space-y-5" @submit.prevent="onSubmit">
       <!-- 아바타 -->
       <div class="flex items-center gap-4">
         <div class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-slate-100">
-          <img v-if="avatarPreview" :src="avatarPreview" alt="아바타 미리보기" class="h-full w-full object-cover" />
+          <img v-if="avatarPreview" :src="avatarPreview" :alt="$t('auth.profile.avatarPreviewAlt')" class="h-full w-full object-cover" />
           <UserRound v-else class="h-8 w-8 text-slate-400" />
         </div>
         <div class="flex-1">
           <label class="inline-flex cursor-pointer items-center rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
-            이미지 선택
+            {{ $t('auth.profile.chooseImage') }}
             <input
               id="avatar-input"
               type="file"
@@ -138,16 +139,16 @@ async function onSubmit() {
             type="button"
             class="ml-2 text-xs text-slate-500 hover:text-slate-700"
             @click="clearAvatarSelection"
-          >취소</button>
+          >{{ $t('common.actions.cancel') }}</button>
           <p class="mt-1 text-[11px] text-slate-400">
-            {{ avatarFile ? avatarFile.name : '저장 시 업로드됩니다.' }}
+            {{ avatarFile ? avatarFile.name : $t('auth.profile.uploadOnSave') }}
           </p>
         </div>
       </div>
 
       <!-- 사용자명 (읽기전용) -->
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">사용자명</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.username') }}</span>
         <input
           :value="auth.user?.username ?? ''"
           type="text"
@@ -158,7 +159,7 @@ async function onSubmit() {
 
       <!-- 이름 -->
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">이름</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.name') }}</span>
         <input
           v-model="form.name"
           type="text"
@@ -170,21 +171,21 @@ async function onSubmit() {
 
       <!-- 역할 (읽기전용) -->
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">역할</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.role') }}</span>
         <input
-          :value="auth.user?.role ?? '(미지정)'"
+          :value="auth.user?.role ?? $t('auth.profile.roleUnassigned')"
           type="text"
           disabled
           class="mt-1 w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
         />
-        <p class="mt-1 text-[11px] text-slate-400">역할은 관리자에게 문의하세요.</p>
+        <p class="mt-1 text-[11px] text-slate-400">{{ $t('auth.profile.roleHint') }}</p>
       </label>
 
       <!-- 비밀번호 변경 -->
       <fieldset class="space-y-3 rounded-md border border-slate-200 p-3">
-        <legend class="px-1 text-xs font-medium text-slate-600">비밀번호 변경 <span class="text-slate-400">(선택)</span></legend>
+        <legend class="px-1 text-xs font-medium text-slate-600">{{ $t('auth.profile.changePassword') }} <span class="text-slate-400">{{ $t('auth.profile.optional') }}</span></legend>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">현재 비밀번호</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.currentPassword') }}</span>
           <input
             v-model="form.currentPassword"
             type="password"
@@ -193,7 +194,7 @@ async function onSubmit() {
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">새 비밀번호</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.newPassword') }}</span>
           <input
             v-model="form.newPassword"
             type="password"
@@ -204,7 +205,7 @@ async function onSubmit() {
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">새 비밀번호 확인</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.newPasswordConfirm') }}</span>
           <input
             v-model="form.newPasswordConfirm"
             type="password"
@@ -222,14 +223,14 @@ async function onSubmit() {
         type="button"
         class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
         @click="emit('close')"
-      >닫기</button>
+      >{{ $t('common.actions.close') }}</button>
       <button
         type="submit"
         form="profile-form"
         :disabled="submitting"
         class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
       >
-        {{ submitting ? '저장 중…' : '저장' }}
+        {{ submitting ? $t('common.state.saving') : $t('common.actions.save') }}
       </button>
     </template>
   </AppDialog>

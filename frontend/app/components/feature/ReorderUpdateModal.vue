@@ -16,6 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const updatesApi = useUpdates()
+const { t } = useI18n()
 
 const list = ref<ProjectUpdate[]>([])
 const submitting = ref(false)
@@ -36,7 +37,7 @@ async function onSave() {
     emit('reordered', reordered)
     emit('close')
   } catch (e: any) {
-    error.value = e?.data?.message ?? '순서 저장에 실패했습니다.'
+    error.value = e?.data?.message ?? t('project.reorderModal.saveFailed')
   } finally {
     submitting.value = false
   }
@@ -44,8 +45,8 @@ async function onSave() {
 </script>
 
 <template>
-  <AppDialog :open="open" title="업데이트 순서 변경" @close="emit('close')">
-    <p class="mb-3 text-xs text-slate-400">항목을 끌어서 노출 순서를 바꾼 뒤 저장하세요.</p>
+  <AppDialog :open="open" :title="$t('project.reorderModal.title')" @close="emit('close')">
+    <p class="mb-3 text-xs text-slate-400">{{ $t('project.reorderModal.hint') }}</p>
     <draggable
       v-model="list"
       item-key="id"
@@ -59,7 +60,7 @@ async function onSave() {
           <button
             type="button"
             class="drag-handle cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing"
-            title="드래그하여 이동"
+            :title="$t('project.reorderModal.dragHandle')"
           >
             <GripVertical class="h-4 w-4" />
           </button>
@@ -72,18 +73,18 @@ async function onSave() {
       </template>
     </draggable>
     <p v-if="list.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
-      순서를 변경할 업데이트가 없습니다.
+      {{ $t('project.reorderModal.empty') }}
     </p>
     <p v-if="error" class="mt-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
     <template #footer>
-      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="emit('close')">취소</button>
+      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="emit('close')">{{ $t('common.actions.cancel') }}</button>
       <button
         type="button"
         :disabled="submitting || list.length === 0"
         class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
         @click="onSave"
       >
-        {{ submitting ? '저장 중…' : '저장' }}
+        {{ submitting ? $t('common.state.saving') : $t('common.actions.save') }}
       </button>
     </template>
   </AppDialog>

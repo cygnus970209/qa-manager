@@ -1,0 +1,25 @@
+{
+  "demo": {
+    "banner": {
+      "message": "데모 버전입니다 — 변경 사항은 이 브라우저에만 저장되며 서버에 반영되지 않습니다."
+    },
+    "accounts": {
+      "otpTag": "(이메일 OTP 체험)"
+    },
+    "api": {
+      "readonly": "데모 모드에서는 사용할 수 없는 기능입니다.",
+      "loginRequired": "로그인이 필요합니다.",
+      "invalidAccount": "데모 계정이 아닙니다. 안내된 계정으로 로그인하세요.",
+      "otpSessionExpired": "인증 세션이 만료되었습니다. 다시 로그인해 주세요.",
+      "otpTooManyAttempts": "시도 횟수를 초과했습니다. 다시 로그인해 주세요.",
+      "otpInvalidCode": "인증 코드가 올바르지 않습니다.",
+      "memberNotFound": "멤버를 찾을 수 없습니다.",
+      "projectNotFound": "프로젝트를 찾을 수 없습니다.",
+      "updateNotFound": "업데이트를 찾을 수 없습니다.",
+      "qaNotFound": "QA 항목을 찾을 수 없습니다.",
+      "commentNotFound": "댓글을 찾을 수 없습니다.",
+      "notificationNotFound": "알림을 찾을 수 없습니다.",
+      "notImplemented": "데모 mock 미구현 경로: {method} {path}"
+    }
+  }
+}

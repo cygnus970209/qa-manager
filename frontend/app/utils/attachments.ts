@@ -5,16 +5,26 @@ export function isPdfUrl(url: string): boolean {
   return path.toLowerCase().endsWith('.pdf')
 }
 
+/** 컴포넌트 렌더 컨텍스트 밖에서 호출돼도 안전하게 번역을 얻는다 (format.ts 의 activeI18n 과 동일 패턴). */
+function pdfDocumentLabel(): string {
+  try {
+    const { $i18n } = useNuxtApp() as any
+    return $i18n.t('qa.attachments.pdfDocument')
+  } catch {
+    return 'PDF 문서'
+  }
+}
+
 /** S3 key 마지막 세그먼트 "{uuid}-{원본파일명}" 에서 원본 파일명을 복원한다. */
 export function attachmentFileName(url: string): string {
-  if (url.startsWith('data:')) return 'PDF 문서'
+  if (url.startsWith('data:')) return pdfDocumentLabel()
   try {
     const path = url.split(/[?#]/)[0] ?? url
     const last = decodeURIComponent(path.split('/').pop() ?? '')
     const name = last.replace(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i, '')
-    return name || 'PDF 문서'
+    return name || pdfDocumentLabel()
   } catch {
-    return 'PDF 문서'
+    return pdfDocumentLabel()
   }
 }
 

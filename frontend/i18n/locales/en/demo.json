@@ -1,0 +1,25 @@
+{
+  "demo": {
+    "banner": {
+      "message": "This is a demo — changes are saved only in this browser and never reach the server."
+    },
+    "accounts": {
+      "otpTag": "(email OTP demo)"
+    },
+    "api": {
+      "readonly": "This feature is not available in demo mode.",
+      "loginRequired": "Please sign in.",
+      "invalidAccount": "Not a demo account. Please sign in with one of the listed accounts.",
+      "otpSessionExpired": "Your verification session has expired. Please sign in again.",
+      "otpTooManyAttempts": "Too many attempts. Please sign in again.",
+      "otpInvalidCode": "The verification code is incorrect.",
+      "memberNotFound": "Member not found.",
+      "projectNotFound": "Project not found.",
+      "updateNotFound": "Update not found.",
+      "qaNotFound": "QA item not found.",
+      "commentNotFound": "Comment not found.",
+      "notificationNotFound": "Notification not found.",
+      "notImplemented": "Demo mock route not implemented: {method} {path}"
+    }
+  }
+}

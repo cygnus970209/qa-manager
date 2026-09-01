@@ -20,6 +20,7 @@ const qa = useQa()
 const upload = useUpload()
 
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const form = reactive<{
   projectId: number | null
@@ -131,7 +132,7 @@ async function uploadFiles(files: Iterable<File>) {
     }
   } catch (e: any) {
     console.error('NewQAModal upload failed', e)
-    error.value = e?.data?.message ?? e?.message ?? '업로드 실패'
+    error.value = e?.data?.message ?? e?.message ?? t('qa.upload.failed')
   } finally {
     uploading.value = false
   }
@@ -183,14 +184,14 @@ const isDirty = computed(() =>
 )
 
 function requestClose() {
-  if (isDirty.value && !window.confirm('작성 중인 내용이 있습니다. 닫으시겠습니까?')) return
+  if (isDirty.value && !window.confirm(t('qa.modal.closeConfirm'))) return
   emit('close')
 }
 
 async function onSubmit() {
   error.value = null
   if (form.updateId == null) {
-    error.value = '업데이트를 선택하세요.'
+    error.value = t('qa.modal.selectUpdateError')
     return
   }
   submitting.value = true
@@ -214,7 +215,7 @@ async function onSubmit() {
     emit('created', created)
     emit('close')
   } catch (e: any) {
-    error.value = e?.data?.message ?? 'QA 생성에 실패했습니다.'
+    error.value = e?.data?.message ?? t('qa.modal.createFailed')
   } finally {
     submitting.value = false
   }
@@ -222,29 +223,29 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AppDialog :open="open" title="새 QA 항목" max-width="max-w-2xl" @close="requestClose">
+  <AppDialog :open="open" :title="$t('qa.modal.title')" max-width="max-w-2xl" @close="requestClose">
     <form id="new-qa-form" class="space-y-4" @submit.prevent="onSubmit">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">프로젝트</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.project') }}</span>
           <select
             v-model="form.projectId"
             required
             class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           >
-            <option :value="null" disabled>프로젝트 선택</option>
+            <option :value="null" disabled>{{ $t('qa.modal.selectProject') }}</option>
             <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">업데이트</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.update') }}</span>
           <select
             v-model="form.updateId"
             required
             :disabled="filteredUpdates.length === 0"
             class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-100"
           >
-            <option :value="null" disabled>업데이트 선택</option>
+            <option :value="null" disabled>{{ $t('qa.modal.selectUpdate') }}</option>
             <option v-for="u in filteredUpdates" :key="u.id" :value="u.id">{{ u.version }} – {{ u.title }}</option>
           </select>
         </label>
@@ -257,7 +258,7 @@ async function onSubmit() {
             type="checkbox"
             class="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-emerald-500"
           />
-          <span class="text-xs text-slate-600">GitHub 이슈도 함께 생성</span>
+          <span class="text-xs text-slate-600">{{ $t('qa.modal.createGithubIssue') }}</span>
         </label>
         <span v-if="githubRepos.length === 1" class="text-xs text-slate-400">({{ githubRepos[0]?.fullName }})</span>
         <select
@@ -271,7 +272,7 @@ async function onSubmit() {
       </div>
 
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">제목</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.title') }}</span>
         <input
           v-model="form.title"
           type="text"
@@ -282,12 +283,12 @@ async function onSubmit() {
       </label>
 
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">설명</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.description') }}</span>
         <QaTagTextarea
           v-model="form.description"
           rows="3"
           maxlength="4000"
-          placeholder="설명을 입력하세요 (이미지 붙여넣기 하려면 여기 누르고 붙여넣기 하세요, #번호 로 QA 태그)"
+          :placeholder="$t('qa.modal.descriptionPlaceholder')"
           class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           @paste="onPaste"
         />
@@ -295,7 +296,7 @@ async function onSubmit() {
 
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <label class="block sm:col-span-2">
-          <span class="block text-xs font-medium text-slate-600">카테고리</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.category') }}</span>
           <input
             v-model="form.category"
             type="text"
@@ -304,30 +305,30 @@ async function onSubmit() {
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">상태</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.status') }}</span>
           <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-            <option value="NEEDS_FIX">수정필요</option>
-            <option value="IN_PROGRESS">진행중</option>
-            <option value="FIX_DONE">수정완료</option>
-            <option value="CONFIRMED">확인완료</option>
-            <option value="ON_HOLD">보류</option>
-            <option value="NEEDS_RECHECK">추가확인필요</option>
+            <option value="NEEDS_FIX">{{ $t('common.qaStatus.needs_fix') }}</option>
+            <option value="IN_PROGRESS">{{ $t('common.qaStatus.in_progress') }}</option>
+            <option value="FIX_DONE">{{ $t('common.qaStatus.fix_done') }}</option>
+            <option value="CONFIRMED">{{ $t('common.qaStatus.confirmed') }}</option>
+            <option value="ON_HOLD">{{ $t('common.qaStatus.on_hold') }}</option>
+            <option value="NEEDS_RECHECK">{{ $t('common.qaStatus.needs_recheck') }}</option>
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">우선순위</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.priority') }}</span>
           <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-            <option value="LOW">낮음</option>
-            <option value="MEDIUM">보통</option>
-            <option value="HIGH">높음</option>
-            <option value="CRITICAL">긴급</option>
+            <option value="LOW">{{ $t('common.priority.low') }}</option>
+            <option value="MEDIUM">{{ $t('common.priority.medium') }}</option>
+            <option value="HIGH">{{ $t('common.priority.high') }}</option>
+            <option value="CRITICAL">{{ $t('common.priority.critical') }}</option>
           </select>
         </label>
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
-          <span class="block text-xs font-medium text-slate-600">테스터 (작성자)</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.testerAuthor') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.testerId"
@@ -335,14 +336,14 @@ async function onSubmit() {
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="이름/역할로 검색"
-            empty-label="미지정"
+            :placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             @update:model-value="(v) => form.testerId = v as number | null"
           />
         </div>
         <div>
-          <span class="block text-xs font-medium text-slate-600">담당자 1</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('common.roles.assignee1') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.assignee1Id"
@@ -350,14 +351,14 @@ async function onSubmit() {
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="이름/역할로 검색"
-            empty-label="미지정"
+            :placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             @update:model-value="(v) => form.assignee1Id = v as number | null"
           />
         </div>
         <div>
-          <span class="block text-xs font-medium text-slate-600">담당자 2</span>
+          <span class="block text-xs font-medium text-slate-600">{{ $t('common.roles.assignee2') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.assignee2Id"
@@ -365,8 +366,8 @@ async function onSubmit() {
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="이름/역할로 검색"
-            empty-label="미지정"
+            :placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :empty-label="$t('qa.common.unassigned')"
             clearable
             @update:model-value="(v) => form.assignee2Id = v as number | null"
           />
@@ -374,7 +375,7 @@ async function onSubmit() {
       </div>
 
       <div>
-        <span class="block text-xs font-medium text-slate-600">첨부 파일</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.attachments') }}</span>
         <div class="mt-2 flex flex-wrap gap-2">
           <div
             v-for="(img, i) in form.images"
@@ -398,7 +399,7 @@ async function onSubmit() {
           </div>
           <label class="flex h-16 w-16 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500">
             <input type="file" accept="image/*,application/pdf" multiple class="hidden" @change="onPickFile" />
-            {{ uploading ? '업로드…' : '+ 추가' }}
+            {{ uploading ? $t('qa.upload.uploading') : $t('qa.upload.add') }}
           </label>
         </div>
       </div>
@@ -407,14 +408,14 @@ async function onSubmit() {
     </form>
 
     <template #footer>
-      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="requestClose">취소</button>
+      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="requestClose">{{ $t('common.actions.cancel') }}</button>
       <button
         type="submit"
         form="new-qa-form"
         :disabled="submitting || uploading"
         class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
       >
-        {{ submitting ? '생성 중…' : '생성' }}
+        {{ submitting ? $t('qa.modal.creating') : $t('qa.modal.create') }}
       </button>
     </template>
   </AppDialog>

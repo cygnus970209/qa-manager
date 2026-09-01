@@ -18,7 +18,33 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
     '@vueuse/nuxt',
+    '@nuxtjs/i18n',
   ],
+
+  // 다국어(ko/en). URL prefix 없이 쿠키로 언어를 기억한다(내부 도구 + noindex 라 SEO용 prefix 불필요).
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'ko',
+    locales: [
+      {
+        code: 'ko',
+        language: 'ko-KR',
+        name: '한국어',
+        files: ['ko/common.json', 'ko/shell.json', 'ko/auth.json', 'ko/dashboard.json', 'ko/project.json', 'ko/qa.json', 'ko/admin.json', 'ko/demo.json'],
+      },
+      {
+        code: 'en',
+        language: 'en-US',
+        name: 'English',
+        files: ['en/common.json', 'en/shell.json', 'en/auth.json', 'en/dashboard.json', 'en/project.json', 'en/qa.json', 'en/admin.json', 'en/demo.json'],
+      },
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'qam_locale',
+      fallbackLocale: 'ko',
+    },
+  },
 
   devServer: {
     port: 3000,

@@ -23,6 +23,7 @@ type SubTab = 'notifications' | 'ms-teams' | 'github'
 const SUB_KEYS: SubTab[] = ['notifications', 'ms-teams', 'github']
 
 const auth = useAuthStore()
+const { t } = useI18n()
 const api = useApi()
 const members = useMembers()
 const github = useGithub()
@@ -50,9 +51,9 @@ const quietEnabled = ref(false)
 
 // 알림 종류 토글 메타 (백엔드 type: qa / comment / reply)
 const typeItems = [
-  { key: 'notifyQaEnabled', label: 'QA 알림', description: 'QA 등록·상태 변경·배정 시 알림을 받습니다', icon: Bug },
-  { key: 'notifyCommentEnabled', label: '코멘트 알림', description: '담당 QA에 코멘트가 달리면 알림을 받습니다', icon: MessageSquare },
-  { key: 'notifyReplyEnabled', label: '답글 알림', description: '내 코멘트에 답글이 달리면 알림을 받습니다', icon: CornerDownRight },
+  { key: 'notifyQaEnabled', label: 'admin.settings.notifyQa', description: 'admin.settings.notifyQaDesc', icon: Bug },
+  { key: 'notifyCommentEnabled', label: 'admin.settings.notifyComment', description: 'admin.settings.notifyCommentDesc', icon: MessageSquare },
+  { key: 'notifyReplyEnabled', label: 'admin.settings.notifyReply', description: 'admin.settings.notifyReplyDesc', icon: CornerDownRight },
 ] as const
 
 onMounted(async () => {
@@ -92,10 +93,10 @@ async function save() {
     const s = await api<NotificationSettings>('/api/me/notification-settings', { method: 'PUT', body })
     Object.assign(settings, s)
     quietEnabled.value = !!(s.quietHoursStart && s.quietHoursEnd)
-    savedMsg.value = '저장되었습니다.'
+    savedMsg.value = t('admin.settings.saved')
   } catch {
     savedError.value = true
-    savedMsg.value = '저장에 실패했습니다.'
+    savedMsg.value = t('admin.settings.saveFailed')
   } finally {
     saving.value = false
   }
@@ -138,7 +139,7 @@ async function loadGithubApp() {
     githubApp.value = await github.appStatus()
     if (githubApp.value.configured) await loadGithubRepos()
   } catch (e: any) {
-    githubError.value = e?.data?.message ?? 'GitHub 연동 상태를 불러오지 못했습니다.'
+    githubError.value = e?.data?.message ?? t('admin.github.statusLoadFailed')
   } finally {
     githubLoading.value = false
   }
@@ -150,7 +151,7 @@ async function loadGithubRepos() {
   try {
     githubRepos.value = await github.listRepos()
   } catch (e: any) {
-    reposError.value = e?.data?.message ?? '저장소 목록을 불러오지 못했습니다.'
+    reposError.value = e?.data?.message ?? t('admin.github.reposLoadFailed')
   } finally {
     reposLoading.value = false
   }
@@ -162,12 +163,12 @@ async function convertGithubCode(code: string) {
   githubError.value = null
   try {
     githubApp.value = await github.convert(code)
-    githubMsg.value = 'GitHub App이 성공적으로 연동되었습니다.'
+    githubMsg.value = t('admin.github.connectSuccess')
     if (githubApp.value.configured) await loadGithubRepos()
   } catch (e: any) {
     // code 는 일회용이라 재교환은 거의 항상 실패 — 앱 생성부터 다시 하도록 안내한다.
     githubError.value = e?.data?.message
-      ?? 'GitHub App 연동에 실패했습니다. "GitHub App 생성하기"부터 다시 시도해 주세요.'
+      ?? t('admin.github.convertFailed')
     // 교환 실패 시 현재 상태라도 조회해 화면을 복구.
     try {
       githubApp.value = await github.appStatus()
@@ -204,13 +205,13 @@ async function createGithubApp() {
     // 페이지가 GitHub 으로 이동하므로 성공 시 로딩 상태를 유지한다.
     submitManifestForm(res.targetUrl, res.manifest)
   } catch (e: any) {
-    githubError.value = e?.data?.message ?? 'GitHub App 생성 요청에 실패했습니다.'
+    githubError.value = e?.data?.message ?? t('admin.github.createFailed')
     githubCreating.value = false
   }
 }
 
 async function removeGithubApp() {
-  if (!confirm('GitHub 연동을 해제하시겠습니까?\n프로젝트별 저장소 연결과 이슈 연동이 더 이상 동작하지 않습니다.')) return
+  if (!confirm(t('admin.github.disconnectConfirm'))) return
   githubRemoving.value = true
   githubError.value = null
   githubMsg.value = ''
@@ -218,9 +219,9 @@ async function removeGithubApp() {
     await github.removeApp()
     githubApp.value = { configured: false, appSlug: null, appName: null, installUrl: null }
     githubRepos.value = []
-    githubMsg.value = 'GitHub 연동이 해제되었습니다.'
+    githubMsg.value = t('admin.github.disconnected')
   } catch (e: any) {
-    githubError.value = e?.data?.message ?? 'GitHub 연동 해제에 실패했습니다.'
+    githubError.value = e?.data?.message ?? t('admin.github.disconnectFailed')
   } finally {
     githubRemoving.value = false
   }
@@ -240,7 +241,7 @@ async function removeGithubApp() {
         @click="subTab = 'notifications'"
       >
         <Bell class="h-4 w-4" />
-        알림 설정
+        {{ $t('admin.settings.tabNotifications') }}
       </button>
       <button
         type="button"
@@ -251,7 +252,7 @@ async function removeGithubApp() {
         @click="subTab = 'ms-teams'"
       >
         <MonitorSmartphone class="h-4 w-4" />
-        MS Teams 설정
+        {{ $t('admin.settings.tabTeams') }}
       </button>
       <button
         type="button"
@@ -262,21 +263,20 @@ async function removeGithubApp() {
         @click="subTab = 'github'"
       >
         <GitBranch class="h-4 w-4" />
-        GitHub 설정
+        {{ $t('admin.settings.tabGithub') }}
       </button>
     </div>
 
     <div v-if="loading" class="flex items-center gap-2 py-10 text-sm text-slate-400">
-      <Loader2 class="h-4 w-4 animate-spin" /> 설정을 불러오는 중...
+      <Loader2 class="h-4 w-4 animate-spin" /> {{ $t('admin.settings.loadingSettings') }}
     </div>
 
     <template v-else>
       <!-- 알림 설정 -->
       <div v-show="subTab === 'notifications'" class="max-w-xl space-y-5">
-        <p class="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500">
-          종류별 알림과 방해금지 시간대는 <span class="font-medium text-slate-600">Teams 발송</span>에만 적용됩니다.
-          앱 내 알림(벨)은 항상 표시됩니다.
-        </p>
+        <i18n-t keypath="admin.settings.scopeNotice" scope="global" tag="p" class="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          <template #teams><span class="font-medium text-slate-600">{{ $t('admin.settings.scopeNoticeTeams') }}</span></template>
+        </i18n-t>
 
         <!-- 종류별 토글 -->
         <div class="space-y-3">
@@ -290,8 +290,8 @@ async function removeGithubApp() {
                 <component :is="item.icon" class="h-4 w-4" />
               </div>
               <div>
-                <p class="text-sm font-semibold text-slate-800">{{ item.label }}</p>
-                <p class="mt-0.5 text-xs text-slate-500">{{ item.description }}</p>
+                <p class="text-sm font-semibold text-slate-800">{{ $t(item.label) }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">{{ $t(item.description) }}</p>
               </div>
             </div>
             <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
@@ -309,8 +309,8 @@ async function removeGithubApp() {
                 <Moon class="h-4 w-4" />
               </div>
               <div>
-                <p class="text-sm font-semibold text-slate-800">방해금지 시간대</p>
-                <p class="mt-0.5 text-xs text-slate-500">이 시간대에는 Teams 알림을 보내지 않습니다 (앱 내 알림은 유지)</p>
+                <p class="text-sm font-semibold text-slate-800">{{ $t('admin.settings.quietHoursTitle') }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">{{ $t('admin.settings.quietHoursDesc') }}</p>
               </div>
             </div>
             <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
@@ -320,7 +320,7 @@ async function removeGithubApp() {
           </div>
           <div v-if="quietEnabled" class="mt-4 flex items-center gap-3 pl-13">
             <div>
-              <label class="mb-1 block text-xs font-medium text-slate-600">시작</label>
+              <label class="mb-1 block text-xs font-medium text-slate-600">{{ $t('admin.settings.quietStart') }}</label>
               <input
                 v-model="settings.quietHoursStart"
                 type="time"
@@ -329,7 +329,7 @@ async function removeGithubApp() {
             </div>
             <span class="mt-5 text-slate-400">~</span>
             <div>
-              <label class="mb-1 block text-xs font-medium text-slate-600">종료</label>
+              <label class="mb-1 block text-xs font-medium text-slate-600">{{ $t('admin.settings.quietEnd') }}</label>
               <input
                 v-model="settings.quietHoursEnd"
                 type="time"
@@ -338,7 +338,7 @@ async function removeGithubApp() {
             </div>
           </div>
           <p v-if="quietEnabled" class="mt-2 text-xs text-slate-400 pl-13">
-            종료 시각이 시작보다 빠르면 자정을 넘기는 구간으로 처리됩니다 (예: 22:00 ~ 08:00).
+            {{ $t('admin.settings.quietHoursHint') }}
           </p>
         </div>
       </div>
@@ -352,8 +352,8 @@ async function removeGithubApp() {
               <MonitorSmartphone class="h-4 w-4" />
             </div>
             <div>
-              <p class="text-sm font-semibold text-slate-800">Teams 알림 받기</p>
-              <p class="mt-0.5 text-xs text-slate-500">내 Teams로 1:1 알림을 받습니다 (전체 on/off)</p>
+              <p class="text-sm font-semibold text-slate-800">{{ $t('admin.settings.teamsMasterTitle') }}</p>
+              <p class="mt-0.5 text-xs text-slate-500">{{ $t('admin.settings.teamsMasterDesc') }}</p>
             </div>
           </div>
           <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
@@ -367,13 +367,19 @@ async function removeGithubApp() {
           <div class="flex items-start gap-3">
             <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
             <div class="space-y-2 text-sm text-slate-700">
-              <p class="font-semibold text-slate-800">Teams 알림을 받으려면 봇 설치가 필요합니다</p>
+              <p class="font-semibold text-slate-800">{{ $t('admin.settings.botInstallTitle') }}</p>
               <ol class="list-decimal space-y-1 pl-4 text-xs text-slate-600">
-                <li>Teams 좌측 <span class="font-medium">앱</span> → <span class="font-medium">앱 관리</span> → <span class="font-medium">앱 업로드</span>에서 QA Manager 봇을 추가합니다.</li>
-                <li>봇과의 1:1 채팅이 열리면 설치 완료입니다.</li>
-                <li>아래 <span class="font-medium">테스트 발송</span>으로 정상 연결을 확인하세요.</li>
+                <i18n-t keypath="admin.settings.botStep1" scope="global" tag="li">
+                  <template #apps><span class="font-medium">{{ $t('admin.settings.botStep1Apps') }}</span></template>
+                  <template #manageApps><span class="font-medium">{{ $t('admin.settings.botStep1ManageApps') }}</span></template>
+                  <template #uploadApp><span class="font-medium">{{ $t('admin.settings.botStep1UploadApp') }}</span></template>
+                </i18n-t>
+                <li>{{ $t('admin.settings.botStep2') }}</li>
+                <i18n-t keypath="admin.settings.botStep3" scope="global" tag="li">
+                  <template #testSend><span class="font-medium">{{ $t('admin.settings.botStep3TestSend') }}</span></template>
+                </i18n-t>
               </ol>
-              <p class="text-xs text-slate-400">봇을 설치하지 않으면 알림이 전송되지 않습니다. 설치 방법은 관리자에게 문의하세요.</p>
+              <p class="text-xs text-slate-400">{{ $t('admin.settings.botInstallFootnote') }}</p>
             </div>
           </div>
         </div>
@@ -388,16 +394,16 @@ async function removeGithubApp() {
           >
             <Loader2 v-if="testLoading" class="h-4 w-4 animate-spin" />
             <Send v-else class="h-4 w-4" />
-            내게 테스트 발송
+            {{ $t('admin.settings.sendTestToMe') }}
           </button>
-          <span v-if="!settings.teamsNotifyEnabled" class="text-xs text-slate-400">Teams 알림을 켜야 발송할 수 있습니다.</span>
+          <span v-if="!settings.teamsNotifyEnabled" class="text-xs text-slate-400">{{ $t('admin.settings.testRequiresEnabled') }}</span>
         </div>
       </div>
 
       <!-- GitHub 설정 -->
       <div v-show="subTab === 'github'" class="max-w-xl space-y-5">
         <div v-if="githubLoading" class="flex items-center gap-2 py-6 text-sm text-slate-400">
-          <Loader2 class="h-4 w-4 animate-spin" /> GitHub 연동 상태를 확인하는 중...
+          <Loader2 class="h-4 w-4 animate-spin" /> {{ $t('admin.github.checkingStatus') }}
         </div>
 
         <!-- 설정된 상태 -->
@@ -411,12 +417,12 @@ async function removeGithubApp() {
                 <div>
                   <p class="text-sm font-semibold text-slate-800">{{ githubApp.appName ?? 'GitHub App' }}</p>
                   <p class="mt-0.5 text-xs text-slate-500">
-                    연동됨<template v-if="githubApp.appSlug"> · @{{ githubApp.appSlug }}</template>
+                    {{ $t('admin.github.connected') }}<template v-if="githubApp.appSlug"> · @{{ githubApp.appSlug }}</template>
                   </p>
                 </div>
               </div>
               <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-600">
-                <CheckCircle2 class="h-3.5 w-3.5" /> 연동 완료
+                <CheckCircle2 class="h-3.5 w-3.5" /> {{ $t('admin.github.connectedBadge') }}
               </span>
             </div>
             <a
@@ -427,14 +433,14 @@ async function removeGithubApp() {
               class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
             >
               <ExternalLink class="h-3.5 w-3.5" />
-              GitHub에서 앱 설치·repo 권한 관리
+              {{ $t('admin.github.manageOnGithub') }}
             </a>
           </div>
 
           <!-- 연결된 저장소 -->
           <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
             <div class="mb-3 flex items-center justify-between">
-              <p class="text-sm font-semibold text-slate-800">연결된 저장소</p>
+              <p class="text-sm font-semibold text-slate-800">{{ $t('admin.github.reposTitle') }}</p>
               <button
                 type="button"
                 :disabled="reposLoading"
@@ -442,15 +448,15 @@ async function removeGithubApp() {
                 @click="loadGithubRepos"
               >
                 <RefreshCw :class="['h-3.5 w-3.5', reposLoading ? 'animate-spin' : '']" />
-                새로고침
+                {{ $t('admin.github.refresh') }}
               </button>
             </div>
             <div v-if="reposLoading" class="flex items-center gap-2 py-3 text-xs text-slate-400">
-              <Loader2 class="h-3.5 w-3.5 animate-spin" /> 저장소를 불러오는 중...
+              <Loader2 class="h-3.5 w-3.5 animate-spin" /> {{ $t('admin.github.reposLoading') }}
             </div>
             <p v-else-if="reposError" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ reposError }}</p>
             <p v-else-if="githubRepos.length === 0" class="py-2 text-xs text-slate-400">
-              연결된 저장소가 없습니다. 위 링크에서 앱을 설치하고 저장소 접근 권한을 추가하세요.
+              {{ $t('admin.github.reposEmpty') }}
             </p>
             <ul v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-100 bg-white">
               <li v-for="r in githubRepos" :key="`${r.installationId}:${r.fullName}`" class="flex items-center gap-2 px-3 py-2">
@@ -465,7 +471,7 @@ async function removeGithubApp() {
                   v-if="r.private"
                   class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600"
                 >
-                  <Lock class="h-3 w-3" /> 비공개
+                  <Lock class="h-3 w-3" /> {{ $t('admin.github.private') }}
                 </span>
               </li>
             </ul>
@@ -481,9 +487,9 @@ async function removeGithubApp() {
             >
               <Loader2 v-if="githubRemoving" class="h-4 w-4 animate-spin" />
               <Unlink v-else class="h-4 w-4" />
-              연동 해제
+              {{ $t('admin.github.disconnect') }}
             </button>
-            <span class="text-xs text-slate-400">GitHub 쪽의 앱은 삭제되지 않으며, 이 서비스와의 연결만 끊습니다.</span>
+            <span class="text-xs text-slate-400">{{ $t('admin.github.disconnectHint') }}</span>
           </div>
         </template>
 
@@ -493,23 +499,25 @@ async function removeGithubApp() {
             <div class="flex items-start gap-3">
               <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
               <div class="space-y-2 text-sm text-slate-700">
-                <p class="font-semibold text-slate-800">GitHub 이슈트래킹 연동</p>
+                <p class="font-semibold text-slate-800">{{ $t('admin.github.setupTitle') }}</p>
                 <ol class="list-decimal space-y-1 pl-4 text-xs text-slate-600">
-                  <li>아래 버튼을 누르면 GitHub으로 이동해 전용 <span class="font-medium">GitHub App</span>을 생성합니다.</li>
-                  <li>생성 후 앱을 설치하고 연동할 저장소를 선택하면 설정이 완료됩니다.</li>
-                  <li>프로젝트에 저장소를 연결하면 QA 생성 시 GitHub 이슈를 함께 만들 수 있습니다.</li>
+                  <i18n-t keypath="admin.github.setupStep1" scope="global" tag="li">
+                    <template #app><span class="font-medium">GitHub App</span></template>
+                  </i18n-t>
+                  <li>{{ $t('admin.github.setupStep2') }}</li>
+                  <li>{{ $t('admin.github.setupStep3') }}</li>
                 </ol>
-                <p class="text-xs text-slate-400">커밋 메시지에 #이슈번호를 남기면 QA 상세에서 관련 커밋을 확인할 수 있습니다.</p>
+                <p class="text-xs text-slate-400">{{ $t('admin.github.setupFootnote') }}</p>
               </div>
             </div>
           </div>
 
           <label class="block">
-            <span class="block text-xs font-medium text-slate-600">GitHub 조직명 (개인 계정에 설치하려면 비워두세요)</span>
+            <span class="block text-xs font-medium text-slate-600">{{ $t('admin.github.orgLabel') }}</span>
             <input
               v-model="githubOrg"
               type="text"
-              placeholder="예: my-organization"
+              :placeholder="$t('admin.github.orgPlaceholder')"
               class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             />
           </label>
@@ -522,7 +530,7 @@ async function removeGithubApp() {
           >
             <Loader2 v-if="githubCreating" class="h-4 w-4 animate-spin" />
             <GitBranch v-else class="h-4 w-4" />
-            GitHub App 생성하기
+            {{ $t('admin.github.createApp') }}
           </button>
         </template>
 
@@ -540,7 +548,7 @@ async function removeGithubApp() {
         >
           <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />
           <CheckCircle2 v-else class="h-4 w-4" />
-          저장
+          {{ $t('common.actions.save') }}
         </button>
         <span v-if="savedMsg" :class="['text-xs', savedError ? 'text-rose-500' : 'text-emerald-600']">{{ savedMsg }}</span>
       </div>

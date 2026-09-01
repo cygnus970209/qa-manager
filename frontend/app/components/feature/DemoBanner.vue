@@ -11,13 +11,13 @@ const { enabled: demoEnabled, reset } = useDemo()
     <span class="rounded bg-amber-950/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">
       Demo
     </span>
-    <span>데모 버전입니다 — 변경 사항은 이 브라우저에만 저장되며 서버에 반영되지 않습니다.</span>
+    <span>{{ $t('demo.banner.message') }}</span>
     <button
       type="button"
       class="ml-1 rounded bg-amber-950/15 px-2 py-0.5 font-semibold hover:bg-amber-950/25"
       @click="reset"
     >
-      초기화
+      {{ $t('common.actions.reset') }}
     </button>
   </div>
 </template>

@@ -177,7 +177,7 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
           @click="filtersOpen = !filtersOpen"
         >
           <ChevronDown :class="['h-3.5 w-3.5 transition-transform', filtersOpen ? '' : '-rotate-90']" />
-          필터
+          {{ $t('qa.sidebar.filters') }}
           <span
             v-if="activeCount > 0"
             class="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-100 px-1 text-[10px] font-medium text-emerald-700"
@@ -187,14 +187,14 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
         </button>
         <button
           type="button"
-          title="목록 새로고침"
+          :title="$t('qa.sidebar.refresh')"
           :disabled="refreshing"
           class="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-60"
           @click="emit('refresh')"
         >
           <RefreshCw :class="['h-3.5 w-3.5', refreshing ? 'animate-spin' : '']" />
         </button>
-        <span class="ml-auto pl-2 text-[11px] text-slate-400">{{ filtered.length }}건</span>
+        <span class="ml-auto pl-2 text-[11px] text-slate-400">{{ $t('qa.sidebar.count', filtered.length) }}</span>
       </div>
 
       <!-- 컨트롤(접힘 가능) -->
@@ -204,7 +204,7 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
         <input
           v-model="search"
           type="text"
-          placeholder="제목·담당자 검색"
+          :placeholder="$t('qa.sidebar.searchPlaceholder')"
           class="w-full rounded-lg border border-slate-200 py-1.5 pl-8 pr-2 text-xs focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200"
         />
       </div>
@@ -212,14 +212,14 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
         v-model="projectId"
         class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
       >
-        <option value="all">모든 프로젝트</option>
+        <option value="all">{{ $t('qa.filter.allProjects') }}</option>
         <option v-for="p in projects" :key="p.id" :value="String(p.id)">{{ p.name }}</option>
       </select>
       <select
         v-model="updateId"
         class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
       >
-        <option value="all">모든 업데이트</option>
+        <option value="all">{{ $t('qa.filter.allUpdates') }}</option>
         <option v-for="u in updateOptions" :key="u.id" :value="String(u.id)">
           {{ u.version }} - {{ u.title }}
         </option>
@@ -230,30 +230,30 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
           type="checkbox"
           class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
         />
-        배포완료 업데이트 숨기기
+        {{ $t('qa.filter.hideReleasedUpdates') }}
       </label>
       <div class="flex gap-2">
         <select
           v-model="status"
           class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
         >
-          <option value="all">모든 상태</option>
-          <option value="needs_fix">수정필요</option>
-          <option value="in_progress">진행중</option>
-          <option value="fix_done">수정완료</option>
-          <option value="confirmed">확인완료</option>
-          <option value="on_hold">보류</option>
-          <option value="needs_recheck">추가확인필요</option>
+          <option value="all">{{ $t('qa.filter.allStatuses') }}</option>
+          <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
+          <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
+          <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
+          <option value="confirmed">{{ $t('common.qaStatus.confirmed') }}</option>
+          <option value="on_hold">{{ $t('common.qaStatus.on_hold') }}</option>
+          <option value="needs_recheck">{{ $t('common.qaStatus.needs_recheck') }}</option>
         </select>
         <select
           v-model="priority"
           class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
         >
-          <option value="all">모든 우선순위</option>
-          <option value="critical">긴급</option>
-          <option value="high">높음</option>
-          <option value="medium">보통</option>
-          <option value="low">낮음</option>
+          <option value="all">{{ $t('qa.filter.allPriorities') }}</option>
+          <option value="critical">{{ $t('common.priority.critical') }}</option>
+          <option value="high">{{ $t('common.priority.high') }}</option>
+          <option value="medium">{{ $t('common.priority.medium') }}</option>
+          <option value="low">{{ $t('common.priority.low') }}</option>
         </select>
       </div>
         <div v-if="hasExtra" class="px-0.5">
@@ -262,7 +262,7 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
             class="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700"
             @click="clearExtra"
           >
-            <X class="h-3 w-3" /> 추가 필터 적용 중 · 전체 보기
+            <X class="h-3 w-3" /> {{ $t('qa.sidebar.clearExtraFilters') }}
           </button>
         </div>
       </div>
@@ -303,7 +303,7 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
       </li>
       <li v-if="filtered.length === 0" class="px-3 py-10 text-center text-xs text-slate-400">
         <Inbox class="mx-auto mb-2 h-5 w-5 text-slate-300" />
-        해당 조건의 QA 항목이 없습니다.
+        {{ $t('qa.filter.noMatch') }}
       </li>
     </ul>
   </div>

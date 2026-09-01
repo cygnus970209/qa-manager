@@ -15,6 +15,7 @@ const emit = defineEmits<{
 
 const projects = useProjects()
 const github = useGithub()
+const { t } = useI18n()
 
 const mode = computed<'create' | 'edit'>(() => props.mode ?? 'create')
 
@@ -130,7 +131,7 @@ async function onSubmit() {
     }
     emit('close')
   } catch (e: any) {
-    error.value = e?.data?.message ?? (mode.value === 'edit' ? '프로젝트 수정에 실패했습니다.' : '프로젝트 생성에 실패했습니다.')
+    error.value = e?.data?.message ?? (mode.value === 'edit' ? t('project.projectModal.updateFailed') : t('project.projectModal.createFailed'))
   } finally {
     submitting.value = false
   }
@@ -138,10 +139,10 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AppDialog :open="open" :title="mode === 'edit' ? '프로젝트 수정' : '새 프로젝트'" @close="emit('close')">
+  <AppDialog :open="open" :title="mode === 'edit' ? $t('project.projectModal.editTitle') : $t('project.projectModal.createTitle')" @close="emit('close')">
     <form id="new-project-form" class="space-y-4" @submit.prevent="onSubmit">
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">프로젝트명</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('project.projectModal.name') }}</span>
         <input
           v-model="form.name"
           type="text"
@@ -151,7 +152,7 @@ async function onSubmit() {
         />
       </label>
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">설명</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('project.projectModal.description') }}</span>
         <textarea
           v-model="form.description"
           rows="3"
@@ -160,20 +161,20 @@ async function onSubmit() {
         />
       </label>
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">상태</span>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('project.projectModal.status') }}</span>
         <select
           v-model="form.status"
           class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         >
-          <option value="ACTIVE">진행중</option>
-          <option value="PAUSED">일시중지</option>
-          <option value="COMPLETED">완료</option>
+          <option value="ACTIVE">{{ $t('common.projectStatus.active') }}</option>
+          <option value="PAUSED">{{ $t('common.projectStatus.paused') }}</option>
+          <option value="COMPLETED">{{ $t('common.projectStatus.completed') }}</option>
         </select>
       </label>
       <div v-if="githubConfigured" class="block">
-        <span class="block text-xs font-medium text-slate-600">GitHub 저장소 연결 <span class="font-normal text-slate-400">(여러 개 선택 가능)</span></span>
-        <div v-if="githubLoading" class="mt-1 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-400">저장소 목록 불러오는 중…</div>
-        <div v-else-if="repoOptions.length === 0" class="mt-1 rounded-md border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400">설치된 저장소가 없습니다.</div>
+        <span class="block text-xs font-medium text-slate-600">{{ $t('project.projectModal.githubSection') }} <span class="font-normal text-slate-400">{{ $t('project.projectModal.githubMultiple') }}</span></span>
+        <div v-if="githubLoading" class="mt-1 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-400">{{ $t('project.projectModal.githubLoading') }}</div>
+        <div v-else-if="repoOptions.length === 0" class="mt-1 rounded-md border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400">{{ $t('project.projectModal.githubEmpty') }}</div>
         <div v-else class="mt-1 max-h-40 space-y-0.5 overflow-y-auto rounded-md border border-slate-300 p-1.5">
           <label
             v-for="r in repoOptions"
@@ -189,7 +190,7 @@ async function onSubmit() {
             <span class="truncate text-sm text-slate-700">{{ r.fullName }}</span>
           </label>
         </div>
-        <span class="mt-1 block text-[11px] text-slate-400">연결하면 QA 생성 시 선택한 저장소에 GitHub 이슈를 함께 만들 수 있습니다.</span>
+        <span class="mt-1 block text-[11px] text-slate-400">{{ $t('project.projectModal.githubHint') }}</span>
       </div>
       <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
     </form>
@@ -198,14 +199,14 @@ async function onSubmit() {
         type="button"
         class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
         @click="emit('close')"
-      >취소</button>
+      >{{ $t('common.actions.cancel') }}</button>
       <button
         type="submit"
         form="new-project-form"
         :disabled="submitting"
         class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
       >
-        {{ submitting ? (mode === 'edit' ? '저장 중…' : '생성 중…') : (mode === 'edit' ? '저장' : '생성') }}
+        {{ submitting ? (mode === 'edit' ? $t('common.state.saving') : $t('project.form.creating')) : (mode === 'edit' ? $t('common.actions.save') : $t('project.form.create')) }}
       </button>
     </template>
   </AppDialog>

@@ -45,7 +45,7 @@ function onPin(e: Event) {
               ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
               : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600',
           ]"
-          :title="project.pinned ? '고정 해제' : '상단 고정'"
+          :title="project.pinned ? $t('dashboard.projectCard.unpin') : $t('dashboard.projectCard.pin')"
           @click="onPin"
         >
           <component :is="project.pinned ? Pin : PinOff" class="h-3.5 w-3.5" />
@@ -57,8 +57,8 @@ function onPin(e: Event) {
     </p>
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3 text-xs text-slate-400">
-        <span>전체 {{ qaCount }}</span>
-        <span>완료 {{ resolvedCount }}</span>
+        <span>{{ $t('dashboard.projectCard.total', { count: qaCount }) }}</span>
+        <span>{{ $t('dashboard.projectCard.resolved', { count: resolvedCount }) }}</span>
       </div>
       <div class="flex items-center gap-1.5">
         <div class="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">

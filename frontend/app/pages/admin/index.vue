@@ -26,6 +26,7 @@ const projectsApi = useProjects()
 const qaApi = useQa()
 const updatesApi = useUpdates()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 type TabKey = 'projects' | 'qa' | 'members' | 'settings'
 const route = useRoute()
@@ -61,7 +62,7 @@ async function runTeamsTest(m: Member) {
   } catch (e: unknown) {
     teamsTestResult.value = {
       success: false,
-      errorMessage: e instanceof Error ? e.message : '요청 실패',
+      errorMessage: e instanceof Error ? e.message : t('admin.teams.requestFailed'),
       configOk: false,
       notifyEnabled: false,
       aadMapped: false,
@@ -122,25 +123,25 @@ function memberAssignedCount(memberId: number) {
 }
 
 const projectStatusConfig: Record<ProjectStatus, { label: string; color: string; bg: string }> = {
-  active: { label: '진행중', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  completed: { label: '완료', color: 'text-slate-500', bg: 'bg-slate-50' },
-  paused: { label: '일시정지', color: 'text-amber-600', bg: 'bg-amber-50' },
+  active: { label: 'common.projectStatus.active', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  completed: { label: 'common.projectStatus.completed', color: 'text-slate-500', bg: 'bg-slate-50' },
+  paused: { label: 'common.projectStatus.paused', color: 'text-amber-600', bg: 'bg-amber-50' },
 }
 
 const qaStatusConfig: Record<QaStatus, { label: string; color: string; bg: string }> = {
-  needs_fix:     { label: '수정필요',     color: 'text-rose-600',    bg: 'bg-rose-50' },
-  in_progress:   { label: '진행중',       color: 'text-blue-600',    bg: 'bg-blue-50' },
-  fix_done:      { label: '수정완료',     color: 'text-amber-600',   bg: 'bg-amber-50' },
-  confirmed:     { label: '확인완료',     color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  on_hold:       { label: '보류',         color: 'text-slate-600',   bg: 'bg-slate-100' },
-  needs_recheck: { label: '추가확인필요', color: 'text-purple-600',  bg: 'bg-purple-50' },
+  needs_fix:     { label: 'common.qaStatus.needs_fix',     color: 'text-rose-600',    bg: 'bg-rose-50' },
+  in_progress:   { label: 'common.qaStatus.in_progress',   color: 'text-blue-600',    bg: 'bg-blue-50' },
+  fix_done:      { label: 'common.qaStatus.fix_done',      color: 'text-amber-600',   bg: 'bg-amber-50' },
+  confirmed:     { label: 'common.qaStatus.confirmed',     color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  on_hold:       { label: 'common.qaStatus.on_hold',       color: 'text-slate-600',   bg: 'bg-slate-100' },
+  needs_recheck: { label: 'common.qaStatus.needs_recheck', color: 'text-purple-600',  bg: 'bg-purple-50' },
 }
 
 const priorityConfig: Record<QaPriority, { label: string; color: string }> = {
-  low: { label: '낮음', color: 'text-slate-500' },
-  medium: { label: '중간', color: 'text-amber-500' },
-  high: { label: '높음', color: 'text-orange-500' },
-  critical: { label: '긴급', color: 'text-rose-500' },
+  low: { label: 'common.priority.low', color: 'text-slate-500' },
+  medium: { label: 'common.priority.medium', color: 'text-amber-500' },
+  high: { label: 'common.priority.high', color: 'text-orange-500' },
+  critical: { label: 'common.priority.critical', color: 'text-rose-500' },
 }
 
 function statusToCode(s: string): 'ACTIVE' | 'COMPLETED' | 'PAUSED' {
@@ -178,7 +179,7 @@ function onUpdated(m: Member) {
 
 function openDelete(m: Member) {
   if (m.id === auth.user?.id) {
-    alert('본인 계정은 여기서 삭제할 수 없습니다.')
+    alert(t('admin.members.cannotDeleteSelf'))
     return
   }
   deleteTarget.value = m
@@ -193,12 +194,12 @@ async function confirmDelete() {
 }
 
 async function resetPassword(m: Member) {
-  if (!window.confirm(`${m.name}(${m.username})의 비밀번호를 "1234"로 초기화할까요?`)) return
+  if (!window.confirm(t('admin.members.resetPasswordConfirm', { name: m.name, username: m.username }))) return
   try {
     await membersApi.resetPassword(m.id)
-    window.alert(`${m.name}의 비밀번호가 "1234"로 초기화되었습니다.`)
+    window.alert(t('admin.members.resetPasswordDone', { name: m.name }))
   } catch (e: unknown) {
-    window.alert(e instanceof Error ? e.message : '비밀번호 초기화 실패')
+    window.alert(e instanceof Error ? e.message : t('admin.members.resetPasswordFailed'))
   }
 }
 </script>
@@ -208,8 +209,8 @@ async function resetPassword(m: Member) {
     <!-- Header -->
     <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mb-8">
       <div>
-        <h1 class="text-xl font-bold text-slate-800 md:text-2xl">관리자 페이지</h1>
-        <p class="mt-1 text-sm text-slate-500">프로젝트, QA 항목, 팀원을 관리하세요</p>
+        <h1 class="text-xl font-bold text-slate-800 md:text-2xl">{{ $t('admin.title') }}</h1>
+        <p class="mt-1 text-sm text-slate-500">{{ $t('admin.subtitle') }}</p>
       </div>
       <button
         type="button"
@@ -217,7 +218,7 @@ async function resetPassword(m: Member) {
         @click="router.push('/')"
       >
         <ArrowLeft class="h-4 w-4" />
-        대시보드로
+        {{ $t('admin.backToDashboard') }}
       </button>
     </header>
 
@@ -237,29 +238,29 @@ async function resetPassword(m: Member) {
       </template>
       <template v-else>
         <StatsCard
-          title="전체 프로젝트"
+          :title="$t('admin.stats.totalProjects')"
           :value="stats.totalProjects"
           :icon="Folder"
           icon-color="text-emerald-500"
           icon-bg="bg-emerald-50"
-          :trend="`진행중 ${stats.activeProjects}개`"
+          :trend="$t('admin.stats.activeTrend', { n: stats.activeProjects })"
         />
         <StatsCard
-          title="전체 QA"
+          :title="$t('admin.stats.totalQa')"
           :value="stats.totalQA"
           :icon="Bug"
           icon-color="text-rose-500"
           icon-bg="bg-rose-50"
         />
         <StatsCard
-          title="진행중 프로젝트"
+          :title="$t('admin.stats.activeProjects')"
           :value="stats.activeProjects"
           :icon="Loader2"
           icon-color="text-emerald-500"
           icon-bg="bg-emerald-50"
         />
         <StatsCard
-          title="긴급 QA"
+          :title="$t('admin.stats.criticalQa')"
           :value="stats.criticalQA"
           :icon="AlertTriangle"
           icon-color="text-red-500"
@@ -273,10 +274,10 @@ async function resetPassword(m: Member) {
       <div class="flex w-fit items-center gap-1 rounded-lg bg-slate-100 p-1">
         <button
           v-for="tab in [
-            { key: 'projects' as TabKey, label: '프로젝트 관리', icon: Folder },
-            { key: 'qa' as TabKey, label: 'QA 관리', icon: Bug },
-            { key: 'members' as TabKey, label: '팀원 관리', icon: Users },
-            { key: 'settings' as TabKey, label: '설정', icon: Settings },
+            { key: 'projects' as TabKey, label: 'admin.tabs.projects', icon: Folder },
+            { key: 'qa' as TabKey, label: 'admin.tabs.qa', icon: Bug },
+            { key: 'members' as TabKey, label: 'admin.tabs.members', icon: Users },
+            { key: 'settings' as TabKey, label: 'common.actions.settings', icon: Settings },
           ]"
           :key="tab.key"
           type="button"
@@ -287,7 +288,7 @@ async function resetPassword(m: Member) {
           @click="activeTab = tab.key"
         >
           <component :is="tab.icon" class="h-4 w-4" />
-          {{ tab.label }}
+          {{ $t(tab.label) }}
         </button>
       </div>
 
@@ -298,7 +299,7 @@ async function resetPassword(m: Member) {
         @click="openCreate"
       >
         <UserPlus class="h-4 w-4" />
-        팀원 추가
+        {{ $t('admin.members.addMember') }}
       </button>
     </div>
 
@@ -324,11 +325,11 @@ async function resetPassword(m: Member) {
         <table class="w-full text-left text-sm">
           <thead class="border-b border-slate-200 bg-slate-50">
             <tr>
-              <th class="px-4 py-3 text-xs font-semibold text-slate-500">프로젝트명</th>
-              <th class="w-36 px-4 py-3 text-xs font-semibold text-slate-500">상태</th>
-              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">QA 수</th>
-              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500">생성일</th>
-              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">동작</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.projects.nameHeader') }}</th>
+              <th class="w-36 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.table.status') }}</th>
+              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.projects.qaCountHeader') }}</th>
+              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.projects.createdAtHeader') }}</th>
+              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.table.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -340,9 +341,9 @@ async function resetPassword(m: Member) {
                   :class="['cursor-pointer rounded-full border-0 px-2 py-1 text-xs font-medium outline-none', projectStatusConfig[p.status].bg, projectStatusConfig[p.status].color]"
                   @change="changeProjectStatus(p, ($event.target as HTMLSelectElement).value as ProjectStatus)"
                 >
-                  <option value="active">{{ projectStatusConfig.active.label }}</option>
-                  <option value="paused">{{ projectStatusConfig.paused.label }}</option>
-                  <option value="completed">{{ projectStatusConfig.completed.label }}</option>
+                  <option value="active">{{ $t(projectStatusConfig.active.label) }}</option>
+                  <option value="paused">{{ $t(projectStatusConfig.paused.label) }}</option>
+                  <option value="completed">{{ $t(projectStatusConfig.completed.label) }}</option>
                 </select>
               </td>
               <td class="px-4 py-3 text-slate-600">{{ projectQaCount(p.id) }}</td>
@@ -352,11 +353,11 @@ async function resetPassword(m: Member) {
                   type="button"
                   class="text-xs font-medium text-emerald-500 hover:text-emerald-600"
                   @click="router.push(`/project/${p.id}`)"
-                >상세보기 →</button>
+                >{{ $t('admin.table.viewDetail') }}</button>
               </td>
             </tr>
             <tr v-if="projects.length === 0">
-              <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-400">프로젝트가 없습니다.</td>
+              <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-400">{{ $t('admin.projects.empty') }}</td>
             </tr>
           </tbody>
         </table>
@@ -367,12 +368,12 @@ async function resetPassword(m: Member) {
         <table class="w-full text-left text-sm">
           <thead class="border-b border-slate-200 bg-slate-50">
             <tr>
-              <th class="px-4 py-3 text-xs font-semibold text-slate-500">제목</th>
-              <th class="w-40 px-4 py-3 text-xs font-semibold text-slate-500">프로젝트</th>
-              <th class="w-28 px-4 py-3 text-xs font-semibold text-slate-500">우선순위</th>
-              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500">상태</th>
-              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">담당자</th>
-              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">동작</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.qa.titleHeader') }}</th>
+              <th class="w-40 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.qa.projectHeader') }}</th>
+              <th class="w-28 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.qa.priorityHeader') }}</th>
+              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.table.status') }}</th>
+              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('common.roles.assignee') }}</th>
+              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.table.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -380,7 +381,7 @@ async function resetPassword(m: Member) {
               <td class="max-w-xs truncate px-4 py-3 font-medium text-slate-800">{{ q.title }}</td>
               <td class="px-4 py-3 text-slate-600">{{ projectName(q.updateId) }}</td>
               <td class="px-4 py-3">
-                <span :class="['text-xs font-semibold', priorityConfig[q.priority].color]">{{ priorityConfig[q.priority].label }}</span>
+                <span :class="['text-xs font-semibold', priorityConfig[q.priority].color]">{{ $t(priorityConfig[q.priority].label) }}</span>
               </td>
               <td class="px-4 py-3">
                 <select
@@ -388,12 +389,12 @@ async function resetPassword(m: Member) {
                   :class="['cursor-pointer rounded-full border-0 px-2 py-1 text-xs font-medium outline-none', qaStatusConfig[q.status].bg, qaStatusConfig[q.status].color]"
                   @change="changeQaStatus(q, ($event.target as HTMLSelectElement).value as QaStatus)"
                 >
-                  <option value="needs_fix">{{ qaStatusConfig.needs_fix.label }}</option>
-                  <option value="in_progress">{{ qaStatusConfig.in_progress.label }}</option>
-                  <option value="fix_done">{{ qaStatusConfig.fix_done.label }}</option>
-                  <option value="confirmed">{{ qaStatusConfig.confirmed.label }}</option>
-                  <option value="on_hold">{{ qaStatusConfig.on_hold.label }}</option>
-                  <option value="needs_recheck">{{ qaStatusConfig.needs_recheck.label }}</option>
+                  <option value="needs_fix">{{ $t(qaStatusConfig.needs_fix.label) }}</option>
+                  <option value="in_progress">{{ $t(qaStatusConfig.in_progress.label) }}</option>
+                  <option value="fix_done">{{ $t(qaStatusConfig.fix_done.label) }}</option>
+                  <option value="confirmed">{{ $t(qaStatusConfig.confirmed.label) }}</option>
+                  <option value="on_hold">{{ $t(qaStatusConfig.on_hold.label) }}</option>
+                  <option value="needs_recheck">{{ $t(qaStatusConfig.needs_recheck.label) }}</option>
                 </select>
               </td>
               <td class="px-4 py-3 text-xs text-slate-600">
@@ -410,11 +411,11 @@ async function resetPassword(m: Member) {
                   type="button"
                   class="text-xs font-medium text-emerald-500 hover:text-emerald-600"
                   @click="router.push(`/qa/${q.id}`)"
-                >상세보기 →</button>
+                >{{ $t('admin.table.viewDetail') }}</button>
               </td>
             </tr>
             <tr v-if="qas.length === 0">
-              <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400">QA 항목이 없습니다.</td>
+              <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400">{{ $t('admin.qa.empty') }}</td>
             </tr>
           </tbody>
         </table>
@@ -426,11 +427,11 @@ async function resetPassword(m: Member) {
           <thead class="border-b border-slate-200 bg-slate-50">
             <tr>
               <th class="w-12 px-4 py-3 text-xs font-semibold text-slate-500">#</th>
-              <th class="px-4 py-3 text-xs font-semibold text-slate-500">이름</th>
-              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500">아이디</th>
-              <th class="w-40 px-4 py-3 text-xs font-semibold text-slate-500">역할</th>
-              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">QA 할당</th>
-              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">동작</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.members.fields.name') }}</th>
+              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.members.fields.username') }}</th>
+              <th class="w-40 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.members.fields.role') }}</th>
+              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.members.assignedHeader') }}</th>
+              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500">{{ $t('admin.table.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -452,7 +453,7 @@ async function resetPassword(m: Member) {
               <td class="px-4 py-3 text-slate-600">{{ m.role ?? '-' }}</td>
               <td class="px-4 py-3">
                 <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                  {{ memberAssignedCount(m.id) }}건
+                  {{ $t('admin.members.assignedCount', memberAssignedCount(m.id)) }}
                 </span>
               </td>
               <td class="px-4 py-3">
@@ -460,7 +461,7 @@ async function resetPassword(m: Member) {
                   <button
                     type="button"
                     class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-sky-50 hover:text-sky-500"
-                    title="Teams 발송 테스트"
+                    :title="$t('admin.teams.testTitle')"
                     @click="runTeamsTest(m)"
                   >
                     <Send class="h-4 w-4" />
@@ -468,7 +469,7 @@ async function resetPassword(m: Member) {
                   <button
                     type="button"
                     class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-500"
-                    title="비밀번호 1234로 초기화"
+                    :title="$t('admin.members.resetPasswordTooltip')"
                     @click="resetPassword(m)"
                   >
                     <KeyRound class="h-4 w-4" />
@@ -476,7 +477,7 @@ async function resetPassword(m: Member) {
                   <button
                     type="button"
                     class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-500"
-                    title="수정"
+                    :title="$t('common.actions.edit')"
                     @click="openEdit(m)"
                   >
                     <Edit3 class="h-4 w-4" />
@@ -484,7 +485,7 @@ async function resetPassword(m: Member) {
                   <button
                     type="button"
                     class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-500"
-                    title="삭제"
+                    :title="$t('common.actions.delete')"
                     @click="openDelete(m)"
                   >
                     <Trash2 class="h-4 w-4" />
@@ -493,7 +494,7 @@ async function resetPassword(m: Member) {
               </td>
             </tr>
             <tr v-if="members.length === 0">
-              <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400">팀원이 없습니다.</td>
+              <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400">{{ $t('admin.members.empty') }}</td>
             </tr>
           </tbody>
         </table>
@@ -514,8 +515,8 @@ async function resetPassword(m: Member) {
 
     <DeleteConfirmModal
       :open="deleteOpen"
-      :title="deleteTarget ? `'${deleteTarget.name}' 팀원을 삭제하시겠습니까?` : undefined"
-      message="삭제하면 복구할 수 없습니다. 계속하시겠습니까?"
+      :title="deleteTarget ? $t('admin.members.deleteTitle', { name: deleteTarget.name }) : undefined"
+      :message="$t('admin.members.deleteMessage')"
       @confirm="confirmDelete"
       @cancel="deleteOpen = false; deleteTarget = null"
     />

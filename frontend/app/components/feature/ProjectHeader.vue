@@ -18,10 +18,10 @@ const emit = defineEmits<{
 
 const router = useRouter()
 
-const statusOptions: { code: ProjectStatus; uppercase: 'ACTIVE' | 'PAUSED' | 'COMPLETED'; label: string }[] = [
-  { code: 'active',    uppercase: 'ACTIVE',    label: '진행중' },
-  { code: 'paused',    uppercase: 'PAUSED',    label: '일시중지' },
-  { code: 'completed', uppercase: 'COMPLETED', label: '완료' },
+const statusOptions: { code: ProjectStatus; uppercase: 'ACTIVE' | 'PAUSED' | 'COMPLETED' }[] = [
+  { code: 'active',    uppercase: 'ACTIVE' },
+  { code: 'paused',    uppercase: 'PAUSED' },
+  { code: 'completed', uppercase: 'COMPLETED' },
 ]
 
 const progress = computed(() => (props.totalQA > 0
@@ -42,7 +42,7 @@ function onSelectStatus(e: Event) {
       @click="router.push('/')"
     >
       <ArrowLeft class="h-3.5 w-3.5" />
-      대시보드
+      {{ $t('project.header.dashboard') }}
     </button>
 
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -50,11 +50,11 @@ function onSelectStatus(e: Event) {
         <h1 class="truncate text-xl font-bold text-slate-800 md:text-2xl">{{ project.name }}</h1>
         <ExpandableText v-if="project.description" :text="project.description" :lines="3" class="mt-2 max-w-3xl" />
         <div class="mt-3 flex items-center gap-2 text-xs text-slate-400">
-          <span>생성 {{ project.createdAt?.slice(0, 10) }}</span>
+          <span>{{ $t('project.header.createdAt', { date: project.createdAt?.slice(0, 10) }) }}</span>
           <span>·</span>
-          <span>업데이트 {{ updateCount }}개</span>
+          <span>{{ $t('project.header.updateCount', updateCount) }}</span>
           <span>·</span>
-          <span>QA {{ totalQA }}건 (완료 {{ resolvedCount }})</span>
+          <span>{{ $t('project.header.qaSummary', { total: totalQA, resolved: resolvedCount }) }}</span>
         </div>
       </div>
 
@@ -66,13 +66,13 @@ function onSelectStatus(e: Event) {
           @change="onSelectStatus"
         >
           <option v-for="opt in statusOptions" :key="opt.uppercase" :value="opt.uppercase">
-            상태: {{ opt.label }}
+            {{ $t('project.header.statusOption', { status: $t('common.projectStatus.' + opt.code) }) }}
           </option>
         </select>
         <button
           type="button"
           class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
-          title="프로젝트 수정"
+          :title="$t('project.header.editProject')"
           @click="emit('edit')"
         >
           <Pencil class="h-4 w-4" />
@@ -80,7 +80,7 @@ function onSelectStatus(e: Event) {
         <button
           type="button"
           class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
-          title="프로젝트 삭제"
+          :title="$t('project.header.deleteProject')"
           @click="emit('remove')"
         >
           <Trash2 class="h-4 w-4" />

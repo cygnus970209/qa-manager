@@ -85,7 +85,7 @@ function rememberFilter() {
           <input
             v-model="search"
             type="text"
-            placeholder="QA 항목 검색..."
+            :placeholder="$t('qa.list.searchPlaceholder')"
             class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200"
           />
         </div>
@@ -93,29 +93,29 @@ function rememberFilter() {
           v-model="statusFilter"
           class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
         >
-          <option value="all">모든 상태</option>
-          <option value="needs_fix">수정필요</option>
-          <option value="in_progress">진행중</option>
-          <option value="fix_done">수정완료</option>
-          <option value="confirmed">확인완료</option>
-          <option value="on_hold">보류</option>
-          <option value="needs_recheck">추가확인필요</option>
+          <option value="all">{{ $t('qa.filter.allStatuses') }}</option>
+          <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
+          <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
+          <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
+          <option value="confirmed">{{ $t('common.qaStatus.confirmed') }}</option>
+          <option value="on_hold">{{ $t('common.qaStatus.on_hold') }}</option>
+          <option value="needs_recheck">{{ $t('common.qaStatus.needs_recheck') }}</option>
         </select>
         <select
           v-model="priorityFilter"
           class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
         >
-          <option value="all">모든 우선순위</option>
-          <option value="critical">긴급</option>
-          <option value="high">높음</option>
-          <option value="medium">보통</option>
-          <option value="low">낮음</option>
+          <option value="all">{{ $t('qa.filter.allPriorities') }}</option>
+          <option value="critical">{{ $t('common.priority.critical') }}</option>
+          <option value="high">{{ $t('common.priority.high') }}</option>
+          <option value="medium">{{ $t('common.priority.medium') }}</option>
+          <option value="low">{{ $t('common.priority.low') }}</option>
         </select>
         <select
           v-model="updateFilter"
           class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
         >
-          <option value="all">모든 업데이트</option>
+          <option value="all">{{ $t('qa.filter.allUpdates') }}</option>
           <option v-for="u in updateOptions" :key="u.id" :value="String(u.id)">
             {{ u.version }} - {{ u.title }}
           </option>
@@ -126,22 +126,22 @@ function rememberFilter() {
             type="checkbox"
             class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
           />
-          배포완료 숨기기
+          {{ $t('qa.filter.hideReleased') }}
         </label>
       </div>
 
       <!-- 멤버 필터 행 -->
       <div class="flex flex-wrap items-center gap-2.5 text-xs">
-        <span class="text-slate-400">멤버:</span>
+        <span class="text-slate-400">{{ $t('qa.list.membersLabel') }}</span>
         <div class="min-w-[180px]">
           <SearchableSelect
             :model-value="testerFilter"
             :options="memberOptions"
             :key-fn="(m: Member) => m.id"
-            :label-fn="(m: Member) => `테스터: ${m.name}`"
+            :label-fn="(m: Member) => $t('qa.list.testerOption', { name: m.name })"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="테스터 검색"
-            empty-label="모든 테스터"
+            :placeholder="$t('qa.list.searchTester')"
+            :empty-label="$t('qa.list.allTesters')"
             clearable
             @update:model-value="(v) => testerFilter = v as number | null"
           />
@@ -151,19 +151,19 @@ function rememberFilter() {
             :model-value="assigneeFilter"
             :options="memberOptions"
             :key-fn="(m: Member) => m.id"
-            :label-fn="(m: Member) => `담당자: ${m.name}`"
+            :label-fn="(m: Member) => $t('qa.list.assigneeOption', { name: m.name })"
             :search-fn="(m: Member) => m.role ?? ''"
-            placeholder="담당자 검색"
-            empty-label="모든 담당자"
+            :placeholder="$t('qa.list.searchAssignee')"
+            :empty-label="$t('qa.list.allAssignees')"
             clearable
             @update:model-value="(v) => assigneeFilter = v as number | null"
           />
         </div>
         <label v-if="auth.user" class="ml-2 inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1.5">
           <input v-model="mineOnly" type="checkbox" class="accent-emerald-500" />
-          <span class="text-slate-600">내 것만</span>
+          <span class="text-slate-600">{{ $t('qa.list.mineOnly') }}</span>
         </label>
-        <span class="ml-auto whitespace-nowrap text-slate-400">총 {{ filtered.length }}건</span>
+        <span class="ml-auto whitespace-nowrap text-slate-400">{{ $t('qa.list.totalCount', filtered.length) }}</span>
       </div>
     </div>
 
@@ -172,12 +172,12 @@ function rememberFilter() {
       <table class="w-full text-left">
         <thead>
           <tr class="border-b border-slate-100 bg-slate-50">
-            <th class="w-full px-5 py-3.5 text-xs font-medium text-slate-500">제목</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden md:table-cell">업데이트</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500">상태</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500">우선순위</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden sm:table-cell">담당자</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden lg:table-cell">수정일</th>
+            <th class="w-full px-5 py-3.5 text-xs font-medium text-slate-500">{{ $t('qa.fields.title') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden md:table-cell">{{ $t('qa.fields.update') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500">{{ $t('qa.fields.status') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500">{{ $t('qa.fields.priority') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden sm:table-cell">{{ $t('common.roles.assignee') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden lg:table-cell">{{ $t('qa.list.colUpdatedAt') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -209,7 +209,7 @@ function rememberFilter() {
                 <span v-if="item.assignee1 || item.assignee2" class="text-slate-700">
                   {{ [item.assignee1?.name, item.assignee2?.name].filter(Boolean).join(', ') }}
                 </span>
-                <span v-if="!item.tester && !item.assignee1 && !item.assignee2" class="text-slate-400">미지정</span>
+                <span v-if="!item.tester && !item.assignee1 && !item.assignee2" class="text-slate-400">{{ $t('qa.common.unassigned') }}</span>
               </div>
             </td>
             <td class="hidden whitespace-nowrap px-5 py-4 text-xs text-slate-400 lg:table-cell">
@@ -219,7 +219,7 @@ function rememberFilter() {
           <tr v-if="filtered.length === 0">
             <td colspan="6" class="px-5 py-12 text-center text-sm text-slate-400">
               <Inbox class="mx-auto mb-2 h-6 w-6 text-slate-300" />
-              해당 조건의 QA 항목이 없습니다.
+              {{ $t('qa.filter.noMatch') }}
             </td>
           </tr>
         </tbody>
