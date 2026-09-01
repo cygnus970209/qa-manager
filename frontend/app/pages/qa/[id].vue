@@ -176,15 +176,15 @@ function goNext() {
 <template>
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <button class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900" type="button" @click="router.back()">
+      <button class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100" type="button" @click="router.back()">
         <ArrowLeft class="h-3.5 w-3.5" /> {{ $t('qa.detail.back') }}
       </button>
       <div v-if="navIds.length > 0 && currentIdx >= 0" class="flex items-center gap-1 text-xs">
-        <span class="mr-1 text-slate-400 tabular-nums">{{ currentIdx + 1 }} / {{ navIds.length }}</span>
+        <span class="mr-1 text-slate-400 tabular-nums dark:text-slate-500">{{ currentIdx + 1 }} / {{ navIds.length }}</span>
         <button
           type="button"
           :disabled="!hasPrev"
-          class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+          class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
           @click="goPrev"
         >
           <ChevronLeft class="h-3.5 w-3.5" /> {{ $t('qa.detail.prev') }}
@@ -192,7 +192,7 @@ function goNext() {
         <button
           type="button"
           :disabled="!hasNext"
-          class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+          class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
           @click="goNext"
         >
           {{ $t('qa.detail.next') }} <ChevronRight class="h-3.5 w-3.5" />
@@ -209,7 +209,7 @@ function goNext() {
           <button
             type="button"
             :title="$t('qa.detail.collapseList')"
-            class="absolute -right-3 top-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
+            class="absolute -right-3 top-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200 lg:flex"
             @click="leftOpen = false"
           >
             <ChevronLeft class="h-3.5 w-3.5" />
@@ -233,7 +233,7 @@ function goNext() {
         v-show="!leftOpen"
         type="button"
         :title="$t('qa.detail.expandList')"
-        class="sticky top-20 hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
+        class="sticky top-20 hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200 lg:flex"
         @click="leftOpen = true"
       >
         <ChevronRight class="h-3.5 w-3.5" />
@@ -244,42 +244,42 @@ function goNext() {
     <div v-if="loading" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div class="space-y-6 lg:col-span-2">
         <!-- QA Info Panel skeleton -->
-        <div class="animate-pulse space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+        <div class="animate-pulse space-y-4 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5">
           <div class="flex items-start justify-between">
             <div class="flex-1 space-y-2">
-              <div class="h-5 w-3/4 rounded bg-slate-200" />
+              <div class="h-5 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
               <div class="flex gap-2">
-                <div class="h-5 w-16 rounded-full bg-slate-100" />
-                <div class="h-5 w-14 rounded-full bg-slate-100" />
+                <div class="h-5 w-16 rounded-full bg-slate-100 dark:bg-slate-800/60" />
+                <div class="h-5 w-14 rounded-full bg-slate-100 dark:bg-slate-800/60" />
               </div>
             </div>
             <div class="flex gap-2">
-              <div class="h-7 w-7 rounded-md bg-slate-100" />
-              <div class="h-7 w-7 rounded-md bg-slate-100" />
+              <div class="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800/60" />
+              <div class="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800/60" />
             </div>
           </div>
           <div class="space-y-2">
-            <div class="h-3 w-full rounded bg-slate-100" />
-            <div class="h-3 w-5/6 rounded bg-slate-100" />
-            <div class="h-3 w-2/3 rounded bg-slate-100" />
+            <div class="h-3 w-full rounded bg-slate-100 dark:bg-slate-800/60" />
+            <div class="h-3 w-5/6 rounded bg-slate-100 dark:bg-slate-800/60" />
+            <div class="h-3 w-2/3 rounded bg-slate-100 dark:bg-slate-800/60" />
           </div>
           <div class="grid grid-cols-2 gap-3 pt-2">
-            <div class="h-12 rounded-lg bg-slate-100" />
-            <div class="h-12 rounded-lg bg-slate-100" />
+            <div class="h-12 rounded-lg bg-slate-100 dark:bg-slate-800/60" />
+            <div class="h-12 rounded-lg bg-slate-100 dark:bg-slate-800/60" />
           </div>
         </div>
         <!-- Comment skeleton -->
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div class="border-b border-slate-100 p-4 md:p-5">
-            <div class="h-4 w-24 animate-pulse rounded bg-slate-200" />
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div class="border-b border-slate-100 p-4 md:p-5 dark:border-slate-800">
+            <div class="h-4 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
           </div>
           <div class="space-y-5 p-4 md:p-5">
             <div v-for="i in 3" :key="i" class="flex animate-pulse gap-3">
-              <div class="h-8 w-8 shrink-0 rounded-full bg-slate-200" />
+              <div class="h-8 w-8 shrink-0 rounded-full bg-slate-200 dark:bg-slate-800" />
               <div class="flex-1 space-y-2">
-                <div class="h-3 w-32 rounded bg-slate-200" />
-                <div class="h-3 w-full rounded bg-slate-100" />
-                <div class="h-3 w-2/3 rounded bg-slate-100" />
+                <div class="h-3 w-32 rounded bg-slate-200 dark:bg-slate-800" />
+                <div class="h-3 w-full rounded bg-slate-100 dark:bg-slate-800/60" />
+                <div class="h-3 w-2/3 rounded bg-slate-100 dark:bg-slate-800/60" />
               </div>
             </div>
           </div>
@@ -287,16 +287,16 @@ function goNext() {
       </div>
       <div>
         <!-- History skeleton -->
-        <div class="animate-pulse space-y-3 rounded-xl border border-slate-200 bg-white p-5">
-          <div class="h-4 w-24 rounded bg-slate-200" />
-          <div v-for="i in 4" :key="i" class="space-y-1.5 border-l-2 border-slate-100 pl-3">
-            <div class="h-3 w-3/4 rounded bg-slate-100" />
-            <div class="h-3 w-1/3 rounded bg-slate-100" />
+        <div class="animate-pulse space-y-3 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5">
+          <div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+          <div v-for="i in 4" :key="i" class="space-y-1.5 border-l-2 border-slate-100 pl-3 dark:border-slate-800">
+            <div class="h-3 w-3/4 rounded bg-slate-100 dark:bg-slate-800/60" />
+            <div class="h-3 w-1/3 rounded bg-slate-100 dark:bg-slate-800/60" />
           </div>
         </div>
       </div>
     </div>
-    <div v-else-if="error" class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+    <div v-else-if="error" class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">{{ error }}</div>
     <template v-else-if="item">
       <div class="flex flex-col gap-6 lg:flex-row">
         <div class="min-w-0 flex-1 space-y-6">
@@ -314,7 +314,7 @@ function goNext() {
           v-show="!rightOpen"
           type="button"
           :title="$t('qa.detail.expandHistory')"
-          class="hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex lg:sticky lg:top-20"
+          class="hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200 lg:flex lg:sticky lg:top-20"
           @click="rightOpen = true"
         >
           <ChevronLeft class="h-3.5 w-3.5" />
@@ -326,7 +326,7 @@ function goNext() {
             <button
               type="button"
               :title="$t('qa.detail.collapseHistory')"
-              class="absolute -left-3 top-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 lg:flex"
+              class="absolute -left-3 top-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200 lg:flex"
               @click="rightOpen = false"
             >
               <ChevronRight class="h-3.5 w-3.5" />

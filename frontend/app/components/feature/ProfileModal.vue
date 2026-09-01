@@ -119,12 +119,12 @@ async function onSubmit() {
     <form id="profile-form" class="space-y-5" @submit.prevent="onSubmit">
       <!-- 아바타 -->
       <div class="flex items-center gap-4">
-        <div class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-slate-100">
+        <div class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
           <img v-if="avatarPreview" :src="avatarPreview" :alt="$t('auth.profile.avatarPreviewAlt')" class="h-full w-full object-cover" />
-          <UserRound v-else class="h-8 w-8 text-slate-400" />
+          <UserRound v-else class="h-8 w-8 text-slate-400 dark:text-slate-500" />
         </div>
         <div class="flex-1">
-          <label class="inline-flex cursor-pointer items-center rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
+          <label class="inline-flex cursor-pointer items-center rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800/60">
             {{ $t('auth.profile.chooseImage') }}
             <input
               id="avatar-input"
@@ -137,10 +137,10 @@ async function onSubmit() {
           <button
             v-if="avatarFile"
             type="button"
-            class="ml-2 text-xs text-slate-500 hover:text-slate-700"
+            class="ml-2 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             @click="clearAvatarSelection"
           >{{ $t('common.actions.cancel') }}</button>
-          <p class="mt-1 text-[11px] text-slate-400">
+          <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
             {{ avatarFile ? avatarFile.name : $t('auth.profile.uploadOnSave') }}
           </p>
         </div>
@@ -148,80 +148,80 @@ async function onSubmit() {
 
       <!-- 사용자명 (읽기전용) -->
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.username') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('auth.profile.username') }}</span>
         <input
           :value="auth.user?.username ?? ''"
           type="text"
           disabled
-          class="mt-1 w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
+          class="mt-1 w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400"
         />
       </label>
 
       <!-- 이름 -->
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.name') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('auth.profile.name') }}</span>
         <input
           v-model="form.name"
           type="text"
           required
           maxlength="50"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </label>
 
       <!-- 역할 (읽기전용) -->
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.role') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('auth.profile.role') }}</span>
         <input
           :value="auth.user?.role ?? $t('auth.profile.roleUnassigned')"
           type="text"
           disabled
-          class="mt-1 w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
+          class="mt-1 w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400"
         />
-        <p class="mt-1 text-[11px] text-slate-400">{{ $t('auth.profile.roleHint') }}</p>
+        <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{{ $t('auth.profile.roleHint') }}</p>
       </label>
 
       <!-- 비밀번호 변경 -->
-      <fieldset class="space-y-3 rounded-md border border-slate-200 p-3">
-        <legend class="px-1 text-xs font-medium text-slate-600">{{ $t('auth.profile.changePassword') }} <span class="text-slate-400">{{ $t('auth.profile.optional') }}</span></legend>
+      <fieldset class="space-y-3 rounded-md border border-slate-200 p-3 dark:border-slate-800">
+        <legend class="px-1 text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('auth.profile.changePassword') }} <span class="text-slate-400 dark:text-slate-500">{{ $t('auth.profile.optional') }}</span></legend>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.currentPassword') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('auth.profile.currentPassword') }}</span>
           <input
             v-model="form.currentPassword"
             type="password"
             autocomplete="current-password"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.newPassword') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('auth.profile.newPassword') }}</span>
           <input
             v-model="form.newPassword"
             type="password"
             autocomplete="new-password"
             minlength="4"
             maxlength="100"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('auth.profile.newPasswordConfirm') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('auth.profile.newPasswordConfirm') }}</span>
           <input
             v-model="form.newPasswordConfirm"
             type="password"
             autocomplete="new-password"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           />
         </label>
       </fieldset>
 
-      <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
-      <p v-if="success" class="rounded bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{{ success }}</p>
+      <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300">{{ error }}</p>
+      <p v-if="success" class="rounded bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">{{ success }}</p>
     </form>
     <template #footer>
       <button
         type="button"
-        class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+        class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
         @click="emit('close')"
       >{{ $t('common.actions.close') }}</button>
       <button

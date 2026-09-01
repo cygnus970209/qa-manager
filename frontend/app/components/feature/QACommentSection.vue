@@ -473,19 +473,19 @@ function memberInitial(name: string) {
 </script>
 
 <template>
-  <section class="rounded-xl border border-slate-200 bg-white">
-    <header class="border-b border-slate-100 p-4 md:p-5">
-      <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+  <section class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <header class="border-b border-slate-100 p-4 md:p-5 dark:border-slate-800">
+      <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
         <MessageSquare class="h-4 w-4" /> {{ $t('qa.comments.title') }}
-        <span class="ml-1 text-xs font-normal text-slate-400">{{ $t('qa.comments.count', comments.length) }}</span>
+        <span class="ml-1 text-xs font-normal text-slate-400 dark:text-slate-500">{{ $t('qa.comments.count', comments.length) }}</span>
       </h3>
     </header>
 
     <!-- 목록 -->
     <div class="max-h-[600px] overflow-y-auto">
       <div v-if="tree.top.length === 0" class="py-10 text-center">
-        <MessageSquare class="mx-auto mb-2 h-6 w-6 text-slate-300" />
-        <p class="text-sm text-slate-400">{{ $t('qa.comments.empty') }}</p>
+        <MessageSquare class="mx-auto mb-2 h-6 w-6 text-slate-300 dark:text-slate-600" />
+        <p class="text-sm text-slate-400 dark:text-slate-500">{{ $t('qa.comments.empty') }}</p>
       </div>
 
       <div v-else class="space-y-5 p-4 md:p-5">
@@ -493,14 +493,14 @@ function memberInitial(name: string) {
           <!-- 루트 댓글 -->
           <div class="flex gap-3">
             <div class="shrink-0">
-              <img v-if="root.author.avatarUrl" :src="root.author.avatarUrl" :alt="root.author.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover" />
-              <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600">{{ memberInitial(root.author.name) }}</div>
+              <img v-if="root.author.avatarUrl" :src="root.author.avatarUrl" :alt="root.author.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover dark:bg-slate-800" />
+              <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ memberInitial(root.author.name) }}</div>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="text-sm font-medium text-slate-700">{{ root.author.name }}</span>
-                <span class="text-xs text-slate-400">{{ timeAgo(root.createdAt) }}</span>
-                <span v-if="editingId === root.id" class="text-xs font-medium text-emerald-500">{{ $t('qa.comments.editing') }}</span>
+                <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ root.author.name }}</span>
+                <span class="text-xs text-slate-400 dark:text-slate-500">{{ timeAgo(root.createdAt) }}</span>
+                <span v-if="editingId === root.id" class="text-xs font-medium text-emerald-500 dark:text-emerald-400">{{ $t('qa.comments.editing') }}</span>
               </div>
 
               <!-- 수정 모드 -->
@@ -511,28 +511,28 @@ function memberInitial(name: string) {
                     v-model="editContent"
                     rows="2"
                     :maxlength="MAX_LEN"
-                    class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-emerald-500/20"
                     @input="checkMention($event.target as HTMLTextAreaElement, 'edit')"
                     @keydown="onEditorKey($event, 'edit')"
                     @paste="onPaste($event, 'edit')"
                   />
-                  <ul v-if="showQaTag && qaTagMode === 'edit' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                  <ul v-if="showQaTag && qaTagMode === 'edit' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(qi, i) in filteredQaItems" :key="qi.id">
-                      <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === qaTagIdx ? 'bg-blue-50' : '']" @click="insertQaTag(qi)">
-                        <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500">#{{ qi.id }}</span>
-                        <span class="min-w-0 flex-1 truncate text-sm text-slate-700">{{ qi.title }}</span>
-                        <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500" />
+                      <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60', i === qaTagIdx ? 'bg-blue-50 dark:bg-blue-500/10' : '']" @click="insertQaTag(qi)">
+                        <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500 dark:text-blue-400">#{{ qi.id }}</span>
+                        <span class="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200">{{ qi.title }}</span>
+                        <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500 dark:text-blue-400" />
                       </button>
                     </li>
                   </ul>
-                  <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 right-auto z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                  <ul v-if="showMention && mentionMode === 'edit' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 right-auto z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
-                      <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
+                      <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60', i === mentionIdx ? 'bg-emerald-50 dark:bg-emerald-500/10' : '']" @click="insertMention(m)">
                         <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
-                        <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
+                        <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ memberInitial(m.name) }}</div>
                         <div class="min-w-0 flex-1">
-                          <span class="block text-sm text-slate-700">{{ m.name }}</span>
-                          <span class="block text-[10px] text-slate-400">{{ m.role ?? '' }}</span>
+                          <span class="block text-sm text-slate-700 dark:text-slate-200">{{ m.name }}</span>
+                          <span class="block text-[10px] text-slate-400 dark:text-slate-500">{{ m.role ?? '' }}</span>
                         </div>
                       </button>
                     </li>
@@ -540,41 +540,41 @@ function memberInitial(name: string) {
                 </div>
                 <div v-if="editImages.length > 0" class="mt-2 flex flex-wrap gap-2">
                   <div v-for="(img, idx) in editImages" :key="img + idx" class="group relative">
-                    <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1">
-                      <FileText class="h-5 w-5 shrink-0 text-rose-500" />
-                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                    <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 dark:border-slate-800 dark:bg-slate-800/50">
+                      <FileText class="h-5 w-5 shrink-0 text-rose-500 dark:text-rose-400" />
+                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500 dark:text-slate-400">{{ attachmentFileName(img) }}</span>
                     </div>
-                    <img v-else :src="img" class="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
+                    <img v-else :src="img" class="h-16 w-16 rounded-lg border border-slate-200 object-cover dark:border-slate-800" />
                     <button type="button" class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white opacity-0 transition-opacity group-hover:opacity-100" @click="editImages.splice(idx, 1)">
                       <X class="h-2.5 w-2.5" />
                     </button>
                   </div>
                 </div>
                 <div class="mt-2 flex items-center gap-2">
-                  <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
+                  <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60">
                     <Paperclip class="h-3.5 w-3.5" />
                     <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'edit'); ($event.target as HTMLInputElement).value = ''" />
                     {{ uploading ? $t('qa.upload.uploading') : $t('qa.comments.file') }}
                   </label>
                   <button type="button" :disabled="!editContent.trim() || editContent.length > MAX_LEN" class="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40" @click="saveEdit">{{ $t('common.actions.save') }}</button>
-                  <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200" @click="cancelEdit">{{ $t('common.actions.cancel') }}</button>
-                  <span :class="['text-xs', editContent.length > MAX_LEN ? 'text-rose-500' : 'text-slate-400']">{{ editContent.length }}/{{ MAX_LEN }}</span>
+                  <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" @click="cancelEdit">{{ $t('common.actions.cancel') }}</button>
+                  <span :class="['text-xs', editContent.length > MAX_LEN ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500']">{{ editContent.length }}/{{ MAX_LEN }}</span>
                 </div>
               </div>
 
               <!-- 표시 모드 -->
               <div v-else>
-                <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+                <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                   <QaRefText :text="root.content" :members="members" />
                 </p>
                 <div v-if="root.images.length > 0" class="mt-2 flex flex-wrap gap-2">
                   <template v-for="(img, idx) in root.images" :key="img + idx">
-                    <button v-if="isPdfUrl(img)" type="button" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 transition-colors hover:border-emerald-300 md:h-20 md:w-20" @click="openPdfInNewTab(img)">
-                      <FileText class="h-5 w-5 shrink-0 text-rose-500" />
-                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                    <button v-if="isPdfUrl(img)" type="button" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 dark:border-slate-800 dark:bg-slate-800/50 transition-colors hover:border-emerald-300 md:h-20 md:w-20" @click="openPdfInNewTab(img)">
+                      <FileText class="h-5 w-5 shrink-0 text-rose-500 dark:text-rose-400" />
+                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500 dark:text-slate-400">{{ attachmentFileName(img) }}</span>
                     </button>
                     <button v-else type="button" class="block cursor-zoom-in" @click="openLightbox(root.images, idx)">
-                      <img :src="img" alt="" class="h-16 w-16 rounded-lg border border-slate-200 object-cover transition-colors hover:border-emerald-300 md:h-20 md:w-20" />
+                      <img :src="img" alt="" class="h-16 w-16 rounded-lg border border-slate-200 object-cover dark:border-slate-800 transition-colors hover:border-emerald-300 md:h-20 md:w-20" />
                     </button>
                   </template>
                 </div>
@@ -587,39 +587,39 @@ function memberInitial(name: string) {
                     type="button"
                     :class="['inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs transition-colors',
                       hasReacted(root, emoji)
-                        ? 'border-emerald-200 bg-emerald-100 text-emerald-600'
-                        : 'border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200']"
+                        ? 'border-emerald-200 bg-emerald-100 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400'
+                        : 'border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700']"
                     @click="onReaction(root.id, emoji)"
                   >
                     <span>{{ emoji }}</span>
                     <span class="font-medium">{{ reactionCount(root, emoji) }}</span>
                   </button>
                   <div class="relative">
-                    <button type="button" class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-400 hover:bg-slate-200" :title="$t('qa.comments.addReaction')" @click="reactionPickerId = (reactionPickerId === root.id ? null : root.id)">
+                    <button type="button" class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-400 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-500 dark:hover:bg-slate-700" :title="$t('qa.comments.addReaction')" @click="reactionPickerId = (reactionPickerId === root.id ? null : root.id)">
                       <Plus class="h-3 w-3" />
                     </button>
-                    <div v-if="reactionPickerId === root.id" ref="pickerRef" class="absolute bottom-full left-0 z-20 mb-1 flex gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
-                      <button v-for="emoji in EMOJIS" :key="emoji" type="button" :class="['flex h-8 w-8 items-center justify-center rounded-md text-lg transition-colors hover:bg-slate-100', hasReacted(root, emoji) ? 'bg-emerald-50' : '']" @click="onReaction(root.id, emoji)">{{ emoji }}</button>
+                    <div v-if="reactionPickerId === root.id" ref="pickerRef" class="absolute bottom-full left-0 z-20 mb-1 flex gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                      <button v-for="emoji in EMOJIS" :key="emoji" type="button" :class="['flex h-8 w-8 items-center justify-center rounded-md text-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-800', hasReacted(root, emoji) ? 'bg-emerald-50 dark:bg-emerald-500/10' : '']" @click="onReaction(root.id, emoji)">{{ emoji }}</button>
                     </div>
                   </div>
                 </div>
 
                 <!-- 액션 -->
                 <div class="mt-1.5 flex items-center gap-2">
-                  <button v-if="replyToId !== root.id" type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-emerald-500" @click="startReply(root.id)">
+                  <button v-if="replyToId !== root.id" type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-emerald-500 dark:text-slate-500 dark:hover:text-emerald-400" @click="startReply(root.id)">
                     <Reply class="h-3 w-3" /> {{ $t('qa.comments.reply') }}
                   </button>
                   <template v-if="isMine(root)">
                     <template v-if="deletingId === root.id">
-                      <span class="text-xs text-rose-500">{{ $t('qa.comments.deletePrompt') }}</span>
-                      <button type="button" class="text-xs font-medium text-rose-500 hover:text-rose-700" @click="confirmDelete(root.id)">{{ $t('common.actions.confirm') }}</button>
-                      <button type="button" class="text-xs font-medium text-slate-400 hover:text-slate-600" @click="deletingId = null">{{ $t('common.actions.cancel') }}</button>
+                      <span class="text-xs text-rose-500 dark:text-rose-400">{{ $t('qa.comments.deletePrompt') }}</span>
+                      <button type="button" class="text-xs font-medium text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300" @click="confirmDelete(root.id)">{{ $t('common.actions.confirm') }}</button>
+                      <button type="button" class="text-xs font-medium text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300" @click="deletingId = null">{{ $t('common.actions.cancel') }}</button>
                     </template>
                     <template v-else>
-                      <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-slate-600" @click="startEdit(root)">
+                      <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300" @click="startEdit(root)">
                         <Edit3 class="h-3 w-3" /> {{ $t('common.actions.edit') }}
                       </button>
-                      <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-rose-500" @click="deletingId = root.id">
+                      <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400" @click="deletingId = root.id">
                         <Trash2 class="h-3 w-3" /> {{ $t('common.actions.delete') }}
                       </button>
                     </template>
@@ -630,40 +630,40 @@ function memberInitial(name: string) {
           </div>
 
           <!-- 답글 목록 -->
-          <div v-if="(tree.childrenMap.get(root.id) ?? []).length > 0" class="ml-11 mt-3 space-y-3 border-l-2 border-slate-100 pl-4">
+          <div v-if="(tree.childrenMap.get(root.id) ?? []).length > 0" class="ml-11 mt-3 space-y-3 border-l-2 border-slate-100 pl-4 dark:border-slate-800">
             <div v-for="child in tree.childrenMap.get(root.id) ?? []" :key="child.id" class="flex gap-3">
               <div class="shrink-0">
-                <img v-if="child.author.avatarUrl" :src="child.author.avatarUrl" :alt="child.author.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover" />
-                <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600">{{ memberInitial(child.author.name) }}</div>
+                <img v-if="child.author.avatarUrl" :src="child.author.avatarUrl" :alt="child.author.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover dark:bg-slate-800" />
+                <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ memberInitial(child.author.name) }}</div>
               </div>
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
-                  <CornerDownRight class="h-3 w-3 text-slate-300" />
-                  <span class="text-sm font-medium text-slate-700">{{ child.author.name }}</span>
-                  <span class="text-xs text-slate-400">{{ timeAgo(child.createdAt) }}</span>
+                  <CornerDownRight class="h-3 w-3 text-slate-300 dark:text-slate-600" />
+                  <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ child.author.name }}</span>
+                  <span class="text-xs text-slate-400 dark:text-slate-500">{{ timeAgo(child.createdAt) }}</span>
                 </div>
-                <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+                <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                   <QaRefText :text="child.content" :members="members" />
                 </p>
                 <div v-if="child.images.length > 0" class="mt-2 flex flex-wrap gap-2">
                   <template v-for="(img, idx) in child.images" :key="img + idx">
-                    <button v-if="isPdfUrl(img)" type="button" :title="attachmentFileName(img)" class="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 transition-colors hover:border-emerald-300" @click="openPdfInNewTab(img)">
-                      <FileText class="h-4 w-4 shrink-0 text-rose-500" />
-                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                    <button v-if="isPdfUrl(img)" type="button" :title="attachmentFileName(img)" class="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 dark:border-slate-800 dark:bg-slate-800/50 transition-colors hover:border-emerald-300" @click="openPdfInNewTab(img)">
+                      <FileText class="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" />
+                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500 dark:text-slate-400">{{ attachmentFileName(img) }}</span>
                     </button>
                     <button v-else type="button" class="block cursor-zoom-in" @click="openLightbox(child.images, idx)">
-                      <img :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover transition-colors hover:border-emerald-300" />
+                      <img :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover dark:border-slate-800 transition-colors hover:border-emerald-300" />
                     </button>
                   </template>
                 </div>
                 <div v-if="isMine(child)" class="mt-1.5 flex items-center gap-2">
                   <template v-if="deletingId === child.id">
-                    <span class="text-xs text-rose-500">{{ $t('qa.comments.deletePrompt') }}</span>
-                    <button type="button" class="text-xs font-medium text-rose-500 hover:text-rose-700" @click="confirmDelete(child.id)">{{ $t('common.actions.confirm') }}</button>
-                    <button type="button" class="text-xs font-medium text-slate-400 hover:text-slate-600" @click="deletingId = null">{{ $t('common.actions.cancel') }}</button>
+                    <span class="text-xs text-rose-500 dark:text-rose-400">{{ $t('qa.comments.deletePrompt') }}</span>
+                    <button type="button" class="text-xs font-medium text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300" @click="confirmDelete(child.id)">{{ $t('common.actions.confirm') }}</button>
+                    <button type="button" class="text-xs font-medium text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300" @click="deletingId = null">{{ $t('common.actions.cancel') }}</button>
                   </template>
                   <template v-else>
-                    <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-rose-500" @click="deletingId = child.id">
+                    <button type="button" class="flex items-center gap-0.5 text-xs text-slate-400 hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400" @click="deletingId = child.id">
                       <Trash2 class="h-3 w-3" /> {{ $t('common.actions.delete') }}
                     </button>
                   </template>
@@ -673,11 +673,11 @@ function memberInitial(name: string) {
           </div>
 
           <!-- 인라인 답글 입력 -->
-          <div v-if="replyToId === root.id" class="ml-11 mt-3 border-l-2 border-slate-100 pl-4">
+          <div v-if="replyToId === root.id" class="ml-11 mt-3 border-l-2 border-slate-100 pl-4 dark:border-slate-800">
             <div class="flex gap-3">
               <div class="shrink-0">
-                <img v-if="auth.user?.avatarUrl" :src="auth.user.avatarUrl" :alt="auth.user.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover" />
-                <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600">{{ memberInitial(auth.user?.name ?? '?') }}</div>
+                <img v-if="auth.user?.avatarUrl" :src="auth.user.avatarUrl" :alt="auth.user.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover dark:bg-slate-800" />
+                <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ memberInitial(auth.user?.name ?? '?') }}</div>
               </div>
               <div class="min-w-0 flex-1">
                 <div class="relative">
@@ -687,28 +687,28 @@ function memberInitial(name: string) {
                     rows="2"
                     :maxlength="MAX_LEN"
                     :placeholder="$t('qa.comments.replyPlaceholder', { name: root.author.name })"
-                    class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-emerald-500/20"
                     @input="checkMention($event.target as HTMLTextAreaElement, 'reply')"
                     @keydown="onEditorKey($event, 'reply')"
                     @paste="onPaste($event, 'reply')"
                   />
-                  <ul v-if="showQaTag && qaTagMode === 'reply' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                  <ul v-if="showQaTag && qaTagMode === 'reply' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(qi, i) in filteredQaItems" :key="qi.id">
-                      <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === qaTagIdx ? 'bg-blue-50' : '']" @click="insertQaTag(qi)">
-                        <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500">#{{ qi.id }}</span>
-                        <span class="min-w-0 flex-1 truncate text-sm text-slate-700">{{ qi.title }}</span>
-                        <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500" />
+                      <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60', i === qaTagIdx ? 'bg-blue-50 dark:bg-blue-500/10' : '']" @click="insertQaTag(qi)">
+                        <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500 dark:text-blue-400">#{{ qi.id }}</span>
+                        <span class="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200">{{ qi.title }}</span>
+                        <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500 dark:text-blue-400" />
                       </button>
                     </li>
                   </ul>
-                  <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+                  <ul v-if="showMention && mentionMode === 'reply' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                     <li v-for="(m, i) in filteredMembers" :key="m.id">
-                      <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
+                      <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60', i === mentionIdx ? 'bg-emerald-50 dark:bg-emerald-500/10' : '']" @click="insertMention(m)">
                         <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
-                        <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
+                        <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ memberInitial(m.name) }}</div>
                         <div class="min-w-0 flex-1">
-                          <span class="block text-sm text-slate-700">{{ m.name }}</span>
-                          <span class="block text-[10px] text-slate-400">{{ m.role ?? '' }}</span>
+                          <span class="block text-sm text-slate-700 dark:text-slate-200">{{ m.name }}</span>
+                          <span class="block text-[10px] text-slate-400 dark:text-slate-500">{{ m.role ?? '' }}</span>
                         </div>
                       </button>
                     </li>
@@ -716,25 +716,25 @@ function memberInitial(name: string) {
                 </div>
                 <div v-if="replyImages.length > 0" class="mt-2 flex flex-wrap gap-2">
                   <div v-for="(img, idx) in replyImages" :key="img + idx" class="group relative">
-                    <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1">
-                      <FileText class="h-4 w-4 shrink-0 text-rose-500" />
-                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                    <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 dark:border-slate-800 dark:bg-slate-800/50">
+                      <FileText class="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" />
+                      <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500 dark:text-slate-400">{{ attachmentFileName(img) }}</span>
                     </div>
-                    <img v-else :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover" />
+                    <img v-else :src="img" class="h-14 w-14 rounded-lg border border-slate-200 object-cover dark:border-slate-800" />
                     <button type="button" class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white opacity-0 transition-opacity group-hover:opacity-100" @click="replyImages.splice(idx, 1)">
                       <X class="h-2.5 w-2.5" />
                     </button>
                   </div>
                 </div>
                 <div class="mt-2 flex items-center gap-2">
-                  <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
+                  <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60">
                     <Paperclip class="h-3.5 w-3.5" />
                     <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'reply'); ($event.target as HTMLInputElement).value = ''" />
                     {{ uploading ? $t('qa.upload.uploading') : $t('qa.comments.file') }}
                   </label>
                   <button type="button" :disabled="(!replyContent.trim() && replyImages.length === 0) || replyContent.length > MAX_LEN" class="rounded-md bg-emerald-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40" @click="submitReply">{{ $t('qa.comments.submitReply') }}</button>
-                  <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200" @click="cancelReply">{{ $t('common.actions.cancel') }}</button>
-                  <span :class="['text-xs', replyContent.length > MAX_LEN ? 'text-rose-500' : 'text-slate-400']">{{ replyContent.length }}/{{ MAX_LEN }}</span>
+                  <button type="button" class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" @click="cancelReply">{{ $t('common.actions.cancel') }}</button>
+                  <span :class="['text-xs', replyContent.length > MAX_LEN ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500']">{{ replyContent.length }}/{{ MAX_LEN }}</span>
                 </div>
               </div>
             </div>
@@ -744,12 +744,12 @@ function memberInitial(name: string) {
     </div>
 
     <!-- 새 댓글 작성 -->
-    <div class="border-t border-slate-100 p-4 md:p-5">
+    <div class="border-t border-slate-100 p-4 md:p-5 dark:border-slate-800">
       <form @submit.prevent="submitNew">
         <div class="flex items-start gap-3">
           <div class="shrink-0">
-            <img v-if="auth.user?.avatarUrl" :src="auth.user.avatarUrl" :alt="auth.user.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover" />
-            <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600">{{ memberInitial(auth.user?.name ?? '?') }}</div>
+            <img v-if="auth.user?.avatarUrl" :src="auth.user.avatarUrl" :alt="auth.user.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover dark:bg-slate-800" />
+            <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ memberInitial(auth.user?.name ?? '?') }}</div>
           </div>
           <div class="min-w-0 flex-1">
             <div class="relative">
@@ -759,54 +759,54 @@ function memberInitial(name: string) {
                 rows="2"
                 :maxlength="MAX_LEN"
                 :placeholder="$t('qa.comments.newPlaceholder')"
-                class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-emerald-500/20"
                 @input="checkMention($event.target as HTMLTextAreaElement, 'new')"
                 @keydown="onEditorKey($event, 'new')"
                 @paste="onPaste($event, 'new')"
               />
-              <ul v-if="showQaTag && qaTagMode === 'new' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+              <ul v-if="showQaTag && qaTagMode === 'new' && filteredQaItems.length > 0" data-qa-tag-list="true" :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900', qaTagAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                 <li v-for="(qi, i) in filteredQaItems" :key="qi.id">
-                  <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === qaTagIdx ? 'bg-blue-50' : '']" @click="insertQaTag(qi)">
-                    <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500">#{{ qi.id }}</span>
-                    <span class="min-w-0 flex-1 truncate text-sm text-slate-700">{{ qi.title }}</span>
-                    <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500" />
+                  <button type="button" :data-qa-tag-active="i === qaTagIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60', i === qaTagIdx ? 'bg-blue-50 dark:bg-blue-500/10' : '']" @click="insertQaTag(qi)">
+                    <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500 dark:text-blue-400">#{{ qi.id }}</span>
+                    <span class="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200">{{ qi.title }}</span>
+                    <Check v-if="i === qaTagIdx" class="h-3 w-3 text-blue-500 dark:text-blue-400" />
                   </button>
                 </li>
               </ul>
-              <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
+              <ul v-if="showMention && mentionMode === 'new' && filteredMembers.length > 0" data-mention-list="true" :class="['absolute left-0 z-50 max-h-48 w-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900', mentionAbove ? 'bottom-full mb-1' : 'top-full mt-1']">
                 <li v-for="(m, i) in filteredMembers" :key="m.id">
-                  <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === mentionIdx ? 'bg-emerald-50' : '']" @click="insertMention(m)">
+                  <button type="button" :data-mention-active="i === mentionIdx" :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60', i === mentionIdx ? 'bg-emerald-50 dark:bg-emerald-500/10' : '']" @click="insertMention(m)">
                     <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-6 w-6 rounded-full object-cover" />
-                    <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600">{{ memberInitial(m.name) }}</div>
+                    <div v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ memberInitial(m.name) }}</div>
                     <div class="min-w-0 flex-1">
-                      <span class="block text-sm text-slate-700">{{ m.name }}</span>
-                      <span class="block text-[10px] text-slate-400">{{ m.role ?? '' }}</span>
+                      <span class="block text-sm text-slate-700 dark:text-slate-200">{{ m.name }}</span>
+                      <span class="block text-[10px] text-slate-400 dark:text-slate-500">{{ m.role ?? '' }}</span>
                     </div>
-                    <Check v-if="i === mentionIdx" class="h-3 w-3 text-emerald-500" />
+                    <Check v-if="i === mentionIdx" class="h-3 w-3 text-emerald-500 dark:text-emerald-400" />
                   </button>
                 </li>
               </ul>
             </div>
             <div v-if="newImages.length > 0" class="mt-2 flex flex-wrap gap-2">
               <div v-for="(img, idx) in newImages" :key="img + idx" class="group relative">
-                <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1">
-                  <FileText class="h-5 w-5 shrink-0 text-rose-500" />
-                  <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+                <div v-if="isPdfUrl(img)" :title="attachmentFileName(img)" class="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-1 dark:border-slate-800 dark:bg-slate-800/50">
+                  <FileText class="h-5 w-5 shrink-0 text-rose-500 dark:text-rose-400" />
+                  <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500 dark:text-slate-400">{{ attachmentFileName(img) }}</span>
                 </div>
-                <img v-else :src="img" class="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
+                <img v-else :src="img" class="h-16 w-16 rounded-lg border border-slate-200 object-cover dark:border-slate-800" />
                 <button type="button" class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white opacity-0 transition-opacity group-hover:opacity-100" @click="newImages.splice(idx, 1)">
                   <X class="h-2.5 w-2.5" />
                 </button>
               </div>
             </div>
             <div class="mt-2 flex items-center justify-between">
-              <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50">
+              <label class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60">
                 <Paperclip class="h-3.5 w-3.5" />
                 <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="uploadFiles(($event.target as HTMLInputElement).files, 'new'); ($event.target as HTMLInputElement).value = ''" />
                 {{ uploading ? $t('qa.upload.uploading') : $t('qa.comments.addFile') }}
               </label>
               <div class="flex items-center gap-2">
-                <span :class="['text-xs', newContent.length > MAX_LEN ? 'text-rose-500' : 'text-slate-400']">{{ newContent.length }}/{{ MAX_LEN }}</span>
+                <span :class="['text-xs', newContent.length > MAX_LEN ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500']">{{ newContent.length }}/{{ MAX_LEN }}</span>
                 <button
                   type="submit"
                   :disabled="submitting || uploading || (!newContent.trim() && newImages.length === 0) || newContent.length > MAX_LEN"
@@ -814,7 +814,7 @@ function memberInitial(name: string) {
                 >{{ submitting ? $t('qa.comments.submitting') : $t('qa.comments.submit') }}</button>
               </div>
             </div>
-            <p v-if="error" class="mt-2 rounded bg-red-50 px-2 py-1 text-xs text-red-700">{{ error }}</p>
+            <p v-if="error" class="mt-2 rounded bg-red-50 px-2 py-1 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-400">{{ error }}</p>
           </div>
         </div>
       </form>

@@ -76,22 +76,22 @@ function rememberFilter() {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
     <!-- Filters -->
-    <div class="flex flex-col gap-3 border-b border-slate-100 p-4 md:p-5">
+    <div class="flex flex-col gap-3 border-b border-slate-100 p-4 md:p-5 dark:border-slate-800">
       <div class="flex flex-wrap items-center gap-2.5">
         <div class="relative min-w-[220px] flex-1">
-          <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             v-model="search"
             type="text"
             :placeholder="$t('qa.list.searchPlaceholder')"
-            class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-emerald-500/20"
           />
         </div>
         <select
           v-model="statusFilter"
-          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
         >
           <option value="all">{{ $t('qa.filter.allStatuses') }}</option>
           <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
@@ -103,7 +103,7 @@ function rememberFilter() {
         </select>
         <select
           v-model="priorityFilter"
-          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
         >
           <option value="all">{{ $t('qa.filter.allPriorities') }}</option>
           <option value="critical">{{ $t('common.priority.critical') }}</option>
@@ -113,18 +113,18 @@ function rememberFilter() {
         </select>
         <select
           v-model="updateFilter"
-          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
         >
           <option value="all">{{ $t('qa.filter.allUpdates') }}</option>
           <option v-for="u in updateOptions" :key="u.id" :value="String(u.id)">
             {{ u.version }} - {{ u.title }}
           </option>
         </select>
-        <label class="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500">
+        <label class="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
           <input
             v-model="hideReleased"
             type="checkbox"
-            class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
+            class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400 dark:border-slate-600 dark:bg-slate-900"
           />
           {{ $t('qa.filter.hideReleased') }}
         </label>
@@ -132,7 +132,7 @@ function rememberFilter() {
 
       <!-- 멤버 필터 행 -->
       <div class="flex flex-wrap items-center gap-2.5 text-xs">
-        <span class="text-slate-400">{{ $t('qa.list.membersLabel') }}</span>
+        <span class="text-slate-400 dark:text-slate-500">{{ $t('qa.list.membersLabel') }}</span>
         <div class="min-w-[180px]">
           <SearchableSelect
             :model-value="testerFilter"
@@ -159,11 +159,11 @@ function rememberFilter() {
             @update:model-value="(v) => assigneeFilter = v as number | null"
           />
         </div>
-        <label v-if="auth.user" class="ml-2 inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1.5">
+        <label v-if="auth.user" class="ml-2 inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1.5 dark:border-slate-800">
           <input v-model="mineOnly" type="checkbox" class="accent-emerald-500" />
-          <span class="text-slate-600">{{ $t('qa.list.mineOnly') }}</span>
+          <span class="text-slate-600 dark:text-slate-300">{{ $t('qa.list.mineOnly') }}</span>
         </label>
-        <span class="ml-auto whitespace-nowrap text-slate-400">{{ $t('qa.list.totalCount', filtered.length) }}</span>
+        <span class="ml-auto whitespace-nowrap text-slate-400 dark:text-slate-500">{{ $t('qa.list.totalCount', filtered.length) }}</span>
       </div>
     </div>
 
@@ -171,31 +171,31 @@ function rememberFilter() {
     <div class="overflow-x-auto">
       <table class="w-full text-left">
         <thead>
-          <tr class="border-b border-slate-100 bg-slate-50">
-            <th class="w-full px-5 py-3.5 text-xs font-medium text-slate-500">{{ $t('qa.fields.title') }}</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden md:table-cell">{{ $t('qa.fields.update') }}</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500">{{ $t('qa.fields.status') }}</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500">{{ $t('qa.fields.priority') }}</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden sm:table-cell">{{ $t('common.roles.assignee') }}</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 hidden lg:table-cell">{{ $t('qa.list.colUpdatedAt') }}</th>
+          <tr class="border-b border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
+            <th class="w-full px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('qa.fields.title') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400 hidden md:table-cell">{{ $t('qa.fields.update') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('qa.fields.status') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('qa.fields.priority') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400 hidden sm:table-cell">{{ $t('common.roles.assignee') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400 hidden lg:table-cell">{{ $t('qa.list.colUpdatedAt') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="item in filtered"
             :key="item.id"
-            class="cursor-pointer border-b border-slate-50 transition hover:bg-slate-50"
+            class="cursor-pointer border-b border-slate-50 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
             @click="rememberFilter(); $router.push(`/qa/${item.id}`)"
           >
             <td class="px-5 py-4">
-              <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ item.title }}</p>
+              <p class="line-clamp-1 text-sm font-medium text-slate-800 dark:text-slate-100">{{ item.title }}</p>
               <!-- wrapper 가 hidden/block 을 담당해, 클램프(display:-webkit-box)가 sm:block 에 덮이지 않게 함 -->
               <div class="mt-1 hidden sm:block">
-                <p class="line-clamp-2 text-xs text-slate-400">{{ item.description }}</p>
+                <p class="line-clamp-2 text-xs text-slate-400 dark:text-slate-500">{{ item.description }}</p>
               </div>
             </td>
             <td class="hidden px-5 py-4 md:table-cell">
-              <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+              <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 {{ findUpdate(item.updateId)?.version ?? '-' }}
               </span>
             </td>
@@ -203,22 +203,22 @@ function rememberFilter() {
             <td class="whitespace-nowrap px-5 py-4"><PriorityBadge :priority="item.priority" /></td>
             <td class="hidden whitespace-nowrap px-5 py-4 sm:table-cell">
               <div class="flex flex-col gap-1 text-xs">
-                <span v-if="item.tester" class="text-slate-500">
+                <span v-if="item.tester" class="text-slate-500 dark:text-slate-400">
                   T: {{ item.tester.name }}
                 </span>
-                <span v-if="item.assignee1 || item.assignee2" class="text-slate-700">
+                <span v-if="item.assignee1 || item.assignee2" class="text-slate-700 dark:text-slate-200">
                   {{ [item.assignee1?.name, item.assignee2?.name].filter(Boolean).join(', ') }}
                 </span>
-                <span v-if="!item.tester && !item.assignee1 && !item.assignee2" class="text-slate-400">{{ $t('qa.common.unassigned') }}</span>
+                <span v-if="!item.tester && !item.assignee1 && !item.assignee2" class="text-slate-400 dark:text-slate-500">{{ $t('qa.common.unassigned') }}</span>
               </div>
             </td>
-            <td class="hidden whitespace-nowrap px-5 py-4 text-xs text-slate-400 lg:table-cell">
+            <td class="hidden whitespace-nowrap px-5 py-4 text-xs text-slate-400 lg:table-cell dark:text-slate-500">
               {{ item.updatedAt?.slice(0, 10) }}
             </td>
           </tr>
           <tr v-if="filtered.length === 0">
-            <td colspan="6" class="px-5 py-12 text-center text-sm text-slate-400">
-              <Inbox class="mx-auto mb-2 h-6 w-6 text-slate-300" />
+            <td colspan="6" class="px-5 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
+              <Inbox class="mx-auto mb-2 h-6 w-6 text-slate-300 dark:text-slate-600" />
               {{ $t('qa.filter.noMatch') }}
             </td>
           </tr>

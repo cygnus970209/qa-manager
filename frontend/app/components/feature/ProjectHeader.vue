@@ -35,9 +35,9 @@ function onSelectStatus(e: Event) {
 </script>
 
 <template>
-  <header class="rounded-xl border border-slate-200 bg-white p-5 md:p-6">
+  <header class="rounded-xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-800 dark:bg-slate-900">
     <button
-      class="mb-3 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900"
+      class="mb-3 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
       type="button"
       @click="router.push('/')"
     >
@@ -47,9 +47,9 @@ function onSelectStatus(e: Event) {
 
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div class="min-w-0">
-        <h1 class="truncate text-xl font-bold text-slate-800 md:text-2xl">{{ project.name }}</h1>
+        <h1 class="truncate text-xl font-bold text-slate-800 md:text-2xl dark:text-slate-100">{{ project.name }}</h1>
         <ExpandableText v-if="project.description" :text="project.description" :lines="3" class="mt-2 max-w-3xl" />
-        <div class="mt-3 flex items-center gap-2 text-xs text-slate-400">
+        <div class="mt-3 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
           <span>{{ $t('project.header.createdAt', { date: project.createdAt?.slice(0, 10) }) }}</span>
           <span>·</span>
           <span>{{ $t('project.header.updateCount', updateCount) }}</span>
@@ -61,7 +61,7 @@ function onSelectStatus(e: Event) {
       <div class="flex shrink-0 items-center gap-3">
         <StatusBadge :status="project.status" />
         <select
-          class="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          class="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
           :value="project.status === 'active' ? 'ACTIVE' : project.status === 'paused' ? 'PAUSED' : 'COMPLETED'"
           @change="onSelectStatus"
         >
@@ -71,7 +71,7 @@ function onSelectStatus(e: Event) {
         </select>
         <button
           type="button"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400"
           :title="$t('project.header.editProject')"
           @click="emit('edit')"
         >
@@ -79,7 +79,7 @@ function onSelectStatus(e: Event) {
         </button>
         <button
           type="button"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
           :title="$t('project.header.deleteProject')"
           @click="emit('remove')"
         >
@@ -89,10 +89,10 @@ function onSelectStatus(e: Event) {
     </div>
 
     <div class="mt-4 flex items-center gap-3">
-      <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+      <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
         <div class="h-full rounded-full bg-emerald-400 transition-all" :style="{ width: `${progress}%` }" />
       </div>
-      <span class="text-xs font-medium text-slate-500">{{ progress }}%</span>
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ progress }}%</span>
     </div>
   </header>
 </template>

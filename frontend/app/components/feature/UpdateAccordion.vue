@@ -23,12 +23,12 @@ const open = ref(!!props.defaultOpen)
 
 /** 헤더에 표시할 상태별 QA 개수 (0건인 상태는 생략). 색상은 StatusBadge 와 동일. */
 const STATUS_META: { key: QaStatus; cls: string }[] = [
-  { key: 'needs_fix',     cls: 'bg-rose-50 text-rose-600' },
-  { key: 'in_progress',   cls: 'bg-blue-50 text-blue-600' },
-  { key: 'fix_done',      cls: 'bg-amber-50 text-amber-600' },
-  { key: 'confirmed',     cls: 'bg-emerald-50 text-emerald-600' },
-  { key: 'on_hold',       cls: 'bg-slate-100 text-slate-600' },
-  { key: 'needs_recheck', cls: 'bg-purple-50 text-purple-600' },
+  { key: 'needs_fix',     cls: 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' },
+  { key: 'in_progress',   cls: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' },
+  { key: 'fix_done',      cls: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' },
+  { key: 'confirmed',     cls: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' },
+  { key: 'on_hold',       cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
+  { key: 'needs_recheck', cls: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' },
 ]
 const statusCounts = computed(() =>
   STATUS_META
@@ -65,23 +65,23 @@ function rememberFilter() {
 </script>
 
 <template>
-  <div class="rounded-xl border border-slate-200 bg-white">
+  <div class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
     <button
       type="button"
-      class="flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition hover:bg-slate-50"
+      class="flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
       @click="open = !open"
     >
       <div class="flex min-w-0 items-center gap-3">
         <ChevronDown
-          :class="['h-4 w-4 text-slate-400 transition-transform', open && 'rotate-180']"
+          :class="['h-4 w-4 text-slate-400 transition-transform dark:text-slate-500', open && 'rotate-180']"
         />
-        <span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+        <span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           {{ update.version }}
         </span>
-        <span class="truncate text-sm font-semibold text-slate-800">{{ update.title }}</span>
+        <span class="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{{ update.title }}</span>
         <StatusBadge :status="update.status" />
       </div>
-      <div class="flex shrink-0 flex-wrap items-center justify-end gap-1.5 text-xs text-slate-400">
+      <div class="flex shrink-0 flex-wrap items-center justify-end gap-1.5 text-xs text-slate-400 dark:text-slate-500">
         <span>{{ $t('project.accordion.qaCount', items.length) }}</span>
         <span
           v-for="sc in statusCounts"
@@ -93,11 +93,11 @@ function rememberFilter() {
       </div>
     </button>
 
-    <div v-if="open" class="border-t border-slate-100 px-5 py-4">
+    <div v-if="open" class="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
       <ExpandableText v-if="update.description" :text="update.description" :lines="3" class="mb-3" />
       <div class="mb-3 flex items-center gap-2">
         <select
-          class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
           :value="upperStatus"
           @change="onChangeStatus"
           @click.stop
@@ -115,7 +115,7 @@ function rememberFilter() {
         </button>
         <button
           type="button"
-          class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400"
           :title="$t('project.accordion.editUpdate')"
           @click.stop="emit('edit', update)"
         >
@@ -123,7 +123,7 @@ function rememberFilter() {
         </button>
         <button
           type="button"
-          class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
+          class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
           :title="$t('project.accordion.deleteUpdate')"
           @click.stop="emit('remove', update)"
         >
@@ -131,22 +131,22 @@ function rememberFilter() {
         </button>
       </div>
 
-      <ul v-if="items.length > 0" class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200">
+      <ul v-if="items.length > 0" class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
         <li
           v-for="q in items"
           :key="q.id"
-          class="cursor-pointer px-4 py-3 transition hover:bg-slate-50"
+          class="cursor-pointer px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
           @click="rememberFilter(); $router.push(`/qa/${q.id}`)"
         >
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ q.title }}</p>
-              <p v-if="q.description" class="mt-0.5 line-clamp-1 text-xs text-slate-400">{{ q.description }}</p>
+              <p class="line-clamp-1 text-sm font-medium text-slate-800 dark:text-slate-100">{{ q.title }}</p>
+              <p v-if="q.description" class="mt-0.5 line-clamp-1 text-xs text-slate-400 dark:text-slate-500">{{ q.description }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-2">
               <select
                 :value="q.status.toUpperCase()"
-                class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
                 @click.stop
                 @change="onChangeQaStatus(q.id, $event)"
               >
@@ -162,7 +162,7 @@ function rememberFilter() {
           </div>
         </li>
       </ul>
-      <div v-else class="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
+      <div v-else class="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
         {{ $t('project.accordion.emptyQa') }}
       </div>
     </div>

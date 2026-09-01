@@ -170,15 +170,15 @@ onBeforeUnmount(() => {
       ref="triggerEl"
       type="button"
       :disabled="disabled"
-      class="flex w-full items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-1.5 text-left text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-50"
+      class="flex w-full items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-1.5 text-left text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/60"
       @click="open ? close() : openDropdown()"
     >
-      <span :class="[selected ? 'text-slate-700' : 'text-slate-400']">{{ displayText }}</span>
+      <span :class="[selected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500']">{{ displayText }}</span>
       <span class="flex items-center gap-1">
         <button
           v-if="clearable && selected && !disabled"
           type="button"
-          class="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          class="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
           :aria-label="$t('common.select.clearSelection')"
           @click.stop="clear"
         >
@@ -193,31 +193,31 @@ onBeforeUnmount(() => {
         v-if="open"
         ref="panelEl"
         :style="panelStyle"
-        class="z-[100] flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg"
+        class="z-[100] flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
       >
         <input
           ref="inputEl"
           v-model="query"
           type="text"
           :placeholder="placeholder ?? $t('common.select.searchPlaceholder')"
-          class="w-full shrink-0 border-b border-slate-100 px-3 py-2 text-xs focus:outline-none"
+          class="w-full shrink-0 border-b border-slate-100 bg-transparent px-3 py-2 text-xs focus:outline-none dark:border-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
           @keydown="onKey"
         />
         <ul class="flex-1 overflow-y-auto py-1">
-          <li v-if="filtered.length === 0" class="px-3 py-2 text-xs text-slate-400">{{ $t('common.select.noResults') }}</li>
+          <li v-if="filtered.length === 0" class="px-3 py-2 text-xs text-slate-400 dark:text-slate-500">{{ $t('common.select.noResults') }}</li>
           <li v-for="(o, i) in filtered" :key="String(keyFn(o))">
             <button
               type="button"
               :class="[
                 'flex w-full items-center justify-between px-3 py-1.5 text-left text-xs transition-colors',
-                i === highlighted ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50',
+                i === highlighted ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/60',
                 modelValue === keyFn(o) ? 'font-medium' : '',
               ]"
               @mousedown.prevent="selectOption(o)"
               @mouseenter="highlighted = i"
             >
               <span class="truncate">{{ labelFn(o) }}</span>
-              <Check v-if="modelValue === keyFn(o)" class="h-3 w-3 text-emerald-500" />
+              <Check v-if="modelValue === keyFn(o)" class="h-3 w-3 text-emerald-500 dark:text-emerald-400" />
             </button>
           </li>
         </ul>

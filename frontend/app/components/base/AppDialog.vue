@@ -21,14 +21,14 @@ function onBackdrop(e: MouseEvent) {
       @mousedown="onBackdrop"
     >
       <div
-        :class="['w-full rounded-2xl bg-white shadow-xl', maxWidth ?? 'max-w-lg']"
+        :class="['w-full rounded-2xl bg-white shadow-xl dark:bg-slate-900', maxWidth ?? 'max-w-lg']"
         @mousedown.stop
       >
-        <header class="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-          <h2 class="text-sm font-semibold text-slate-800">{{ title }}</h2>
+        <header class="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-800">
+          <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ title }}</h2>
           <button
             type="button"
-            class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
             @click="emit('close')"
           >
             <X class="h-4 w-4" />
@@ -37,7 +37,7 @@ function onBackdrop(e: MouseEvent) {
         <div class="max-h-[70vh] overflow-y-auto px-5 py-4">
           <slot />
         </div>
-        <footer v-if="$slots.footer" class="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+        <footer v-if="$slots.footer" class="flex justify-end gap-2 border-t border-slate-100 px-5 py-3 dark:border-slate-800">
           <slot name="footer" />
         </footer>
       </div>

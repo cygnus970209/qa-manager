@@ -65,6 +65,12 @@
       "title": "Delete this item?",
       "message": "This action cannot be undone. Continue?"
     },
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
     "select": {
       "notSelected": "Not selected",
       "searchPlaceholder": "Search...",

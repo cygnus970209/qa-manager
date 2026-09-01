@@ -38,42 +38,42 @@ function displayValue(field: string, value: string | null | undefined): string {
 </script>
 
 <template>
-  <section class="rounded-xl border border-slate-200 bg-white p-5">
-    <h2 class="mb-3 text-sm font-semibold text-slate-700">{{ $t('qa.history.title') }}</h2>
+  <section class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    <h2 class="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('qa.history.title') }}</h2>
     <ol v-if="entries.length > 0" class="space-y-3">
       <li v-for="h in entries" :key="h.id" class="flex gap-3">
         <div class="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
         <div class="flex-1 text-sm">
-          <p v-if="h.field === 'image_added'" class="text-slate-700">
+          <p v-if="h.field === 'image_added'" class="text-slate-700 dark:text-slate-200">
             <span class="font-medium">{{ h.changedBy?.name ?? $t('qa.history.system') }}</span>
             {{ $t('qa.history.addedImage') }}
             <a v-if="h.newValue" :href="h.newValue" target="_blank" rel="noopener noreferrer" class="ml-1 inline-block align-middle">
-              <img :src="h.newValue" :alt="$t('qa.history.addedImageAlt')" class="h-10 w-10 rounded border border-slate-200 object-cover" />
+              <img :src="h.newValue" :alt="$t('qa.history.addedImageAlt')" class="h-10 w-10 rounded border border-slate-200 object-cover dark:border-slate-800" />
             </a>
           </p>
-          <p v-else-if="h.field === 'image_removed'" class="text-slate-700">
+          <p v-else-if="h.field === 'image_removed'" class="text-slate-700 dark:text-slate-200">
             <span class="font-medium">{{ h.changedBy?.name ?? $t('qa.history.system') }}</span>
             {{ $t('qa.history.removedImage') }}
             <a v-if="h.oldValue" :href="h.oldValue" target="_blank" rel="noopener noreferrer" class="ml-1 inline-block align-middle">
-              <img :src="h.oldValue" :alt="$t('qa.history.removedImageAlt')" class="h-10 w-10 rounded border border-slate-200 object-cover opacity-60 grayscale" />
+              <img :src="h.oldValue" :alt="$t('qa.history.removedImageAlt')" class="h-10 w-10 rounded border border-slate-200 object-cover opacity-60 grayscale dark:border-slate-800" />
             </a>
           </p>
-          <div v-else class="text-slate-700">
+          <div v-else class="text-slate-700 dark:text-slate-200">
             <p>
               <span class="font-medium">{{ h.changedBy?.name ?? $t('qa.history.system') }}</span>
               {{ $t('qa.history.changedBy') }} <span class="font-medium">{{ fieldLabel(h.field) }}</span>{{ $t('qa.history.fieldObjectParticle') }}
             </p>
             <p class="mt-1 flex flex-wrap items-center gap-1">
-              <span class="rounded bg-slate-100 px-1 py-0.5 text-xs">{{ displayValue(h.field, h.oldValue) }}</span>
-              <span class="text-slate-400">→</span>
-              <span class="rounded bg-emerald-50 px-1 py-0.5 text-xs text-emerald-700">{{ displayValue(h.field, h.newValue) }}</span>
+              <span class="rounded bg-slate-100 px-1 py-0.5 text-xs dark:bg-slate-800">{{ displayValue(h.field, h.oldValue) }}</span>
+              <span class="text-slate-400 dark:text-slate-500">→</span>
+              <span class="rounded bg-emerald-50 px-1 py-0.5 text-xs text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">{{ displayValue(h.field, h.newValue) }}</span>
               <span>{{ $t('qa.history.changedTo') }}</span>
             </p>
           </div>
-          <p class="mt-0.5 text-xs text-slate-400">{{ timeAgo(h.changedAt) }}</p>
+          <p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{{ timeAgo(h.changedAt) }}</p>
         </div>
       </li>
     </ol>
-    <p v-else class="text-xs text-slate-400">{{ $t('qa.history.empty') }}</p>
+    <p v-else class="text-xs text-slate-400 dark:text-slate-500">{{ $t('qa.history.empty') }}</p>
   </section>
 </template>

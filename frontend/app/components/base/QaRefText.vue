@@ -33,12 +33,12 @@ const segments = computed<Segment[]>(() => {
       :to="`/qa/${seg.qaId}`"
       target="_blank"
       rel="noopener noreferrer"
-      class="rounded bg-blue-50 px-0.5 font-medium text-blue-600 hover:underline"
+      class="rounded bg-blue-50 px-0.5 font-medium text-blue-600 hover:underline dark:bg-blue-500/10 dark:text-blue-400"
       @click.stop
     >{{ seg.text }}</NuxtLink>
     <span
       v-else
-      :class="seg.kind === 'mention' ? 'rounded bg-emerald-50 px-0.5 font-medium text-emerald-600' : ''"
+      :class="seg.kind === 'mention' ? 'rounded bg-emerald-50 px-0.5 font-medium text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : ''"
     >{{ seg.text }}</span>
   </template>
 </template>

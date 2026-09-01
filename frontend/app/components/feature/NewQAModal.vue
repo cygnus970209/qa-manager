@@ -227,23 +227,23 @@ async function onSubmit() {
     <form id="new-qa-form" class="space-y-4" @submit.prevent="onSubmit">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.project') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.project') }}</span>
           <select
             v-model="form.projectId"
             required
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           >
             <option :value="null" disabled>{{ $t('qa.modal.selectProject') }}</option>
             <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.update') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.update') }}</span>
           <select
             v-model="form.updateId"
             required
             :disabled="filteredUpdates.length === 0"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-100"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 disabled:bg-slate-100 dark:disabled:bg-slate-800"
           >
             <option :value="null" disabled>{{ $t('qa.modal.selectUpdate') }}</option>
             <option v-for="u in filteredUpdates" :key="u.id" :value="u.id">{{ u.version }} – {{ u.title }}</option>
@@ -251,62 +251,62 @@ async function onSubmit() {
         </label>
       </div>
 
-      <div v-if="githubRepos.length > 0" class="flex flex-wrap items-center gap-2 rounded-md bg-slate-50 px-3 py-2">
+      <div v-if="githubRepos.length > 0" class="flex flex-wrap items-center gap-2 rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-800/50">
         <label class="flex cursor-pointer items-center gap-2">
           <input
             v-model="form.createGithubIssue"
             type="checkbox"
-            class="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-emerald-500"
+            class="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
           />
-          <span class="text-xs text-slate-600">{{ $t('qa.modal.createGithubIssue') }}</span>
+          <span class="text-xs text-slate-600 dark:text-slate-300">{{ $t('qa.modal.createGithubIssue') }}</span>
         </label>
-        <span v-if="githubRepos.length === 1" class="text-xs text-slate-400">({{ githubRepos[0]?.fullName }})</span>
+        <span v-if="githubRepos.length === 1" class="text-xs text-slate-400 dark:text-slate-500">({{ githubRepos[0]?.fullName }})</span>
         <select
           v-else
           v-model="form.githubRepo"
           :disabled="!form.createGithubIssue"
-          class="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50"
+          class="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
         >
           <option v-for="r in githubRepos" :key="r.fullName" :value="r.fullName">{{ r.fullName }}</option>
         </select>
       </div>
 
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.title') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.title') }}</span>
         <input
           v-model="form.title"
           type="text"
           required
           maxlength="200"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </label>
 
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.description') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.description') }}</span>
         <QaTagTextarea
           v-model="form.description"
           rows="3"
           maxlength="4000"
           :placeholder="$t('qa.modal.descriptionPlaceholder')"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           @paste="onPaste"
         />
       </label>
 
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <label class="block sm:col-span-2">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.category') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.category') }}</span>
           <input
             v-model="form.category"
             type="text"
             maxlength="50"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.status') }}</span>
-          <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.status') }}</span>
+          <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500">
             <option value="NEEDS_FIX">{{ $t('common.qaStatus.needs_fix') }}</option>
             <option value="IN_PROGRESS">{{ $t('common.qaStatus.in_progress') }}</option>
             <option value="FIX_DONE">{{ $t('common.qaStatus.fix_done') }}</option>
@@ -316,8 +316,8 @@ async function onSubmit() {
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.priority') }}</span>
-          <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.priority') }}</span>
+          <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500">
             <option value="LOW">{{ $t('common.priority.low') }}</option>
             <option value="MEDIUM">{{ $t('common.priority.medium') }}</option>
             <option value="HIGH">{{ $t('common.priority.high') }}</option>
@@ -328,7 +328,7 @@ async function onSubmit() {
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
-          <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.testerAuthor') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.testerAuthor') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.testerId"
@@ -343,7 +343,7 @@ async function onSubmit() {
           />
         </div>
         <div>
-          <span class="block text-xs font-medium text-slate-600">{{ $t('common.roles.assignee1') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('common.roles.assignee1') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.assignee1Id"
@@ -358,7 +358,7 @@ async function onSubmit() {
           />
         </div>
         <div>
-          <span class="block text-xs font-medium text-slate-600">{{ $t('common.roles.assignee2') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('common.roles.assignee2') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.assignee2Id"
@@ -375,20 +375,20 @@ async function onSubmit() {
       </div>
 
       <div>
-        <span class="block text-xs font-medium text-slate-600">{{ $t('qa.fields.attachments') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.attachments') }}</span>
         <div class="mt-2 flex flex-wrap gap-2">
           <div
             v-for="(img, i) in form.images"
             :key="img"
-            class="relative h-16 w-16 overflow-hidden rounded border border-slate-200"
+            class="relative h-16 w-16 overflow-hidden rounded border border-slate-200 dark:border-slate-800"
           >
             <div
               v-if="isPdfUrl(img)"
               :title="attachmentFileName(img)"
-              class="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-slate-50 px-1"
+              class="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-slate-50 px-1 dark:bg-slate-800/50"
             >
-              <FileText class="h-5 w-5 shrink-0 text-rose-500" />
-              <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+              <FileText class="h-5 w-5 shrink-0 text-rose-500 dark:text-rose-400" />
+              <span class="w-full truncate text-center text-[9px] leading-tight text-slate-500 dark:text-slate-400">{{ attachmentFileName(img) }}</span>
             </div>
             <img v-else :src="img" :alt="`image-${i}`" class="h-full w-full object-cover" />
             <button
@@ -397,18 +397,18 @@ async function onSubmit() {
               @click="removeImage(i)"
             >×</button>
           </div>
-          <label class="flex h-16 w-16 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500">
+          <label class="flex h-16 w-16 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500 dark:border-slate-700 dark:text-slate-500 dark:hover:text-emerald-400">
             <input type="file" accept="image/*,application/pdf" multiple class="hidden" @change="onPickFile" />
             {{ uploading ? $t('qa.upload.uploading') : $t('qa.upload.add') }}
           </label>
         </div>
       </div>
 
-      <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
+      <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-400">{{ error }}</p>
     </form>
 
     <template #footer>
-      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="requestClose">{{ $t('common.actions.cancel') }}</button>
+      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60" @click="requestClose">{{ $t('common.actions.cancel') }}</button>
       <button
         type="submit"
         form="new-qa-form"

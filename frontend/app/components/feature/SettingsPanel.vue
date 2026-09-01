@@ -231,12 +231,12 @@ async function removeGithubApp() {
 <template>
   <div class="p-4 md:p-6">
     <!-- Sub Tabs -->
-    <div class="mb-6 flex w-fit items-center gap-1 rounded-lg bg-slate-100 p-1">
+    <div class="mb-6 flex w-fit items-center gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
       <button
         type="button"
         :class="[
           'flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
-          subTab === 'notifications' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+          subTab === 'notifications' ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
         ]"
         @click="subTab = 'notifications'"
       >
@@ -247,7 +247,7 @@ async function removeGithubApp() {
         type="button"
         :class="[
           'flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
-          subTab === 'ms-teams' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+          subTab === 'ms-teams' ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
         ]"
         @click="subTab = 'ms-teams'"
       >
@@ -258,7 +258,7 @@ async function removeGithubApp() {
         type="button"
         :class="[
           'flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
-          subTab === 'github' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+          subTab === 'github' ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
         ]"
         @click="subTab = 'github'"
       >
@@ -267,15 +267,15 @@ async function removeGithubApp() {
       </button>
     </div>
 
-    <div v-if="loading" class="flex items-center gap-2 py-10 text-sm text-slate-400">
+    <div v-if="loading" class="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
       <Loader2 class="h-4 w-4 animate-spin" /> {{ $t('admin.settings.loadingSettings') }}
     </div>
 
     <template v-else>
       <!-- 알림 설정 -->
       <div v-show="subTab === 'notifications'" class="max-w-xl space-y-5">
-        <i18n-t keypath="admin.settings.scopeNotice" scope="global" tag="p" class="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500">
-          <template #teams><span class="font-medium text-slate-600">{{ $t('admin.settings.scopeNoticeTeams') }}</span></template>
+        <i18n-t keypath="admin.settings.scopeNotice" scope="global" tag="p" class="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+          <template #teams><span class="font-medium text-slate-600 dark:text-slate-300">{{ $t('admin.settings.scopeNoticeTeams') }}</span></template>
         </i18n-t>
 
         <!-- 종류별 토글 -->
@@ -283,61 +283,61 @@ async function removeGithubApp() {
           <div
             v-for="item in typeItems"
             :key="item.key"
-            class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-4 transition-colors hover:border-slate-200"
+            class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-4 transition-colors hover:border-slate-200 dark:border-slate-800 dark:bg-slate-800/50 dark:hover:border-slate-700"
           >
             <div class="flex items-start gap-3">
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-white text-slate-500">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-white text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
                 <component :is="item.icon" class="h-4 w-4" />
               </div>
               <div>
-                <p class="text-sm font-semibold text-slate-800">{{ $t(item.label) }}</p>
-                <p class="mt-0.5 text-xs text-slate-500">{{ $t(item.description) }}</p>
+                <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ $t(item.label) }}</p>
+                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ $t(item.description) }}</p>
               </div>
             </div>
             <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
               <input v-model="settings[item.key]" type="checkbox" class="peer sr-only" />
-              <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
+              <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-slate-900 dark:after:border-slate-600" />
             </label>
           </div>
         </div>
 
         <!-- 방해금지 시간대 -->
-        <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
           <div class="flex items-center justify-between">
             <div class="flex items-start gap-3">
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-white text-slate-500">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-white text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
                 <Moon class="h-4 w-4" />
               </div>
               <div>
-                <p class="text-sm font-semibold text-slate-800">{{ $t('admin.settings.quietHoursTitle') }}</p>
-                <p class="mt-0.5 text-xs text-slate-500">{{ $t('admin.settings.quietHoursDesc') }}</p>
+                <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ $t('admin.settings.quietHoursTitle') }}</p>
+                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ $t('admin.settings.quietHoursDesc') }}</p>
               </div>
             </div>
             <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
               <input v-model="quietEnabled" type="checkbox" class="peer sr-only" />
-              <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
+              <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-slate-900 dark:after:border-slate-600" />
             </label>
           </div>
           <div v-if="quietEnabled" class="mt-4 flex items-center gap-3 pl-13">
             <div>
-              <label class="mb-1 block text-xs font-medium text-slate-600">{{ $t('admin.settings.quietStart') }}</label>
+              <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('admin.settings.quietStart') }}</label>
               <input
                 v-model="settings.quietHoursStart"
                 type="time"
-                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />
             </div>
-            <span class="mt-5 text-slate-400">~</span>
+            <span class="mt-5 text-slate-400 dark:text-slate-500">~</span>
             <div>
-              <label class="mb-1 block text-xs font-medium text-slate-600">{{ $t('admin.settings.quietEnd') }}</label>
+              <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('admin.settings.quietEnd') }}</label>
               <input
                 v-model="settings.quietHoursEnd"
                 type="time"
-                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
-          <p v-if="quietEnabled" class="mt-2 text-xs text-slate-400 pl-13">
+          <p v-if="quietEnabled" class="mt-2 text-xs text-slate-400 pl-13 dark:text-slate-500">
             {{ $t('admin.settings.quietHoursHint') }}
           </p>
         </div>
@@ -346,29 +346,29 @@ async function removeGithubApp() {
       <!-- MS Teams 설정 -->
       <div v-show="subTab === 'ms-teams'" class="max-w-xl space-y-5">
         <!-- 마스터 토글 -->
-        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-4">
+        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-white text-slate-500">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-white text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
               <MonitorSmartphone class="h-4 w-4" />
             </div>
             <div>
-              <p class="text-sm font-semibold text-slate-800">{{ $t('admin.settings.teamsMasterTitle') }}</p>
-              <p class="mt-0.5 text-xs text-slate-500">{{ $t('admin.settings.teamsMasterDesc') }}</p>
+              <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ $t('admin.settings.teamsMasterTitle') }}</p>
+              <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ $t('admin.settings.teamsMasterDesc') }}</p>
             </div>
           </div>
           <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
             <input v-model="settings.teamsNotifyEnabled" type="checkbox" class="peer sr-only" />
-            <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
+            <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-slate-900 dark:after:border-slate-600" />
           </label>
         </div>
 
         <!-- 봇 설치 안내 -->
-        <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+        <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-4 dark:border-blue-500/30 dark:bg-blue-500/10">
           <div class="flex items-start gap-3">
-            <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-            <div class="space-y-2 text-sm text-slate-700">
-              <p class="font-semibold text-slate-800">{{ $t('admin.settings.botInstallTitle') }}</p>
-              <ol class="list-decimal space-y-1 pl-4 text-xs text-slate-600">
+            <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-500 dark:text-blue-400" />
+            <div class="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+              <p class="font-semibold text-slate-800 dark:text-slate-100">{{ $t('admin.settings.botInstallTitle') }}</p>
+              <ol class="list-decimal space-y-1 pl-4 text-xs text-slate-600 dark:text-slate-300">
                 <i18n-t keypath="admin.settings.botStep1" scope="global" tag="li">
                   <template #apps><span class="font-medium">{{ $t('admin.settings.botStep1Apps') }}</span></template>
                   <template #manageApps><span class="font-medium">{{ $t('admin.settings.botStep1ManageApps') }}</span></template>
@@ -379,7 +379,7 @@ async function removeGithubApp() {
                   <template #testSend><span class="font-medium">{{ $t('admin.settings.botStep3TestSend') }}</span></template>
                 </i18n-t>
               </ol>
-              <p class="text-xs text-slate-400">{{ $t('admin.settings.botInstallFootnote') }}</p>
+              <p class="text-xs text-slate-400 dark:text-slate-500">{{ $t('admin.settings.botInstallFootnote') }}</p>
             </div>
           </div>
         </div>
@@ -396,32 +396,32 @@ async function removeGithubApp() {
             <Send v-else class="h-4 w-4" />
             {{ $t('admin.settings.sendTestToMe') }}
           </button>
-          <span v-if="!settings.teamsNotifyEnabled" class="text-xs text-slate-400">{{ $t('admin.settings.testRequiresEnabled') }}</span>
+          <span v-if="!settings.teamsNotifyEnabled" class="text-xs text-slate-400 dark:text-slate-500">{{ $t('admin.settings.testRequiresEnabled') }}</span>
         </div>
       </div>
 
       <!-- GitHub 설정 -->
       <div v-show="subTab === 'github'" class="max-w-xl space-y-5">
-        <div v-if="githubLoading" class="flex items-center gap-2 py-6 text-sm text-slate-400">
+        <div v-if="githubLoading" class="flex items-center gap-2 py-6 text-sm text-slate-400 dark:text-slate-500">
           <Loader2 class="h-4 w-4 animate-spin" /> {{ $t('admin.github.checkingStatus') }}
         </div>
 
         <!-- 설정된 상태 -->
         <template v-else-if="githubApp?.configured">
-          <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-white text-slate-500">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-white text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
                   <GitBranch class="h-4 w-4" />
                 </div>
                 <div>
-                  <p class="text-sm font-semibold text-slate-800">{{ githubApp.appName ?? 'GitHub App' }}</p>
-                  <p class="mt-0.5 text-xs text-slate-500">
+                  <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ githubApp.appName ?? 'GitHub App' }}</p>
+                  <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                     {{ $t('admin.github.connected') }}<template v-if="githubApp.appSlug"> · @{{ githubApp.appSlug }}</template>
                   </p>
                 </div>
               </div>
-              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-600">
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
                 <CheckCircle2 class="h-3.5 w-3.5" /> {{ $t('admin.github.connectedBadge') }}
               </span>
             </div>
@@ -430,7 +430,7 @@ async function removeGithubApp() {
               :href="githubApp.installUrl"
               target="_blank"
               rel="noopener noreferrer"
-              class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+              class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline dark:text-emerald-400 dark:hover:text-emerald-300"
             >
               <ExternalLink class="h-3.5 w-3.5" />
               {{ $t('admin.github.manageOnGithub') }}
@@ -438,38 +438,38 @@ async function removeGithubApp() {
           </div>
 
           <!-- 연결된 저장소 -->
-          <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
             <div class="mb-3 flex items-center justify-between">
-              <p class="text-sm font-semibold text-slate-800">{{ $t('admin.github.reposTitle') }}</p>
+              <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ $t('admin.github.reposTitle') }}</p>
               <button
                 type="button"
                 :disabled="reposLoading"
-                class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-60"
+                class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                 @click="loadGithubRepos"
               >
                 <RefreshCw :class="['h-3.5 w-3.5', reposLoading ? 'animate-spin' : '']" />
                 {{ $t('admin.github.refresh') }}
               </button>
             </div>
-            <div v-if="reposLoading" class="flex items-center gap-2 py-3 text-xs text-slate-400">
+            <div v-if="reposLoading" class="flex items-center gap-2 py-3 text-xs text-slate-400 dark:text-slate-500">
               <Loader2 class="h-3.5 w-3.5 animate-spin" /> {{ $t('admin.github.reposLoading') }}
             </div>
-            <p v-else-if="reposError" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ reposError }}</p>
-            <p v-else-if="githubRepos.length === 0" class="py-2 text-xs text-slate-400">
+            <p v-else-if="reposError" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300">{{ reposError }}</p>
+            <p v-else-if="githubRepos.length === 0" class="py-2 text-xs text-slate-400 dark:text-slate-500">
               {{ $t('admin.github.reposEmpty') }}
             </p>
-            <ul v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-100 bg-white">
+            <ul v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-100 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
               <li v-for="r in githubRepos" :key="`${r.installationId}:${r.fullName}`" class="flex items-center gap-2 px-3 py-2">
-                <GitBranch class="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                <GitBranch class="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
                 <a
                   :href="r.htmlUrl"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="min-w-0 flex-1 truncate text-sm text-slate-700 hover:text-emerald-600 hover:underline"
+                  class="min-w-0 flex-1 truncate text-sm text-slate-700 hover:text-emerald-600 hover:underline dark:text-slate-200 dark:hover:text-emerald-400"
                 >{{ r.fullName }}</a>
                 <span
                   v-if="r.private"
-                  class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600"
+                  class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
                 >
                   <Lock class="h-3 w-3" /> {{ $t('admin.github.private') }}
                 </span>
@@ -482,50 +482,50 @@ async function removeGithubApp() {
             <button
               type="button"
               :disabled="githubRemoving"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
               @click="removeGithubApp"
             >
               <Loader2 v-if="githubRemoving" class="h-4 w-4 animate-spin" />
               <Unlink v-else class="h-4 w-4" />
               {{ $t('admin.github.disconnect') }}
             </button>
-            <span class="text-xs text-slate-400">{{ $t('admin.github.disconnectHint') }}</span>
+            <span class="text-xs text-slate-400 dark:text-slate-500">{{ $t('admin.github.disconnectHint') }}</span>
           </div>
         </template>
 
         <!-- 미설정 상태 -->
         <template v-else>
-          <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+          <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-4 dark:border-blue-500/30 dark:bg-blue-500/10">
             <div class="flex items-start gap-3">
-              <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-              <div class="space-y-2 text-sm text-slate-700">
-                <p class="font-semibold text-slate-800">{{ $t('admin.github.setupTitle') }}</p>
-                <ol class="list-decimal space-y-1 pl-4 text-xs text-slate-600">
+              <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-500 dark:text-blue-400" />
+              <div class="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                <p class="font-semibold text-slate-800 dark:text-slate-100">{{ $t('admin.github.setupTitle') }}</p>
+                <ol class="list-decimal space-y-1 pl-4 text-xs text-slate-600 dark:text-slate-300">
                   <i18n-t keypath="admin.github.setupStep1" scope="global" tag="li">
                     <template #app><span class="font-medium">GitHub App</span></template>
                   </i18n-t>
                   <li>{{ $t('admin.github.setupStep2') }}</li>
                   <li>{{ $t('admin.github.setupStep3') }}</li>
                 </ol>
-                <p class="text-xs text-slate-400">{{ $t('admin.github.setupFootnote') }}</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500">{{ $t('admin.github.setupFootnote') }}</p>
               </div>
             </div>
           </div>
 
           <label class="block">
-            <span class="block text-xs font-medium text-slate-600">{{ $t('admin.github.orgLabel') }}</span>
+            <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('admin.github.orgLabel') }}</span>
             <input
               v-model="githubOrg"
               type="text"
               :placeholder="$t('admin.github.orgPlaceholder')"
-              class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
             />
           </label>
 
           <button
             type="button"
             :disabled="githubCreating"
-            class="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap"
             @click="createGithubApp"
           >
             <Loader2 v-if="githubCreating" class="h-4 w-4 animate-spin" />
@@ -534,23 +534,23 @@ async function removeGithubApp() {
           </button>
         </template>
 
-        <p v-if="githubError" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ githubError }}</p>
-        <p v-if="githubMsg" class="rounded bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{{ githubMsg }}</p>
+        <p v-if="githubError" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300">{{ githubError }}</p>
+        <p v-if="githubMsg" class="rounded bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{{ githubMsg }}</p>
       </div>
 
       <!-- 공통 저장 바 (알림/Teams 설정 전용) -->
-      <div v-if="subTab !== 'github'" class="mt-6 flex items-center gap-3 border-t border-slate-100 pt-4">
+      <div v-if="subTab !== 'github'" class="mt-6 flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
         <button
           type="button"
           :disabled="saving"
-          class="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          class="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
           @click="save"
         >
           <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />
           <CheckCircle2 v-else class="h-4 w-4" />
           {{ $t('common.actions.save') }}
         </button>
-        <span v-if="savedMsg" :class="['text-xs', savedError ? 'text-rose-500' : 'text-emerald-600']">{{ savedMsg }}</span>
+        <span v-if="savedMsg" :class="['text-xs', savedError ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400']">{{ savedMsg }}</span>
       </div>
     </template>
 

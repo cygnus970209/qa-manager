@@ -276,10 +276,10 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
 </script>
 
 <template>
-  <article class="rounded-xl border border-slate-200 bg-white p-5 md:p-6">
+  <article class="rounded-xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-800 dark:bg-slate-900">
     <!-- 상단: QA 번호(좌) + 액션 버튼(우). 제목은 아랫줄에서 전체 폭 사용 → 긴 제목에도 안 깨진다. -->
     <div class="mb-2 flex items-center justify-between gap-3">
-      <p class="text-xs font-semibold tabular-nums text-slate-400">QA #{{ item.id }}</p>
+      <p class="text-xs font-semibold tabular-nums text-slate-400 dark:text-slate-500">QA #{{ item.id }}</p>
       <div class="flex shrink-0 items-center gap-2">
         <button
           v-if="!editing"
@@ -289,8 +289,8 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         >
           <Plus class="h-3.5 w-3.5" /> {{ $t('qa.info.newQa') }}
         </button>
-        <button v-if="!editing" type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = true">{{ $t('common.actions.edit') }}</button>
-        <button v-else type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50" @click="editing = false">{{ $t('common.actions.cancel') }}</button>
+        <button v-if="!editing" type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60" @click="editing = true">{{ $t('common.actions.edit') }}</button>
+        <button v-else type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60" @click="editing = false">{{ $t('common.actions.cancel') }}</button>
         <button
           v-if="editing"
           type="button"
@@ -303,7 +303,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         <button
           v-if="!editing"
           type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-100"
+          class="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-100 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
           @click="onDelete"
         >
           <Trash2 class="h-3.5 w-3.5" /> {{ $t('common.actions.delete') }}
@@ -314,21 +314,21 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       <input
         v-if="editing"
         v-model="form.title"
-        class="w-full rounded-md border border-slate-300 px-3 py-2 text-lg font-bold focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        class="w-full rounded-md border border-slate-300 px-3 py-2 text-lg font-bold focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       />
-      <h1 v-else class="break-words text-xl font-bold text-slate-800 md:text-2xl">{{ item.title }}</h1>
+      <h1 v-else class="break-words text-xl font-bold text-slate-800 md:text-2xl dark:text-slate-100">{{ item.title }}</h1>
     </div>
 
     <!-- 메타 -->
-    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-      <span v-if="item.category" class="rounded-md bg-slate-100 px-2 py-0.5">{{ item.category }}</span>
+    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+      <span v-if="item.category" class="rounded-md bg-slate-100 px-2 py-0.5 dark:bg-slate-800">{{ item.category }}</span>
       <!-- 업데이트(버전) 이동: 같은 프로젝트의 다른 버전으로 즉시 이동 -->
       <div v-if="(updates?.length ?? 0) > 0" class="inline-flex items-center gap-1">
-        <span class="text-slate-400">{{ $t('qa.fields.update') }}</span>
+        <span class="text-slate-400 dark:text-slate-500">{{ $t('qa.fields.update') }}</span>
         <select
           :value="item.updateId"
           :disabled="saving"
-          class="max-w-[180px] truncate rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50"
+          class="max-w-[180px] truncate rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
           @change="onMoveUpdate(Number(($event.target as HTMLSelectElement).value))"
         >
           <option v-for="u in updates" :key="u.id" :value="u.id">{{ u.version }} · {{ u.title }}</option>
@@ -339,7 +339,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         v-if="!editing"
         :value="item.status"
         :disabled="saving"
-        class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50"
+        class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
         @change="onQuickStatusChange(($event.target as HTMLSelectElement).value as any)"
       >
         <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
@@ -359,7 +359,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         :title="`${item.githubIssue.repoOwner}/${item.githubIssue.repoName}`"
         :class="[
           'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium hover:underline',
-          item.githubIssue.state === 'open' ? 'bg-emerald-50 text-emerald-600' : 'bg-purple-50 text-purple-600',
+          item.githubIssue.state === 'open' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400',
         ]"
       >
         <CircleDot class="h-3 w-3" />
@@ -370,7 +370,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       <!-- 비편집 모드에서 담당자도 즉시 변경 가능 (상태와 동일한 패턴) -->
       <template v-if="!editing">
         <div class="inline-flex items-center gap-1">
-          <span class="text-slate-400">{{ $t('common.roles.tester') }}</span>
+          <span class="text-slate-400 dark:text-slate-500">{{ $t('common.roles.tester') }}</span>
           <SearchableSelect
             class="w-32"
             :model-value="item.tester?.id ?? null"
@@ -386,7 +386,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           />
         </div>
         <div class="inline-flex items-center gap-1">
-          <span class="text-slate-400">{{ $t('common.roles.assignee1') }}</span>
+          <span class="text-slate-400 dark:text-slate-500">{{ $t('common.roles.assignee1') }}</span>
           <SearchableSelect
             class="w-32"
             :model-value="item.assignee1?.id ?? null"
@@ -402,7 +402,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           />
         </div>
         <div class="inline-flex items-center gap-1">
-          <span class="text-slate-400">{{ $t('common.roles.assignee2') }}</span>
+          <span class="text-slate-400 dark:text-slate-500">{{ $t('common.roles.assignee2') }}</span>
           <SearchableSelect
             class="w-32"
             :model-value="item.assignee2?.id ?? null"
@@ -433,7 +433,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
 
     <!-- 본문 -->
     <div class="mt-5">
-      <h2 class="mb-2 text-xs font-medium text-slate-500">{{ $t('qa.fields.description') }}</h2>
+      <h2 class="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('qa.fields.description') }}</h2>
       <QaTagTextarea
         v-if="editing"
         v-model="form.description"
@@ -441,10 +441,10 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         :exclude-id="item.id"
         rows="5"
         :placeholder="$t('qa.info.descriptionPlaceholder')"
-        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         @paste="onPaste"
       />
-      <p v-else class="whitespace-pre-wrap text-sm text-slate-700">
+      <p v-else class="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
         <QaRefText v-if="item.description" :text="item.description" />
         <template v-else>—</template>
       </p>
@@ -454,8 +454,8 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
     <div v-if="editing" class="mt-5 space-y-3">
       <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
         <label class="block">
-          <span class="block text-xs text-slate-500">{{ $t('qa.fields.status') }}</span>
-          <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+          <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('qa.fields.status') }}</span>
+          <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
             <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
             <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
             <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
@@ -465,8 +465,8 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs text-slate-500">{{ $t('qa.fields.priority') }}</span>
-          <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs">
+          <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('qa.fields.priority') }}</span>
+          <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
             <option value="low">{{ $t('common.priority.low') }}</option>
             <option value="medium">{{ $t('common.priority.medium') }}</option>
             <option value="high">{{ $t('common.priority.high') }}</option>
@@ -474,13 +474,13 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs text-slate-500">{{ $t('qa.fields.category') }}</span>
-          <input v-model="form.category" maxlength="50" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs" />
+          <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('qa.fields.category') }}</span>
+          <input v-model="form.category" maxlength="50" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" />
         </label>
       </div>
       <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
         <div>
-          <span class="block text-xs text-slate-500">{{ $t('qa.fields.testerAuthor') }}</span>
+          <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('qa.fields.testerAuthor') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.testerId"
@@ -495,7 +495,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           />
         </div>
         <div>
-          <span class="block text-xs text-slate-500">{{ $t('common.roles.assignee1') }}</span>
+          <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('common.roles.assignee1') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.assignee1Id"
@@ -510,7 +510,7 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
           />
         </div>
         <div>
-          <span class="block text-xs text-slate-500">{{ $t('common.roles.assignee2') }}</span>
+          <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('common.roles.assignee2') }}</span>
           <SearchableSelect
             class="mt-1"
             :model-value="form.assignee2Id"
@@ -529,22 +529,22 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
 
     <!-- 첨부 파일 -->
     <div class="mt-5">
-      <h2 class="mb-2 text-xs font-medium text-slate-500">{{ $t('qa.fields.attachments') }}</h2>
+      <h2 class="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('qa.fields.attachments') }}</h2>
       <div class="flex flex-wrap gap-2">
         <div
           v-for="(img, i) in attachments"
           :key="img + i"
-          class="relative h-24 w-24 overflow-hidden rounded border border-slate-200"
+          class="relative h-24 w-24 overflow-hidden rounded border border-slate-200 dark:border-slate-800"
         >
           <button
             v-if="isPdfUrl(img)"
             type="button"
             :title="attachmentFileName(img)"
-            class="flex h-full w-full flex-col items-center justify-center gap-1 bg-slate-50 px-1.5 transition-colors hover:bg-slate-100"
+            class="flex h-full w-full flex-col items-center justify-center gap-1 bg-slate-50 px-1.5 transition-colors hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800"
             @click="openPdfInNewTab(img)"
           >
-            <FileText class="h-7 w-7 shrink-0 text-rose-500" />
-            <span class="w-full truncate text-center text-[10px] leading-tight text-slate-500">{{ attachmentFileName(img) }}</span>
+            <FileText class="h-7 w-7 shrink-0 text-rose-500 dark:text-rose-400" />
+            <span class="w-full truncate text-center text-[10px] leading-tight text-slate-500 dark:text-slate-400">{{ attachmentFileName(img) }}</span>
           </button>
           <button
             v-else
@@ -563,50 +563,50 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
         </div>
         <label
           v-if="editing"
-          class="flex h-24 w-24 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500"
+          class="flex h-24 w-24 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-500 dark:border-slate-700 dark:text-slate-500 dark:hover:text-emerald-400"
         >
           <input type="file" accept="image/*,application/pdf" multiple class="hidden" @change="onPickFile" />
           {{ uploading ? $t('qa.upload.uploading') : $t('qa.upload.add') }}
         </label>
-        <p v-if="attachments.length === 0 && !editing" class="text-xs text-slate-400">{{ $t('qa.info.noAttachments') }}</p>
+        <p v-if="attachments.length === 0 && !editing" class="text-xs text-slate-400 dark:text-slate-500">{{ $t('qa.info.noAttachments') }}</p>
       </div>
     </div>
 
     <!-- GitHub 연결 커밋 (이슈가 연결된 QA 에서만) -->
     <div v-if="item.githubIssue" class="mt-5">
-      <h2 class="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+      <h2 class="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
         <GitCommitHorizontal class="h-3.5 w-3.5" /> {{ $t('qa.info.linkedCommits') }}
       </h2>
-      <div v-if="commitsLoading" class="flex items-center gap-2 py-2 text-xs text-slate-400">
+      <div v-if="commitsLoading" class="flex items-center gap-2 py-2 text-xs text-slate-400 dark:text-slate-500">
         <Loader2 class="h-3.5 w-3.5 animate-spin" /> {{ $t('qa.info.loadingCommits') }}
       </div>
-      <p v-else-if="commits.length === 0" class="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400">
+      <p v-else-if="commits.length === 0" class="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
         {{ $t('qa.info.commitsHint') }}
       </p>
-      <ul v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-100">
+      <ul v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-100 dark:divide-slate-800 dark:border-slate-800">
         <li v-for="c in commits" :key="c.sha" class="flex items-center gap-3 px-3 py-2">
           <a
             :href="c.htmlUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-emerald-50 hover:text-emerald-600"
+            class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400"
           >{{ c.shortSha }}</a>
-          <span class="min-w-0 flex-1 truncate text-sm text-slate-700" :title="c.message">{{ commitTitle(c.message) }}</span>
-          <span class="hidden shrink-0 items-center gap-1.5 text-xs text-slate-400 sm:flex">
-            <img v-if="c.avatarUrl" :src="c.avatarUrl" :alt="c.authorName ?? c.authorLogin ?? ''" class="h-4 w-4 rounded-full bg-slate-100" />
+          <span class="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200" :title="c.message">{{ commitTitle(c.message) }}</span>
+          <span class="hidden shrink-0 items-center gap-1.5 text-xs text-slate-400 sm:flex dark:text-slate-500">
+            <img v-if="c.avatarUrl" :src="c.avatarUrl" :alt="c.authorName ?? c.authorLogin ?? ''" class="h-4 w-4 rounded-full bg-slate-100 dark:bg-slate-800" />
             {{ c.authorName ?? c.authorLogin ?? '-' }}
           </span>
-          <span class="shrink-0 text-xs tabular-nums text-slate-400">{{ c.committedAt ? c.committedAt.slice(0, 10) : '-' }}</span>
+          <span class="shrink-0 text-xs tabular-nums text-slate-400 dark:text-slate-500">{{ c.committedAt ? c.committedAt.slice(0, 10) : '-' }}</span>
         </li>
       </ul>
     </div>
 
     <!-- 생성/수정 날짜 (보조 정보, 본문 하단) -->
-    <div class="mt-4 text-[11px] text-slate-400">
+    <div class="mt-4 text-[11px] text-slate-400 dark:text-slate-500">
       {{ $t('qa.info.dates', { created: item.createdAt?.slice(0, 10) ?? '', updated: item.updatedAt?.slice(0, 10) ?? '' }) }}
     </div>
 
-    <p v-if="error" class="mt-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
+    <p v-if="error" class="mt-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-400">{{ error }}</p>
 
     <ImageLightbox
       :images="lightboxImages"

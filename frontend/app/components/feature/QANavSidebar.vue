@@ -165,14 +165,14 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
 </script>
 
 <template>
-  <div class="flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+  <div class="flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
     <!-- 필터 -->
-    <div class="shrink-0 border-b border-slate-100">
+    <div class="shrink-0 border-b border-slate-100 dark:border-slate-800">
       <!-- 헤더(항상 표시): 접기 토글 + 적용 개수 + 새로고침 + 결과 건수 -->
       <div class="flex items-center justify-between pr-3">
         <button
           type="button"
-          class="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium text-slate-600"
+          class="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300"
           :aria-expanded="filtersOpen"
           @click="filtersOpen = !filtersOpen"
         >
@@ -180,7 +180,7 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
           {{ $t('qa.sidebar.filters') }}
           <span
             v-if="activeCount > 0"
-            class="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-100 px-1 text-[10px] font-medium text-emerald-700"
+            class="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-100 px-1 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
           >
             {{ activeCount }}
           </span>
@@ -189,53 +189,53 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
           type="button"
           :title="$t('qa.sidebar.refresh')"
           :disabled="refreshing"
-          class="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-60"
+          class="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-60 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
           @click="emit('refresh')"
         >
           <RefreshCw :class="['h-3.5 w-3.5', refreshing ? 'animate-spin' : '']" />
         </button>
-        <span class="ml-auto pl-2 text-[11px] text-slate-400">{{ $t('qa.sidebar.count', filtered.length) }}</span>
+        <span class="ml-auto pl-2 text-[11px] text-slate-400 dark:text-slate-500">{{ $t('qa.sidebar.count', filtered.length) }}</span>
       </div>
 
       <!-- 컨트롤(접힘 가능) -->
       <div v-show="filtersOpen" class="space-y-2 px-3 pb-3">
       <div class="relative">
-        <Search class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+        <Search class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
         <input
           v-model="search"
           type="text"
           :placeholder="$t('qa.sidebar.searchPlaceholder')"
-          class="w-full rounded-lg border border-slate-200 py-1.5 pl-8 pr-2 text-xs focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          class="w-full rounded-lg border border-slate-200 py-1.5 pl-8 pr-2 text-xs focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-emerald-500/20"
         />
       </div>
       <select
         v-model="projectId"
-        class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
       >
         <option value="all">{{ $t('qa.filter.allProjects') }}</option>
         <option v-for="p in projects" :key="p.id" :value="String(p.id)">{{ p.name }}</option>
       </select>
       <select
         v-model="updateId"
-        class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
       >
         <option value="all">{{ $t('qa.filter.allUpdates') }}</option>
         <option v-for="u in updateOptions" :key="u.id" :value="String(u.id)">
           {{ u.version }} - {{ u.title }}
         </option>
       </select>
-      <label class="flex cursor-pointer select-none items-center gap-1.5 px-0.5 text-[11px] font-medium text-slate-500">
+      <label class="flex cursor-pointer select-none items-center gap-1.5 px-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
         <input
           v-model="hideReleased"
           type="checkbox"
-          class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400"
+          class="h-3.5 w-3.5 rounded border-slate-300 text-blue-500 focus:ring-blue-400 dark:border-slate-600 dark:bg-slate-900"
         />
         {{ $t('qa.filter.hideReleasedUpdates') }}
       </label>
       <div class="flex gap-2">
         <select
           v-model="status"
-          class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
         >
           <option value="all">{{ $t('qa.filter.allStatuses') }}</option>
           <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
@@ -247,7 +247,7 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
         </select>
         <select
           v-model="priority"
-          class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
         >
           <option value="all">{{ $t('qa.filter.allPriorities') }}</option>
           <option value="critical">{{ $t('common.priority.critical') }}</option>
@@ -259,7 +259,7 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
         <div v-if="hasExtra" class="px-0.5">
           <button
             type="button"
-            class="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700"
+            class="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
             @click="clearExtra"
           >
             <X class="h-3 w-3" /> {{ $t('qa.sidebar.clearExtraFilters') }}
@@ -275,23 +275,23 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
           type="button"
           :aria-current="item.id === currentId ? 'true' : undefined"
           :class="[
-            'flex w-full flex-col gap-1.5 border-b border-slate-50 px-3 py-2.5 text-left transition',
+            'flex w-full flex-col gap-1.5 border-b border-slate-50 px-3 py-2.5 text-left transition dark:border-slate-800',
             item.id === currentId
-              ? 'bg-emerald-50/70 ring-1 ring-inset ring-emerald-200'
-              : 'hover:bg-slate-50',
+              ? 'bg-emerald-50/70 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/10 dark:ring-emerald-500/20'
+              : 'hover:bg-slate-50 dark:hover:bg-slate-800/60',
           ]"
           @click="go(item.id)"
         >
           <p
             :class="[
               'line-clamp-2 text-xs font-medium',
-              item.id === currentId ? 'text-emerald-900' : 'text-slate-700',
+              item.id === currentId ? 'text-emerald-900 dark:text-emerald-100' : 'text-slate-700 dark:text-slate-200',
             ]"
           >
             <span
               :class="[
                 'mr-1 tabular-nums',
-                item.id === currentId ? 'text-emerald-600' : 'text-slate-400',
+                item.id === currentId ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500',
               ]"
             >#{{ item.id }}</span>{{ item.title }}
           </p>
@@ -301,8 +301,8 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
           </div>
         </button>
       </li>
-      <li v-if="filtered.length === 0" class="px-3 py-10 text-center text-xs text-slate-400">
-        <Inbox class="mx-auto mb-2 h-5 w-5 text-slate-300" />
+      <li v-if="filtered.length === 0" class="px-3 py-10 text-center text-xs text-slate-400 dark:text-slate-500">
+        <Inbox class="mx-auto mb-2 h-5 w-5 text-slate-300 dark:text-slate-600" />
         {{ $t('qa.filter.noMatch') }}
       </li>
     </ul>

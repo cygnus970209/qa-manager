@@ -142,19 +142,19 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
     />
     <ul
       v-if="show && filtered.length > 0"
-      :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg', above ? 'bottom-full mb-1' : 'top-full mt-1']"
+      :class="['absolute left-0 z-50 max-h-48 w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900', above ? 'bottom-full mb-1' : 'top-full mt-1']"
     >
       <li v-for="(qi, i) in filtered" :key="qi.id">
         <button
           type="button"
           :data-active="i === idx"
-          :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50', i === idx ? 'bg-blue-50' : '']"
+          :class="['flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60', i === idx ? 'bg-blue-50 dark:bg-blue-500/10' : '']"
           @mousedown.prevent
           @click="insert(qi)"
         >
-          <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500">#{{ qi.id }}</span>
-          <span class="min-w-0 flex-1 truncate text-sm text-slate-700">{{ qi.title }}</span>
-          <Check v-if="i === idx" class="h-3 w-3 text-blue-500" />
+          <span class="shrink-0 font-mono text-[11px] font-medium text-blue-500 dark:text-blue-400">#{{ qi.id }}</span>
+          <span class="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200">{{ qi.title }}</span>
+          <Check v-if="i === idx" class="h-3 w-3 text-blue-500 dark:text-blue-400" />
         </button>
       </li>
     </ul>

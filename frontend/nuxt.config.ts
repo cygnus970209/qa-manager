@@ -19,7 +19,17 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxtjs/i18n',
+    '@nuxtjs/color-mode',
   ],
+
+  // 다크모드. Tailwind `dark:` variant(class 전략)와 연동 — html 에 'dark'/'light' 클래스 부착.
+  // 기본은 OS 설정(system) 따라가고, 사용자가 선택하면 localStorage 에 기억된다(FOUC 방지 스크립트 내장).
+  colorMode: {
+    classSuffix: '',
+    preference: 'system',
+    fallback: 'light',
+    storageKey: 'qam-color-mode',
+  },
 
   // 다국어(ko/en). URL prefix 없이 쿠키로 언어를 기억한다(내부 도구 + noindex 라 SEO용 prefix 불필요).
   i18n: {

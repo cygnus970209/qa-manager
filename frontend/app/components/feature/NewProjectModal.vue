@@ -142,29 +142,29 @@ async function onSubmit() {
   <AppDialog :open="open" :title="mode === 'edit' ? $t('project.projectModal.editTitle') : $t('project.projectModal.createTitle')" @close="emit('close')">
     <form id="new-project-form" class="space-y-4" @submit.prevent="onSubmit">
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('project.projectModal.name') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.projectModal.name') }}</span>
         <input
           v-model="form.name"
           type="text"
           required
           maxlength="100"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </label>
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('project.projectModal.description') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.projectModal.description') }}</span>
         <textarea
           v-model="form.description"
           rows="3"
           maxlength="4000"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </label>
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('project.projectModal.status') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.projectModal.status') }}</span>
         <select
           v-model="form.status"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         >
           <option value="ACTIVE">{{ $t('common.projectStatus.active') }}</option>
           <option value="PAUSED">{{ $t('common.projectStatus.paused') }}</option>
@@ -172,32 +172,32 @@ async function onSubmit() {
         </select>
       </label>
       <div v-if="githubConfigured" class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('project.projectModal.githubSection') }} <span class="font-normal text-slate-400">{{ $t('project.projectModal.githubMultiple') }}</span></span>
-        <div v-if="githubLoading" class="mt-1 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-400">{{ $t('project.projectModal.githubLoading') }}</div>
-        <div v-else-if="repoOptions.length === 0" class="mt-1 rounded-md border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400">{{ $t('project.projectModal.githubEmpty') }}</div>
-        <div v-else class="mt-1 max-h-40 space-y-0.5 overflow-y-auto rounded-md border border-slate-300 p-1.5">
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.projectModal.githubSection') }} <span class="font-normal text-slate-400 dark:text-slate-500">{{ $t('project.projectModal.githubMultiple') }}</span></span>
+        <div v-if="githubLoading" class="mt-1 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">{{ $t('project.projectModal.githubLoading') }}</div>
+        <div v-else-if="repoOptions.length === 0" class="mt-1 rounded-md border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">{{ $t('project.projectModal.githubEmpty') }}</div>
+        <div v-else class="mt-1 max-h-40 space-y-0.5 overflow-y-auto rounded-md border border-slate-300 p-1.5 dark:border-slate-700">
           <label
             v-for="r in repoOptions"
             :key="r.fullName"
-            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-slate-50"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60"
           >
             <input
               v-model="selectedRepos"
               type="checkbox"
               :value="r.fullName"
-              class="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-emerald-500"
+              class="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
             />
-            <span class="truncate text-sm text-slate-700">{{ r.fullName }}</span>
+            <span class="truncate text-sm text-slate-700 dark:text-slate-200">{{ r.fullName }}</span>
           </label>
         </div>
-        <span class="mt-1 block text-[11px] text-slate-400">{{ $t('project.projectModal.githubHint') }}</span>
+        <span class="mt-1 block text-[11px] text-slate-400 dark:text-slate-500">{{ $t('project.projectModal.githubHint') }}</span>
       </div>
-      <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
+      <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300">{{ error }}</p>
     </form>
     <template #footer>
       <button
         type="button"
-        class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+        class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
         @click="emit('close')"
       >{{ $t('common.actions.cancel') }}</button>
       <button

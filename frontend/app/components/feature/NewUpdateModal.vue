@@ -79,21 +79,21 @@ async function onSubmit() {
     <form id="new-update-form" class="space-y-4" @submit.prevent="onSubmit">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('project.updateModal.version') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.updateModal.version') }}</span>
           <input
             v-model="form.version"
             type="text"
             required
             maxlength="50"
             placeholder="v1.2.0"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-slate-600">{{ $t('project.updateModal.status') }}</span>
+          <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.updateModal.status') }}</span>
           <select
             v-model="form.status"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           >
             <option value="IN_PROGRESS">{{ $t('common.updateStatus.in_progress') }}</option>
             <option value="TESTING">{{ $t('common.updateStatus.testing') }}</option>
@@ -102,28 +102,28 @@ async function onSubmit() {
         </label>
       </div>
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('project.updateModal.title') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.updateModal.title') }}</span>
         <input
           v-model="form.title"
           type="text"
           required
           maxlength="200"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </label>
       <label class="block">
-        <span class="block text-xs font-medium text-slate-600">{{ $t('project.updateModal.description') }}</span>
+        <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.updateModal.description') }}</span>
         <textarea
           v-model="form.description"
           rows="3"
           maxlength="4000"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </label>
-      <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{{ error }}</p>
+      <p v-if="error" class="rounded bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300">{{ error }}</p>
     </form>
     <template #footer>
-      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50" @click="emit('close')">{{ $t('common.actions.cancel') }}</button>
+      <button type="button" class="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60" @click="emit('close')">{{ $t('common.actions.cancel') }}</button>
       <button type="submit" form="new-update-form" :disabled="submitting" class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
         {{ submitting ? (mode === 'edit' ? $t('common.state.saving') : $t('project.form.creating')) : (mode === 'edit' ? $t('common.actions.save') : $t('project.form.create')) }}
       </button>

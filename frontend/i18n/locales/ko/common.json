@@ -65,6 +65,12 @@
       "title": "정말 삭제하시겠습니까?",
       "message": "삭제하면 복구할 수 없습니다. 계속하시겠습니까?"
     },
+    "theme": {
+      "label": "테마",
+      "light": "라이트",
+      "dark": "다크",
+      "system": "시스템 설정"
+    },
     "select": {
       "notSelected": "선택 안함",
       "searchPlaceholder": "검색...",

@@ -51,13 +51,13 @@ watch(() => props.text, () => {
   <div>
     <p
       ref="el"
-      class="whitespace-pre-wrap text-sm text-slate-500"
+      class="whitespace-pre-wrap text-sm text-slate-500 dark:text-slate-400"
       :class="expanded ? '' : clampClass"
     >{{ text }}</p>
     <button
       v-if="overflowing || expanded"
       type="button"
-      class="mt-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
+      class="mt-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
       @click="expanded = !expanded"
     >
       {{ expanded ? $t('qa.expandable.less') : $t('qa.expandable.more') }}

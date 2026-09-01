@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShieldCheck, Mail, ArrowLeft, Globe } from '@lucide/vue'
+import { ShieldCheck, Mail, ArrowLeft, Globe, Sun, Moon } from '@lucide/vue'
 import type { ApiErrorBody } from '~/types/api'
 import type { DemoAccount } from '~/composables/useDemo'
 
@@ -12,6 +12,12 @@ const { t, locale, setLocale } = useI18n()
 // 로그인 화면(네비바 없음)에도 언어 전환 제공 — 데모 방문자의 첫 화면
 async function toggleLocale() {
   await setLocale(locale.value === 'ko' ? 'en' : 'ko')
+}
+
+// 테마 토글 (라이트/다크 단순 전환; 3단 선택은 네비바에서)
+const colorMode = useNuxtApp().$colorMode
+function toggleTheme() {
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
 const auth = useAuthStore()
 const { enabled: demoEnabled, accounts: demoAccounts } = useDemo()
@@ -148,45 +154,58 @@ function loginAs(acc: DemoAccount) {
 
 <template>
   <div class="relative flex min-h-screen items-center justify-center px-4">
-    <button
-      type="button"
-      class="absolute right-4 top-4 flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50"
-      :aria-label="$t('common.actions.language')"
-      @click="toggleLocale"
-    >
-      <Globe class="h-3.5 w-3.5" />
-      {{ locale === 'ko' ? 'English' : '한국어' }}
-    </button>
-    <div class="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+    <div class="absolute right-4 top-4 flex items-center gap-2">
+      <button
+        type="button"
+        class="flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+        :aria-label="$t('common.theme.label')"
+        @click="toggleTheme"
+      >
+        <ClientOnly>
+          <component :is="colorMode.value === 'dark' ? Sun : Moon" class="h-3.5 w-3.5" />
+          <template #fallback><Moon class="h-3.5 w-3.5" /></template>
+        </ClientOnly>
+      </button>
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+        :aria-label="$t('common.actions.language')"
+        @click="toggleLocale"
+      >
+        <Globe class="h-3.5 w-3.5" />
+        {{ locale === 'ko' ? 'English' : '한국어' }}
+      </button>
+    </div>
+    <div class="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="mb-6 flex items-center gap-2">
-        <ShieldCheck class="h-6 w-6 text-emerald-600" />
+        <ShieldCheck class="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
         <h1 class="text-lg font-semibold tracking-tight">{{ $t('auth.login.title') }}</h1>
       </div>
 
       <!-- 1단계: 아이디/비밀번호 -->
       <form v-if="step === 'credentials'" class="space-y-4" @submit.prevent="onSubmitCredentials">
         <label class="block">
-          <span class="block text-xs font-medium text-gray-600">{{ $t('auth.login.username') }}</span>
+          <span class="block text-xs font-medium text-gray-600 dark:text-slate-300">{{ $t('auth.login.username') }}</span>
           <input
             v-model="username"
             type="text"
             autocomplete="username"
             required
-            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           />
         </label>
         <label class="block">
-          <span class="block text-xs font-medium text-gray-600">{{ $t('auth.login.password') }}</span>
+          <span class="block text-xs font-medium text-gray-600 dark:text-slate-300">{{ $t('auth.login.password') }}</span>
           <input
             v-model="password"
             type="password"
             autocomplete="current-password"
             required
-            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           />
         </label>
 
-        <p v-if="errorMessage" class="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
+        <p v-if="errorMessage" class="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300">
           {{ errorMessage }}
         </p>
 
@@ -202,21 +221,21 @@ function loginAs(acc: DemoAccount) {
       <!-- 데모 계정 안내 (데모 모드에서만 표시) -->
       <div
         v-if="step === 'credentials' && demoEnabled && demoAccounts.length"
-        class="mt-6 border-t border-dashed border-gray-200 pt-4"
+        class="mt-6 border-t border-dashed border-gray-200 pt-4 dark:border-slate-800"
       >
-        <p class="mb-2 text-xs font-medium text-gray-500">
-          {{ $t('auth.login.demoAccounts') }} <span class="text-gray-400">{{ $t('auth.login.demoAccountsHint') }}</span>
+        <p class="mb-2 text-xs font-medium text-gray-500 dark:text-slate-400">
+          {{ $t('auth.login.demoAccounts') }} <span class="text-gray-400 dark:text-slate-500">{{ $t('auth.login.demoAccountsHint') }}</span>
         </p>
         <ul class="space-y-1.5">
           <li v-for="acc in demoAccounts" :key="acc.username">
             <button
               type="button"
               :disabled="submitting"
-              class="flex w-full items-center justify-between gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-left hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-60"
+              class="flex w-full items-center justify-between gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-left hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-800/50 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/10"
               @click="loginAs(acc)"
             >
-              <span class="text-xs font-medium text-gray-700">{{ acc.label }}</span>
-              <span class="font-mono text-[11px] text-gray-500">{{ acc.username }} / {{ acc.password }}</span>
+              <span class="text-xs font-medium text-gray-700 dark:text-slate-200">{{ acc.label }}</span>
+              <span class="font-mono text-[11px] text-gray-500 dark:text-slate-400">{{ acc.username }} / {{ acc.password }}</span>
             </button>
           </li>
         </ul>
@@ -224,9 +243,9 @@ function loginAs(acc: DemoAccount) {
 
       <!-- 2단계: 이메일 OTP -->
       <form v-else class="space-y-4" @submit.prevent="onVerifyOtp">
-        <div class="flex items-start gap-2.5 rounded-lg bg-emerald-50 px-3.5 py-3">
-          <Mail class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-          <p class="text-xs text-emerald-800">
+        <div class="flex items-start gap-2.5 rounded-lg bg-emerald-50 px-3.5 py-3 dark:bg-emerald-500/10">
+          <Mail class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <p class="text-xs text-emerald-800 dark:text-emerald-300">
             {{ $t('auth.otp.notice') }}<br />
             <i18n-t keypath="auth.otp.sentTo" scope="global">
               <template #email><span class="font-semibold">{{ maskedEmail }}</span></template>
@@ -234,14 +253,14 @@ function loginAs(acc: DemoAccount) {
           </p>
         </div>
 
-        <p v-if="demoEnabled" class="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <p v-if="demoEnabled" class="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
           <i18n-t keypath="auth.otp.demoNotice" scope="global">
             <template #code><span class="font-mono font-semibold">123456</span></template>
           </i18n-t>
         </p>
 
         <label class="block">
-          <span class="block text-xs font-medium text-gray-600">{{ $t('auth.otp.codeLabel') }}</span>
+          <span class="block text-xs font-medium text-gray-600 dark:text-slate-300">{{ $t('auth.otp.codeLabel') }}</span>
           <input
             v-model="code"
             type="text"
@@ -250,11 +269,11 @@ function loginAs(acc: DemoAccount) {
             maxlength="6"
             placeholder="000000"
             required
-            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-center text-lg tracking-[0.4em] focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-center text-lg tracking-[0.4em] focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
           />
         </label>
 
-        <p v-if="otpError" class="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
+        <p v-if="otpError" class="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300">
           {{ otpError }}
           <span v-if="remainingAttempts !== null"> {{ $t('auth.otp.remainingAttempts', remainingAttempts) }}</span>
         </p>
@@ -270,7 +289,7 @@ function loginAs(acc: DemoAccount) {
         <div class="flex items-center justify-between text-xs">
           <button
             type="button"
-            class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700"
+            class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
             @click="backToCredentials"
           >
             <ArrowLeft class="h-3.5 w-3.5" /> {{ $t('auth.otp.backToStart') }}
@@ -278,7 +297,7 @@ function loginAs(acc: DemoAccount) {
           <button
             type="button"
             :disabled="resendCooldown > 0"
-            class="text-emerald-600 hover:text-emerald-700 disabled:text-gray-400"
+            class="text-emerald-600 hover:text-emerald-700 disabled:text-gray-400 dark:text-emerald-400 dark:hover:text-emerald-300 dark:disabled:text-slate-500"
             @click="onResend"
           >
             {{ resendCooldown > 0 ? $t('auth.otp.resendCooldown', { n: resendCooldown }) : $t('auth.otp.resend') }}

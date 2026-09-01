@@ -21,18 +21,18 @@ function onBackdrop(e: MouseEvent) {
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
       @mousedown="onBackdrop"
     >
-      <div class="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-xl" @mousedown.stop>
+      <div class="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-xl dark:bg-slate-900" @mousedown.stop>
         <div class="px-5 pt-5 pb-2 text-center">
-          <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-            <Trash2 class="h-5 w-5 text-red-500" />
+          <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10">
+            <Trash2 class="h-5 w-5 text-red-500 dark:text-red-400" />
           </div>
-          <h3 class="text-base font-bold text-slate-800">{{ title ?? $t('common.deleteConfirm.title') }}</h3>
-          <p class="mt-1.5 text-sm text-slate-500">{{ message ?? $t('common.deleteConfirm.message') }}</p>
+          <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">{{ title ?? $t('common.deleteConfirm.title') }}</h3>
+          <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{{ message ?? $t('common.deleteConfirm.message') }}</p>
         </div>
         <div class="flex gap-2 px-5 py-4">
           <button
             type="button"
-            class="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200"
+            class="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="emit('cancel')"
           >{{ $t('common.actions.cancel') }}</button>
           <button
