@@ -19,8 +19,9 @@ import type {
 } from './types'
 import { createSeed } from './seed'
 
-// v3: 다중 GitHub repo(githubRepos 배열) + 알림센터 시드 추가 — 구버전 상태는 버리고 재시드한다.
-const LS_KEY = 'qa-demo-state-v3'
+// v4: OTP 체험 계정(hanboan) 추가 — 구버전 상태는 버리고 재시드한다.
+// (v3: 다중 GitHub repo + 알림센터 시드)
+const LS_KEY = 'qa-demo-state-v4'
 
 /**
  * 데모용 인메모리 + localStorage 백엔드.
