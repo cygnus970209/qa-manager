@@ -31,6 +31,7 @@ const props = withDefaults(defineProps<{ scope?: 'admin' | 'personal' }>(), { sc
 
 const auth = useAuthStore()
 const { t } = useI18n()
+const { confirmDialog } = useAppDialog()
 const api = useApi()
 const members = useMembers()
 const github = useGithub()
@@ -220,7 +221,7 @@ async function createGithubApp() {
 }
 
 async function removeGithubApp() {
-  if (!confirm(t('admin.github.disconnectConfirm'))) return
+  if (!(await confirmDialog({ message: t('admin.github.disconnectConfirm'), danger: true }))) return
   githubRemoving.value = true
   githubError.value = null
   githubMsg.value = ''

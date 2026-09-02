@@ -27,6 +27,7 @@ const qaApi = useQa()
 const upload = useUpload()
 const github = useGithub()
 const { t } = useI18n()
+const { confirmDialog } = useAppDialog()
 
 const editing = ref(false)
 const saving = ref(false)
@@ -173,7 +174,7 @@ function removeImage(idx: number) {
 }
 
 async function onDelete() {
-  if (!confirm(t('qa.info.deleteConfirm'))) return
+  if (!(await confirmDialog({ message: t('qa.info.deleteConfirm'), danger: true }))) return
   await qaApi.remove(props.item.id)
   emit('removed')
 }

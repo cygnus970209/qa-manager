@@ -80,6 +80,9 @@
 - **IP 조건부 이메일 OTP 2FA** — 신뢰 IP(사무실) 밖 로그인에만 6자리 이메일 인증 요구
 - API 감사 로그(쓰기 요청 전수 기록), X-Forwarded-For 신뢰 경계 처리, CSP 등 보안 헤더
 
+### 데스크톱 앱
+- **[qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop)** (Tauri) — 서버 URL 을 추가해 접속하는 경량 데스크톱 셸. 트레이 상주 + **네이티브 OS 알림·독 뱃지**(창을 닫아도 알림 수신). macOS / Windows / Linux
+
 ### 운영
 - 관리자 페이지 4탭(프로젝트/QA/팀원/설정) + Teams 발송 단계별 진단 도구
 - Docker Compose 풀스택 배포(DB + Redis + BE + FE), Flyway 마이그레이션 자동 적용

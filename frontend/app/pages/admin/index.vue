@@ -28,6 +28,7 @@ const qaApi = useQa()
 const updatesApi = useUpdates()
 const auth = useAuthStore()
 const { t } = useI18n()
+const { confirmDialog, alertDialog } = useAppDialog()
 
 // 관리자 전용 페이지 — 일반 멤버는 대시보드로 돌려보낸다 (API 는 백엔드 403 으로 별도 보호됨)
 watchEffect(() => {
@@ -185,7 +186,7 @@ function onUpdated(m: Member) {
 
 function openDelete(m: Member) {
   if (m.id === auth.user?.id) {
-    alert(t('admin.members.cannotDeleteSelf'))
+    void alertDialog({ message: t('admin.members.cannotDeleteSelf') })
     return
   }
   deleteTarget.value = m
@@ -200,12 +201,12 @@ async function confirmDelete() {
 }
 
 async function resetPassword(m: Member) {
-  if (!window.confirm(t('admin.members.resetPasswordConfirm', { name: m.name, username: m.username }))) return
+  if (!(await confirmDialog({ message: t('admin.members.resetPasswordConfirm', { name: m.name, username: m.username }) }))) return
   try {
     await membersApi.resetPassword(m.id)
-    window.alert(t('admin.members.resetPasswordDone', { name: m.name }))
+    await alertDialog({ message: t('admin.members.resetPasswordDone', { name: m.name }) })
   } catch (e: unknown) {
-    window.alert(e instanceof Error ? e.message : t('admin.members.resetPasswordFailed'))
+    await alertDialog({ message: e instanceof Error ? e.message : t('admin.members.resetPasswordFailed'), danger: true })
   }
 }
 
@@ -216,7 +217,7 @@ async function onAccountRoleChange(m: Member, e: Event) {
   const prev = m.accountRole ?? 'MEMBER'
   if (next === prev) return
   const roleLabel = t(`common.accountRole.${next.toLowerCase()}`)
-  if (!window.confirm(t('admin.members.accountRole.confirm', { name: m.name, role: roleLabel }))) {
+  if (!(await confirmDialog({ message: t('admin.members.accountRole.confirm', { name: m.name, role: roleLabel }) }))) {
     select.value = prev
     return
   }
@@ -225,7 +226,7 @@ async function onAccountRoleChange(m: Member, e: Event) {
     members.value = members.value.map((x) => (x.id === m.id ? updated : x))
   } catch (err: any) {
     select.value = prev
-    window.alert(err?.data?.message ?? t('admin.members.accountRole.failed'))
+    await alertDialog({ message: err?.data?.message ?? t('admin.members.accountRole.failed'), danger: true })
   }
 }
 </script>

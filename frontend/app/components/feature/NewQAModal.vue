@@ -24,6 +24,7 @@ const upload = useUpload()
 
 const auth = useAuthStore()
 const { t } = useI18n()
+const { confirmDialog } = useAppDialog()
 
 const form = reactive<{
   projectId: number | null
@@ -186,8 +187,9 @@ const isDirty = computed(() =>
   || form.assignee2Id != null,
 )
 
-function requestClose() {
-  if (isDirty.value && !window.confirm(t('qa.modal.closeConfirm'))) return
+async function requestClose() {
+  // window.confirm 은 데스크톱(웹뷰)에서 동작하지 않는다 — 반드시 앱 내 다이얼로그 사용
+  if (isDirty.value && !(await confirmDialog({ message: t('qa.modal.closeConfirm') }))) return
   emit('close')
 }
 

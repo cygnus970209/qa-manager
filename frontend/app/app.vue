@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppDialogHost from '~/components/base/AppDialogHost.vue'
 import DemoBanner from '~/components/feature/DemoBanner.vue'
 
 // <html lang> 을 현재 언어에 맞게 동기화 (nuxt.config 의 정적 'ko' 를 덮어씀)
@@ -13,5 +14,6 @@ useHead(() => ({ htmlAttrs: { lang: localeHead.value.htmlAttrs?.lang ?? 'ko' } }
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <AppDialogHost />
   </div>
 </template>

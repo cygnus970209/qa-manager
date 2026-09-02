@@ -38,6 +38,7 @@ const props = defineProps<{ projectId: number; updates: ProjectUpdate[] }>()
 
 const testing = useTesting()
 const { t } = useI18n()
+const { confirmDialog } = useAppDialog()
 
 // 다크모드 여부 (캔버스 배경 dot 색상용) — vueuse useColorMode 와 이름이 겹쳐 모듈 주입 사용
 const colorMode = useNuxtApp().$colorMode
@@ -175,8 +176,9 @@ async function loadFlows(selectId?: number) {
 }
 
 /** 에디터 → 목록 복귀 (미저장 변경은 확인 후 폐기) */
-function backToList() {
-  if (dirty.value && !window.confirm(t('testflow.messages.discardConfirm'))) return
+async function backToList() {
+  // window.confirm 은 데스크톱(웹뷰)에서 동작하지 않는다 — 앱 내 다이얼로그 사용
+  if (dirty.value && !(await confirmDialog({ message: t('testflow.messages.discardConfirm') }))) return
   clearEditor()
 }
 
@@ -232,7 +234,7 @@ async function openFlow(id: number) {
 async function createNewFlow() {
   const name = newFlowName.value.trim()
   if (!name || creatingFlow.value) return
-  if (dirty.value && !window.confirm(t('testflow.messages.discardConfirm'))) return
+  if (dirty.value && !(await confirmDialog({ message: t('testflow.messages.discardConfirm') }))) return
   creatingFlow.value = true
   error.value = null
   try {

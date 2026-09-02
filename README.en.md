@@ -80,6 +80,9 @@ The full feature guide, screen by screen, lives in **[docs/FEATURES.md](docs/FEA
 - **IP-conditional email OTP 2FA** — a 6-digit email code is required only for logins from outside trusted IPs (e.g. the office)
 - API audit log (every write request recorded), X-Forwarded-For trust-boundary handling, CSP and other security headers
 
+### Desktop app
+- **[qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop)** (Tauri) — a lightweight desktop shell: add your server URL and connect. Stays in the tray with **native OS notifications and a dock badge** (notifications keep arriving even with the window closed). macOS / Windows / Linux
+
 ### Operations
 - Admin area with 4 tabs (projects/QA/members/settings) + a step-by-step Teams delivery diagnostic tool
 - Full-stack Docker Compose deployment (DB + Redis + BE + FE) with Flyway migrations applied automatically
