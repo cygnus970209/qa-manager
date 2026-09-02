@@ -242,7 +242,9 @@ function loginAs(acc: DemoAccount) {
       </div>
 
       <!-- 2단계: 이메일 OTP -->
-      <form v-else class="space-y-4" @submit.prevent="onVerifyOtp">
+      <!-- 2단계: 이메일 OTP. v-else 를 쓰면 바로 위 '데모 계정 목록' div 의 v-if 에 체이닝되어
+           운영(demoEnabled=false)에서 항상 노출되는 버그가 생긴다 — 반드시 명시적 v-if 로 둘 것 -->
+      <form v-if="step === 'otp'" class="space-y-4" @submit.prevent="onVerifyOtp">
         <div class="flex items-start gap-2.5 rounded-lg bg-emerald-50 px-3.5 py-3 dark:bg-emerald-500/10">
           <Mail class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <p class="text-xs text-emerald-800 dark:text-emerald-300">
