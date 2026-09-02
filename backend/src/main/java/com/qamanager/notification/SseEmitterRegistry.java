@@ -2,22 +2,40 @@ package com.qamanager.notification;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class SseEmitterRegistry {
+public class SseEmitterRegistry implements DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(SseEmitterRegistry.class);
     private static final long DEFAULT_TIMEOUT_MS = 30L * 60 * 1000; // 30분
+    /**
+     * keep-alive 간격. 프록시 유휴 타임아웃(nginx 기본 60s)보다 짧게 잡아 조용한 연결이 끊기지 않게 하고,
+     * 클라이언트(frontend notifications 스토어)는 이 코멘트가 90s 동안 없으면 죽은 연결로 보고 재연결한다.
+     */
+    private static final long HEARTBEAT_MS = 25_000;
 
     private final Map<Long, List<SseEmitter>> emitters = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService heartbeat = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "sse-heartbeat");
+        t.setDaemon(true);
+        return t;
+    });
+
+    public SseEmitterRegistry() {
+        heartbeat.scheduleAtFixedRate(this::sendHeartbeat, HEARTBEAT_MS, HEARTBEAT_MS, TimeUnit.MILLISECONDS);
+    }
 
     public SseEmitter register(Long memberId) {
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT_MS);
@@ -47,11 +65,35 @@ public class SseEmitterRegistry {
         }
     }
 
+    /** 모든 연결에 SSE 코멘트(":keep-alive")를 보낸다. 클라이언트 파서는 코멘트를 무시한다. */
+    private void sendHeartbeat() {
+        try {
+            emitters.forEach((memberId, list) -> {
+                for (SseEmitter emitter : list) {
+                    try {
+                        emitter.send(SseEmitter.event().comment("keep-alive"));
+                    } catch (IOException | IllegalStateException e) {
+                        // 끊긴 연결 / 이미 완료된 emitter → 정리
+                        remove(memberId, emitter);
+                    }
+                }
+            });
+        } catch (RuntimeException e) {
+            // scheduleAtFixedRate 는 예외가 새면 이후 실행이 멈추므로 여기서 막는다
+            log.warn("SSE keep-alive 전송 중 오류", e);
+        }
+    }
+
     private void remove(Long memberId, SseEmitter emitter) {
         List<SseEmitter> list = emitters.get(memberId);
         if (list != null) {
             list.remove(emitter);
             if (list.isEmpty()) emitters.remove(memberId);
         }
+    }
+
+    @Override
+    public void destroy() {
+        heartbeat.shutdownNow();
     }
 }
