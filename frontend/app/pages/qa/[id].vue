@@ -25,6 +25,7 @@ const updatesApi = useUpdates()
 const auth = useAuthStore()
 
 const item = ref<QaItem | null>(null)
+const notifs = useNotificationsStore()
 const history = ref<QaHistoryEntry[]>([])
 const comments = ref<QaComment[]>([])
 const members = ref<Member[]>([])
@@ -88,6 +89,8 @@ async function load() {
   error.value = null
   try {
     item.value = await qaApi.get(qaId.value)
+    // 이 QA 를 봤으니 관련 안읽은 알림은 읽음 처리 (알림센터 뱃지 갱신). 페이지 로드를 막지 않게 기다리지 않는다.
+    void notifs.markReadForQa(qaId.value)
     history.value = await qaApi.history(qaId.value)
     comments.value = await qaApi.listComments(qaId.value)
     members.value = await membersApi.list()

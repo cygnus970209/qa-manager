@@ -63,9 +63,20 @@ export const useNotificationsStore = defineStore('notifications', () => {
   /** 직전 연결이 열렸다가 끊겼으면 true → 다음 연결 성공 시 목록 재조회 */
   let needResync = false
 
+  /** 진행 중이거나 완료된 최초 로드. 페이지가 알림 목록에 의존할 때 ensureLoaded() 로 기다린다 */
+  let loadPromise: Promise<void> | null = null
+
   async function load() {
     const api = useApi()
-    items.value = await api<Notification[]>('/api/notifications')
+    const p = api<Notification[]>('/api/notifications').then((list) => { items.value = list })
+    loadPromise = p
+    await p
+  }
+
+  /** 아직 한 번도 로드하지 않았으면 로드하고, 진행 중이면 그 완료를 기다린다 */
+  async function ensureLoaded() {
+    if (!loadPromise) await load()
+    else await loadPromise
   }
 
   async function markRead(id: number) {
@@ -78,6 +89,16 @@ export const useNotificationsStore = defineStore('notifications', () => {
     const api = useApi()
     await api('/api/notifications/read-all', { method: 'PATCH' })
     items.value = items.value.map((n) => (n.read ? n : { ...n, read: true }))
+  }
+
+  /**
+   * 특정 QA 에 대한 안읽은 알림을 모두 읽음 처리. QA 상세 페이지에 들어왔을 때 호출한다.
+   * 알림을 클릭해 들어왔든 목록에서 직접 들어왔든, 그 QA 를 봤으면 관련 알림은 읽은 것으로 본다.
+   */
+  async function markReadForQa(qaItemId: number) {
+    try { await ensureLoaded() } catch { return }
+    const targets = items.value.filter((n) => n.qaItemId === qaItemId && !n.read)
+    await Promise.all(targets.map((n) => markRead(n.id).catch(() => { /* 개별 실패는 무시 */ })))
   }
 
   /** 알림 열기: 안읽음이면 읽음 처리하고 연결된 QA(없으면 프로젝트)로 이동. 알림센터 클릭과 데스크톱 알림 클릭이 함께 쓴다 */
@@ -256,5 +277,5 @@ export const useNotificationsStore = defineStore('notifications', () => {
     })
   }
 
-  return { items, unreadCount, load, markRead, markAllRead, openNotification, connect, disconnect }
+  return { items, unreadCount, load, markRead, markAllRead, markReadForQa, openNotification, connect, disconnect }
 })
