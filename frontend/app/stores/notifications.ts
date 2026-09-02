@@ -10,9 +10,29 @@ import type { Notification } from '~/types/api'
  * SSE 는 fetch + ReadableStream 으로 구현하여 credentials 쿠키 자동 첨부.
  * (EventSource 의 헤더 미지원 한계와 무관)
  */
+/**
+ * 데스크톱 앱(별도 리포: qa-manager-desktop) 브리지.
+ * 데스크톱 셸이 웹뷰에 주입하는 선택적 전역 객체 — 없으면 아무 동작도 하지 않는다.
+ * Tauri 등 특정 기술에 종속되지 않는 인터페이스로 유지할 것.
+ */
+interface DesktopBridge {
+  notify?: (p: { title: string; body: string }) => void
+  setBadge?: (count: number) => void
+}
+function desktopBridge(): DesktopBridge | undefined {
+  return import.meta.client ? (window as any).__QAM_DESKTOP__ : undefined
+}
+
 export const useNotificationsStore = defineStore('notifications', () => {
   const items = ref<Notification[]>([])
   const unreadCount = computed(() => items.value.filter((n) => !n.read).length)
+
+  // 데스크톱 앱: 안읽음 수 → 독/작업표시줄 뱃지
+  if (import.meta.client) {
+    watch(unreadCount, (n) => {
+      try { desktopBridge()?.setBadge?.(n) } catch { /* 브리지 없음 */ }
+    })
+  }
 
   let abort: AbortController | null = null
 
@@ -93,6 +113,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
       try {
         const n = JSON.parse(raw) as Notification
         items.value = [n, ...items.value]
+        // 데스크톱 앱: 네이티브 OS 알림
+        try { desktopBridge()?.notify?.({ title: 'QA Manager', body: n.message }) } catch { /* 브리지 없음 */ }
       } catch { /* ignore */ }
     }
   }
