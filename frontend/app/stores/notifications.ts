@@ -24,8 +24,11 @@ import type { Notification } from '~/types/api'
  * Tauri 등 특정 기술에 종속되지 않는 인터페이스로 유지할 것.
  */
 interface DesktopBridge {
-  notify?: (p: { title: string; body: string }) => void
+  /** 네이티브 알림. tag 를 주면 클릭 시 onNotificationClick(tag) 로 되돌아온다 */
+  notify?: (p: { title: string; body: string; tag?: string }) => void
   setBadge?: (count: number) => void
+  /** 데스크톱 셸이 네이티브 알림 클릭 시 호출한다. 웹앱이 등록 */
+  onNotificationClick?: ((tag: string) => void) | null
 }
 function desktopBridge(): DesktopBridge | undefined {
   return import.meta.client ? (window as any).__QAM_DESKTOP__ : undefined
@@ -39,6 +42,7 @@ const HEALTHY_AFTER_MS = 10_000
 const STALE_MS = 90_000
 
 export const useNotificationsStore = defineStore('notifications', () => {
+  const router = useRouter()
   const items = ref<Notification[]>([])
   const unreadCount = computed(() => items.value.filter((n) => !n.read).length)
 
@@ -74,6 +78,28 @@ export const useNotificationsStore = defineStore('notifications', () => {
     const api = useApi()
     await api('/api/notifications/read-all', { method: 'PATCH' })
     items.value = items.value.map((n) => (n.read ? n : { ...n, read: true }))
+  }
+
+  /** 알림 열기: 안읽음이면 읽음 처리하고 연결된 QA(없으면 프로젝트)로 이동. 알림센터 클릭과 데스크톱 알림 클릭이 함께 쓴다 */
+  async function openNotification(id: number) {
+    const n = items.value.find((x) => x.id === id)
+    if (!n) return
+    if (!n.read) {
+      try { await markRead(id) } catch { /* 읽음 처리 실패해도 이동은 진행 */ }
+    }
+    if (n.qaItemId) await router.push(`/qa/${n.qaItemId}`)
+    else if (n.projectId) await router.push(`/project/${n.projectId}`)
+  }
+
+  // 데스크톱 앱: 네이티브 알림 클릭 → 해당 알림 열기 (tag = 알림 id)
+  if (import.meta.client) {
+    const bridge = desktopBridge()
+    if (bridge) {
+      bridge.onNotificationClick = (tag) => {
+        const id = Number(tag)
+        if (Number.isFinite(id)) void openNotification(id)
+      }
+    }
   }
 
   /** 중복(재조회와 SSE 가 겹치는 경우) 없이 맨 앞에 추가. 실제로 추가됐으면 true */
@@ -198,8 +224,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
       try {
         const n = JSON.parse(raw) as Notification
         if (!prepend(n)) return
-        // 데스크톱 앱: 네이티브 OS 알림 — 제목 = QA 제목, 본문 = 문구 + 댓글 발췌
-        try { desktopBridge()?.notify?.({ title: n.title || 'QA Manager', body: n.message }) } catch { /* 브리지 없음 */ }
+        // 데스크톱 앱: 네이티브 OS 알림 — 제목 = QA 제목, 본문 = 문구 + 댓글 발췌, tag = 알림 id (클릭 시 이동용)
+        try { desktopBridge()?.notify?.({ title: n.title || 'QA Manager', body: n.message, tag: String(n.id) }) } catch { /* 브리지 없음 */ }
       } catch { /* ignore */ }
     }
   }
@@ -230,5 +256,5 @@ export const useNotificationsStore = defineStore('notifications', () => {
     })
   }
 
-  return { items, unreadCount, load, markRead, markAllRead, connect, disconnect }
+  return { items, unreadCount, load, markRead, markAllRead, openNotification, connect, disconnect }
 })

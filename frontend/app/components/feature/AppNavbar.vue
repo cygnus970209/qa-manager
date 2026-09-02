@@ -65,13 +65,9 @@ async function onLogout() {
   router.push('/auth/login')
 }
 
-async function onClickNotif(id: number, qaId: number | null, projectId: number | null) {
-  if (!notifs.items.find((n) => n.id === id)?.read) {
-    await notifs.markRead(id)
-  }
-  if (qaId) router.push(`/qa/${qaId}`)
-  else if (projectId) router.push(`/project/${projectId}`)
+async function onClickNotif(id: number) {
   dropdownOpen.value = false
+  await notifs.openNotification(id)
 }
 </script>
 
@@ -199,7 +195,7 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
                   'cursor-pointer px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60',
                   !n.read && 'bg-emerald-50/40 dark:bg-emerald-500/5',
                 ]"
-                @click="onClickNotif(n.id, n.qaItemId, n.projectId)"
+                @click="onClickNotif(n.id)"
               >
                 <p v-if="n.title" class="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{{ n.title }}</p>
                 <p
