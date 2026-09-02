@@ -38,6 +38,11 @@ public class Notification {
     @Column(name = "type", nullable = false, length = 20)
     private String type;
 
+    /** 제목(QA 제목 스냅샷). 알림센터 첫 줄·데스크톱/Teams 알림 제목. 구버전 행은 null. */
+    @Column(name = "title", length = 200)
+    private String title;
+
+    /** 본문. 코멘트류는 "<문구>: <댓글 발췌>" 형태. */
     @Column(name = "message", nullable = false, length = 500)
     private String message;
 
@@ -58,11 +63,12 @@ public class Notification {
 
     protected Notification() {}
 
-    public Notification(TeamMember recipient, TeamMember actor, String type, String message,
+    public Notification(TeamMember recipient, TeamMember actor, String type, String title, String message,
                         Project project, QaItem qaItem) {
         this.recipient = recipient;
         this.actor = actor;
         this.type = type;
+        this.title = title;
         this.message = message;
         this.project = project;
         this.qaItem = qaItem;
@@ -75,6 +81,7 @@ public class Notification {
     public TeamMember getRecipient() { return recipient; }
     public TeamMember getActor() { return actor; }
     public String getType() { return type; }
+    public String getTitle() { return title; }
     public String getMessage() { return message; }
     public Project getProject() { return project; }
     public QaItem getQaItem() { return qaItem; }

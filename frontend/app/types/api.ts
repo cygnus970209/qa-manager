@@ -331,6 +331,9 @@ export type NotificationType = 'qa' | 'update' | 'project' | 'mention' | 'commen
 export interface Notification {
   id: number
   type: NotificationType
+  /** QA 제목 스냅샷. 알림센터 첫 줄·데스크톱 알림 제목. 구버전 알림은 null → message 만 표시 */
+  title: string | null
+  /** 본문. 코멘트류는 "<문구>: <댓글 발췌>" */
   message: string
   projectId: number | null
   projectName: string | null

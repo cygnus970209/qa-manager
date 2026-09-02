@@ -148,6 +148,7 @@ export class DemoDb {
     return {
       id: n.id,
       type: n.type,
+      title: n.title,
       message: n.message,
       projectId: n.projectId,
       projectName: project?.name ?? null,

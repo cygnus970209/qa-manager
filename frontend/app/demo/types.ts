@@ -80,6 +80,8 @@ export interface DemoNotification {
   /** 수신자 멤버 id — 알림은 로그인 사용자 기준으로 필터된다. */
   recipientId: number
   type: NotificationType
+  /** QA 제목. 시드에서는 qaItemId 로 채운다(fillNotificationTitles) */
+  title: string | null
   message: string
   projectId: number | null
   qaItemId: number | null

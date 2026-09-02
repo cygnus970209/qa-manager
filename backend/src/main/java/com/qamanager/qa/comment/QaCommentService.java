@@ -81,7 +81,7 @@ public class QaCommentService {
         if (parent == null) {
             // 새 루트 코멘트 → tester + assignee1 + assignee2 모두에게 알림 (조건 2)
             events.publishEvent(new QaCommentCreatedEvent(
-                saved.getId(), item.getId(), projectId, item.getTitle(),
+                saved.getId(), item.getId(), projectId, item.getTitle(), saved.getContent(),
                 currentMemberId,
                 item.getTester()    == null ? null : item.getTester().getId(),
                 item.getAssignee1() == null ? null : item.getAssignee1().getId(),
@@ -94,7 +94,7 @@ public class QaCommentService {
             // 답글 → 부모 코멘트 작성자에게 알림 (조건 3)
             Long parentAuthorId = parent.getAuthor().getId();
             events.publishEvent(new QaCommentRepliedEvent(
-                saved.getId(), parent.getId(), item.getId(), projectId, item.getTitle(),
+                saved.getId(), parent.getId(), item.getId(), projectId, item.getTitle(), saved.getContent(),
                 currentMemberId, parentAuthorId
             ));
             excludeForMention.add(parentAuthorId);
@@ -111,7 +111,7 @@ public class QaCommentService {
                 // 존재하는 활성 멤버인지 검증 (잘못된 id 무시)
                 if (memberRepository.findByIdAndDeletedAtIsNull(mentionedId).isEmpty()) continue;
                 events.publishEvent(new QaCommentMentionedEvent(
-                    saved.getId(), item.getId(), projectId, item.getTitle(),
+                    saved.getId(), item.getId(), projectId, item.getTitle(), saved.getContent(),
                     currentMemberId, mentionedId
                 ));
             }
@@ -170,19 +170,19 @@ public class QaCommentService {
 
     /* ─────── 이벤트 (Notification 도메인에서 구독) ─────── */
     public record QaCommentCreatedEvent(Long commentId, Long qaItemId, Long projectId,
-                                        String qaTitle,
+                                        String qaTitle, String content,
                                         Long actorMemberId,
                                         Long testerMemberId,
                                         Long assignee1MemberId,
                                         Long assignee2MemberId) {}
 
     public record QaCommentRepliedEvent(Long commentId, Long parentCommentId, Long qaItemId,
-                                        Long projectId, String qaTitle,
+                                        Long projectId, String qaTitle, String content,
                                         Long actorMemberId, Long parentAuthorMemberId) {}
 
     /** 코멘트 본문에 @멘션 된 멤버에게 발행. 멤버 1명당 1건. */
     public record QaCommentMentionedEvent(Long commentId, Long qaItemId, Long projectId,
-                                          String qaTitle,
+                                          String qaTitle, String content,
                                           Long actorMemberId, Long mentionedMemberId) {}
 
     private CommentDto.Response toResponse(QaComment c, Map<String, List<Long>> reactions) {

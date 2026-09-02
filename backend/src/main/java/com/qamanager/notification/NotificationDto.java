@@ -5,6 +5,7 @@ public class NotificationDto {
     public record Response(
         Long id,
         String type,
+        String title,
         String message,
         Long projectId,
         String projectName,
@@ -18,6 +19,7 @@ public class NotificationDto {
             return new Response(
                 n.getId(),
                 n.getType(),
+                n.getTitle(),
                 n.getMessage(),
                 n.getProject() == null ? null : n.getProject().getId(),
                 n.getProject() == null ? null : n.getProject().getName(),

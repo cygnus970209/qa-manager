@@ -201,7 +201,13 @@ async function onClickNotif(id: number, qaId: number | null, projectId: number |
                 ]"
                 @click="onClickNotif(n.id, n.qaItemId, n.projectId)"
               >
-                <p class="line-clamp-2 text-sm text-slate-700 dark:text-slate-200">{{ n.message }}</p>
+                <p v-if="n.title" class="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{{ n.title }}</p>
+                <p
+                  :class="[
+                    'line-clamp-2',
+                    n.title ? 'mt-0.5 text-xs text-slate-600 dark:text-slate-300' : 'text-sm text-slate-700 dark:text-slate-200',
+                  ]"
+                >{{ n.message }}</p>
                 <p class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
                   <span v-if="n.actorName">{{ n.actorName }} · </span>
                   <span v-if="n.projectName">{{ n.projectName }} · </span>

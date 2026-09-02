@@ -121,7 +121,7 @@ public class TeamsNotifier {
             }
 
             Map<String, Object> card = buildCard(payload);
-            botClient.sendAdaptiveCard(serviceUrl, conversationId, payload.message(), card);
+            botClient.sendAdaptiveCard(serviceUrl, conversationId, fallbackText(payload), card);
             logService.record(TeamsSendLog.STATUS_SENT, payload.type(), recipientId, email,
                 payload.message(), null, elapsed(start));
         } catch (TeamsApiException e) {
@@ -219,7 +219,7 @@ public class TeamsNotifier {
         String testMessage = "[테스트] Teams 알림이 정상적으로 연결되었습니다.";
         try {
             Map<String, Object> card = buildCard(new NotificationPayload(
-                "test", testMessage, null, null, null, null
+                "test", null, testMessage, null, null, null, null
             ));
             botClient.sendAdaptiveCard(serviceUrl, conversationId, "Teams 알림 테스트", card);
             TestSendResult r = b.sent(true).build();
@@ -242,12 +242,30 @@ public class TeamsNotifier {
 
     /* ─────────────── Adaptive Card ─────────────── */
 
+    /** 카드 미지원 클라이언트용 요약 텍스트: "제목 — 본문" (제목 없으면 본문만). */
+    private static String fallbackText(NotificationPayload p) {
+        return p.title() == null || p.title().isBlank() ? p.message() : p.title() + " — " + p.message();
+    }
+
     private Map<String, Object> buildCard(NotificationPayload p) {
+        List<Map<String, Object>> blocks = new java.util.ArrayList<>();
+
+        // 제목(QA 제목)이 있으면 굵게 첫 줄, 본문은 보통 굵기. 없으면(구버전/테스트) 본문을 굵게.
+        if (p.title() != null && !p.title().isBlank()) {
+            Map<String, Object> title = new LinkedHashMap<>();
+            title.put("type", "TextBlock");
+            title.put("text", p.title());
+            title.put("wrap", true);
+            title.put("weight", "Bolder");
+            blocks.add(title);
+        }
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("type", "TextBlock");
         body.put("text", p.message());
         body.put("wrap", true);
-        body.put("weight", "Bolder");
+        if (blocks.isEmpty()) body.put("weight", "Bolder");
+        else body.put("spacing", "Small");
+        blocks.add(body);
 
         Map<String, Object> sub = new LinkedHashMap<>();
         sub.put("type", "TextBlock");
@@ -266,7 +284,8 @@ public class TeamsNotifier {
         card.put("type", "AdaptiveCard");
         card.put("$schema", "http://adaptivecards.io/schemas/adaptive-card.json");
         card.put("version", "1.4");
-        card.put("body", List.of(body, sub));
+        blocks.add(sub);
+        card.put("body", blocks);
 
         String deepLink = buildDeepLink(p);
         if (deepLink != null) {
@@ -336,6 +355,7 @@ public class TeamsNotifier {
     /** Notification 에서 필요한 정보만 추려서 비동기로 넘기는 DTO. */
     public record NotificationPayload(
         String type,
+        String title,
         String message,
         Long projectId,
         String projectName,
@@ -345,6 +365,7 @@ public class TeamsNotifier {
         public static NotificationPayload from(Notification n) {
             return new NotificationPayload(
                 n.getType(),
+                n.getTitle(),
                 n.getMessage(),
                 n.getProject() == null ? null : n.getProject().getId(),
                 n.getProject() == null ? null : n.getProject().getName(),

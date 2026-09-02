@@ -198,8 +198,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
       try {
         const n = JSON.parse(raw) as Notification
         if (!prepend(n)) return
-        // 데스크톱 앱: 네이티브 OS 알림
-        try { desktopBridge()?.notify?.({ title: 'QA Manager', body: n.message }) } catch { /* 브리지 없음 */ }
+        // 데스크톱 앱: 네이티브 OS 알림 — 제목 = QA 제목, 본문 = 문구 + 댓글 발췌
+        try { desktopBridge()?.notify?.({ title: n.title || 'QA Manager', body: n.message }) } catch { /* 브리지 없음 */ }
       } catch { /* ignore */ }
     }
   }

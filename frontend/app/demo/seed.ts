@@ -25,7 +25,16 @@ function resolveSeedLocale(): SeedLocale {
 export function createSeed(locale?: SeedLocale): DemoState {
   const state = createKoSeed()
   if ((locale ?? resolveSeedLocale()) === 'en') applyEnglishTexts(state)
+  fillNotificationTitles(state)
   return state
+}
+
+/** 알림 제목 = 연결된 QA 제목 (백엔드가 title 에 QA 제목 스냅샷을 넣는 것과 동일). 언어 적용 후 호출한다. */
+function fillNotificationTitles(s: DemoState): void {
+  for (const n of s.notifications) {
+    if (n.title != null || n.qaItemId == null) continue
+    n.title = s.qa.find((q) => q.id === n.qaItemId)?.title ?? null
+  }
 }
 
 function createKoSeed(): DemoState {
@@ -95,26 +104,26 @@ function createKoSeed(): DemoState {
     },
 
     /* 알림센터 시드 — 어느 데모 계정으로 로그인해도 알림이 보이도록 멤버별로 구성.
-     * 메시지 문구는 백엔드 NotificationService 형식과 동일하게 맞춘다. */
+     * 메시지 문구는 백엔드 NotificationService 형식과 동일하게 맞춘다 (title = QA 제목, message = 본문). */
     notifications: [
       // 김민준(1) — FE 개발자
-      { id: 81, recipientId: 1, type: 'mention', message: '코멘트에서 언급되었습니다: 카드 결제 시 오류 메시지 미표시', projectId: 1, qaItemId: 1, actorId: 2, read: false, createdAt: '2026-05-14T10:20:00' },
-      { id: 82, recipientId: 1, type: 'qa', message: 'QA가 배정되었습니다: 푸시 클릭 시 앱 미실행', projectId: 1, qaItemId: 4, actorId: 4, read: false, createdAt: '2026-04-22T09:12:00' },
-      { id: 83, recipientId: 1, type: 'reply', message: '내 코멘트에 답글이 달렸습니다: 카드 결제 시 오류 메시지 미표시', projectId: 1, qaItemId: 1, actorId: 2, read: true, createdAt: '2026-04-09T11:00:00' },
+      { id: 81, recipientId: 1, type: 'mention', title: null, message: '코멘트에서 언급되었습니다: @김민준 님, 프론트 catch 블록 누락 확인 부탁드립니다.', projectId: 1, qaItemId: 1, actorId: 2, read: false, createdAt: '2026-05-14T10:20:00' },
+      { id: 82, recipientId: 1, type: 'qa', title: null, message: 'QA가 배정되었습니다', projectId: 1, qaItemId: 4, actorId: 4, read: false, createdAt: '2026-04-22T09:12:00' },
+      { id: 83, recipientId: 1, type: 'reply', title: null, message: '내 코멘트에 답글이 달렸습니다: PR 확인 완료. 머지 감사합니다!', projectId: 1, qaItemId: 1, actorId: 2, read: true, createdAt: '2026-04-09T11:00:00' },
       // 박서연(2) — BE 개발자
-      { id: 84, recipientId: 2, type: 'qa', message: 'QA가 배정되었습니다: 간편결제(토스) 취소 후 재시도 불가', projectId: 1, qaItemId: 2, actorId: 4, read: false, createdAt: '2026-05-13T15:40:00' },
-      { id: 85, recipientId: 2, type: 'mention', message: '코멘트에서 언급되었습니다: 카드 결제 시 오류 메시지 미표시', projectId: 1, qaItemId: 1, actorId: 1, read: false, createdAt: '2026-04-08T13:05:00' },
-      { id: 86, recipientId: 2, type: 'comment', message: 'QA에 새 코멘트: AI 위젯 예측값 0으로 표시', projectId: 2, qaItemId: 6, actorId: 5, read: true, createdAt: '2026-05-13T09:30:00' },
+      { id: 84, recipientId: 2, type: 'qa', title: null, message: 'QA가 배정되었습니다', projectId: 1, qaItemId: 2, actorId: 4, read: false, createdAt: '2026-05-13T15:40:00' },
+      { id: 85, recipientId: 2, type: 'mention', title: null, message: '코멘트에서 언급되었습니다: 확인했습니다. @박서연 님, PaymentErrorBoundary에 처리 로직 추가해서 PR 올렸어요. #2842', projectId: 1, qaItemId: 1, actorId: 1, read: false, createdAt: '2026-04-08T13:05:00' },
+      { id: 86, recipientId: 2, type: 'comment', title: null, message: '새 코멘트가 달렸습니다: AI 모델 버전이 v2.1로 업데이트되면서 입력 스키마가 변경된 것 같습니다. 백엔드 로그 확인 중.', projectId: 2, qaItemId: 6, actorId: 5, read: true, createdAt: '2026-05-13T09:30:00' },
       // 이도윤(3) — DevOps
-      { id: 87, recipientId: 3, type: 'qa', message: 'QA가 배정되었습니다: 영수증 이메일 발송 지연', projectId: 1, qaItemId: 3, actorId: 4, read: false, createdAt: '2026-04-08T10:00:00' },
-      { id: 88, recipientId: 3, type: 'qa', message: 'QA 상태 변경: 카카오 친구 목록 동기화 실패 → 보류', projectId: 3, qaItemId: 8, actorId: 4, read: true, createdAt: '2026-03-25T17:20:00' },
+      { id: 87, recipientId: 3, type: 'qa', title: null, message: 'QA가 배정되었습니다', projectId: 1, qaItemId: 3, actorId: 4, read: false, createdAt: '2026-04-08T10:00:00' },
+      { id: 88, recipientId: 3, type: 'qa', title: null, message: 'QA 상태 변경 → 보류', projectId: 3, qaItemId: 8, actorId: 4, read: true, createdAt: '2026-03-25T17:20:00' },
       // 최지우(4) — QA 엔지니어
-      { id: 89, recipientId: 4, type: 'comment', message: 'QA에 새 코멘트: 간편결제(토스) 취소 후 재시도 불가', projectId: 1, qaItemId: 2, actorId: 3, read: false, createdAt: '2026-05-14T14:10:00' },
-      { id: 90, recipientId: 4, type: 'qa', message: 'QA 상태 변경: 딥링크 파라미터 누락 → 수정완료', projectId: 1, qaItemId: 5, actorId: 2, read: false, createdAt: '2026-04-25T18:00:00' },
-      { id: 91, recipientId: 4, type: 'qa', message: '새 QA가 등록되었습니다: 위젯 새로고침 시 데이터 섞임', projectId: 2, qaItemId: 7, actorId: 5, read: true, createdAt: '2026-05-13T08:45:00' },
+      { id: 89, recipientId: 4, type: 'comment', title: null, message: '새 코멘트가 달렸습니다: Redis 세션 TTL 설정이 취소 시 0으로 변경되는 것 확인. 세션 재생성 로직 확인이 필요합니다.', projectId: 1, qaItemId: 2, actorId: 3, read: false, createdAt: '2026-05-14T14:10:00' },
+      { id: 90, recipientId: 4, type: 'qa', title: null, message: 'QA 상태 변경 → 수정완료', projectId: 1, qaItemId: 5, actorId: 2, read: false, createdAt: '2026-04-25T18:00:00' },
+      { id: 91, recipientId: 4, type: 'qa', title: null, message: '새 QA가 등록되었습니다', projectId: 2, qaItemId: 7, actorId: 5, read: true, createdAt: '2026-05-13T08:45:00' },
       // 정현우(5) — 풀스택
-      { id: 92, recipientId: 5, type: 'qa', message: 'QA가 배정되었습니다: 위젯 새로고침 시 데이터 섞임', projectId: 2, qaItemId: 7, actorId: 4, read: false, createdAt: '2026-05-13T09:00:00' },
-      { id: 93, recipientId: 5, type: 'comment', message: 'QA에 새 코멘트: AI 위젯 예측값 0으로 표시', projectId: 2, qaItemId: 6, actorId: 2, read: true, createdAt: '2026-05-14T11:25:00' },
+      { id: 92, recipientId: 5, type: 'qa', title: null, message: 'QA가 배정되었습니다', projectId: 2, qaItemId: 7, actorId: 4, read: false, createdAt: '2026-05-13T09:00:00' },
+      { id: 93, recipientId: 5, type: 'comment', title: null, message: '새 코멘트가 달렸습니다: 입력 스키마 변경 확인했습니다. 어댑터 수정 후 재배포하겠습니다.', projectId: 2, qaItemId: 6, actorId: 2, read: true, createdAt: '2026-05-14T11:25:00' },
     ],
 
     /* 테스트 케이스 관리 시드 — 모바일 쇼핑몰 앱(프로젝트 1) 기준. */
@@ -321,19 +330,19 @@ const EN_TEXTS = {
   } as Record<number, { title: string; precondition?: string; steps: { action: string; expected: string }[]; note?: string }>,
 
   notifications: {
-    81: 'You were mentioned in a comment: No error message on card payment failure',
-    82: 'A QA item was assigned to you: App not opening from push tap',
-    83: 'New reply to your comment: No error message on card payment failure',
-    84: 'A QA item was assigned to you: Express checkout (Toss) retry fails after cancel',
-    85: 'You were mentioned in a comment: No error message on card payment failure',
-    86: 'New comment on QA: AI widget prediction stuck at 0',
-    87: 'A QA item was assigned to you: Receipt emails delayed',
-    88: 'QA status changed: Kakao friend list sync fails → On Hold',
-    89: 'New comment on QA: Express checkout (Toss) retry fails after cancel',
-    90: 'QA status changed: Missing deep link parameter → Fixed',
-    91: 'New QA item created: Widget data mixed up after refresh',
-    92: 'A QA item was assigned to you: Widget data mixed up after refresh',
-    93: 'New comment on QA: AI widget prediction stuck at 0',
+    81: 'You were mentioned in a comment: @Minjun Kim — could you check the missing catch block on the frontend?',
+    82: 'A QA item was assigned to you',
+    83: 'New reply to your comment: Reviewed the PR — thanks for the merge!',
+    84: 'A QA item was assigned to you',
+    85: 'You were mentioned in a comment: Confirmed. @Seoyeon Park — added handling to PaymentErrorBoundary and opened a PR. #2842',
+    86: 'New comment: Looks like the input schema changed when the AI model moved to v2.1. Checking backend logs.',
+    87: 'A QA item was assigned to you',
+    88: 'QA status changed → On Hold',
+    89: 'New comment: Verified that the Redis session TTL gets set to 0 on cancel. The session re-creation logic needs review.',
+    90: 'QA status changed → Fixed',
+    91: 'New QA item created',
+    92: 'A QA item was assigned to you',
+    93: 'New comment: Confirmed the schema change. Will patch the adapter and redeploy.',
   } as Record<number, string>,
 }
 
