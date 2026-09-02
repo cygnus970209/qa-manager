@@ -66,8 +66,10 @@
 
 ### 알림
 - 인앱 실시간 알림 (SSE) — QA 등록/상태 변경/담당자 배정/코멘트/답글/멘션 6종
+- 알림은 **제목(QA 제목) + 본문**으로 구성 — 코멘트/답글/멘션은 본문에 댓글 내용 발췌 포함
 - **MS Teams 봇** 1:1 프로액티브 메시지 (Adaptive Card + 딥링크) — 종류별 on/off, 방해금지 시간대 설정
-- 알림센터 드롭다운: 안읽음 배지, 모두 읽기, 클릭 시 해당 QA로 이동
+- 알림센터 드롭다운: 안읽음 배지, 모두 읽기, 클릭 시 해당 QA로 이동. **QA 상세를 열면 그 QA 의 알림은 자동 읽음**
+- SSE 가 끊겨도 자동 재연결 + 서버 keep-alive — 장시간 켜 두어도 알림이 끊기지 않음
 
 ### GitHub 연동
 - **GitHub App Manifest flow** — 관리자 화면에서 원클릭으로 전용 GitHub App 생성·연동
@@ -81,7 +83,8 @@
 - API 감사 로그(쓰기 요청 전수 기록), X-Forwarded-For 신뢰 경계 처리, CSP 등 보안 헤더
 
 ### 데스크톱 앱
-- **[qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop)** (Tauri) — 서버 URL 을 추가해 접속하는 경량 데스크톱 셸. 트레이 상주 + **네이티브 OS 알림·독 뱃지**(창을 닫아도 알림 수신). macOS / Windows / Linux
+- **[qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop)** (Tauri) — 서버 URL 을 추가해 접속하는 경량 데스크톱 셸. 트레이 상주 + **네이티브 OS 알림·독 뱃지**(창을 닫아도 알림 수신), **알림 클릭 시 해당 QA 로 바로 이동**
+- macOS(Universal · Developer ID 서명·공증) / Windows / Linux — [Releases](https://github.com/cygnus970209/qa-manager-desktop/releases) 에서 내려받고, 이후에는 **앱이 스스로 업데이트**
 
 ### 운영
 - 관리자 페이지 4탭(프로젝트/QA/팀원/설정) + Teams 발송 단계별 진단 도구

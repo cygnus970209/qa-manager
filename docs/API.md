@@ -79,11 +79,11 @@
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
-| GET | `/api/notifications` | 내 알림 목록 |
+| GET | `/api/notifications` | 내 알림 목록 — 항목마다 `title`(QA 제목, 구버전 알림은 null) + `message`(본문) |
 | GET | `/api/notifications/unread-count` | 안읽음 개수 |
 | PATCH | `/api/notifications/{id}/read` | 읽음 처리 |
 | PATCH | `/api/notifications/read-all` | 전체 읽음 |
-| GET | `/api/notifications/stream` | **SSE 구독** (`text/event-stream`, 타임아웃 30분) |
+| GET | `/api/notifications/stream` | **SSE 구독** (`text/event-stream`, 타임아웃 30분). 접속 직후 `connected` 이벤트, 이후 `notification` 이벤트(알림 JSON). 25초마다 `:keep-alive` 코멘트 |
 
 ## 파일
 

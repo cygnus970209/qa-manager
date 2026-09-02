@@ -66,8 +66,10 @@ The full feature guide, screen by screen, lives in **[docs/FEATURES.md](docs/FEA
 
 ### Notifications
 - In-app real-time notifications (SSE) — six types: QA created, status changed, assignee assigned, comment, reply, mention
+- Each notification has a **title (the QA title) and a body** — comment/reply/mention bodies include an excerpt of the comment
 - **MS Teams bot** proactive 1:1 messages (Adaptive Cards + deep links) — per-type on/off and quiet hours
-- Notification center dropdown: unread badge, mark all as read, click to jump to the QA item
+- Notification center dropdown: unread badge, mark all as read, click to jump to the QA item. **Opening a QA detail page marks its notifications as read**
+- Automatic SSE reconnection plus a server keep-alive — notifications keep flowing even when the app stays open for hours
 
 ### GitHub integration
 - **GitHub App Manifest flow** — create and connect a dedicated GitHub App in one click from the admin screen
@@ -81,7 +83,8 @@ The full feature guide, screen by screen, lives in **[docs/FEATURES.md](docs/FEA
 - API audit log (every write request recorded), X-Forwarded-For trust-boundary handling, CSP and other security headers
 
 ### Desktop app
-- **[qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop)** (Tauri) — a lightweight desktop shell: add your server URL and connect. Stays in the tray with **native OS notifications and a dock badge** (notifications keep arriving even with the window closed). macOS / Windows / Linux
+- **[qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop)** (Tauri) — a lightweight desktop shell: add your server URL and connect. Stays in the tray with **native OS notifications and a dock badge** (notifications keep arriving even with the window closed), and **clicking a notification jumps straight to the QA item**
+- macOS (Universal, Developer ID signed and notarized) / Windows / Linux — download from [Releases](https://github.com/cygnus970209/qa-manager-desktop/releases); the app **updates itself** afterwards
 
 ### Operations
 - Admin area with 4 tabs (projects/QA/members/settings) + a step-by-step Teams delivery diagnostic tool

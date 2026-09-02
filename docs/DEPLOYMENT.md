@@ -92,7 +92,7 @@ docker exec -i qa-manager-db sh -c 'mariadb -u root -p"$MARIADB_ROOT_PASSWORD" "
 
 **바로 쓸 수 있는 예시:** [`docs/nginx.example.conf`](./nginx.example.conf)
 - HTTP → HTTPS 리다이렉트
-- SSE 라우팅 (`proxy_buffering off` — 실시간 알림 필수)
+- SSE 라우팅 (`proxy_buffering off` — 실시간 알림 필수. 서버가 25초마다 keep-alive 를 보내므로 `proxy_read_timeout` 은 기본값 60초로 충분)
 - `_nuxt/*` 정적 자산 long-cache
 - HSTS / X-Frame-Options 등 보안 헤더
 
