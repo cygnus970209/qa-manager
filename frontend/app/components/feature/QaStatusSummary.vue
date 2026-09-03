@@ -17,13 +17,14 @@ interface Counts {
 }
 const props = defineProps<{ stats: Counts }>()
 
+// 비율 바는 면적이 넓어 원색(500)이면 눈이 아프다 — 라이트는 400 톤, 다크는 500 톤을 70% 로 낮춘다
 const segments = computed(() => [
-  { key: 'needs_fix', count: props.stats.needsFix, cls: 'bg-rose-500' },
-  { key: 'in_progress', count: props.stats.inProgress, cls: 'bg-blue-500' },
-  { key: 'fix_done', count: props.stats.fixDone, cls: 'bg-amber-500' },
-  { key: 'confirmed', count: props.stats.confirmed, cls: 'bg-emerald-500' },
-  { key: 'on_hold', count: props.stats.onHold, cls: 'bg-slate-400' },
-  { key: 'needs_recheck', count: props.stats.needsRecheck, cls: 'bg-purple-500' },
+  { key: 'needs_fix', count: props.stats.needsFix, cls: 'bg-rose-400 dark:bg-rose-500/70' },
+  { key: 'in_progress', count: props.stats.inProgress, cls: 'bg-blue-400 dark:bg-blue-500/70' },
+  { key: 'fix_done', count: props.stats.fixDone, cls: 'bg-amber-400 dark:bg-amber-500/70' },
+  { key: 'confirmed', count: props.stats.confirmed, cls: 'bg-emerald-400/90 dark:bg-emerald-500/70' },
+  { key: 'on_hold', count: props.stats.onHold, cls: 'bg-slate-300 dark:bg-slate-500/70' },
+  { key: 'needs_recheck', count: props.stats.needsRecheck, cls: 'bg-purple-400 dark:bg-purple-500/70' },
 ])
 const rate = computed(() => (props.stats.total > 0 ? Math.round((props.stats.confirmed / props.stats.total) * 100) : 0))
 function pct(n: number) {

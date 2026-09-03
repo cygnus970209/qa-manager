@@ -73,3 +73,44 @@ html.dark .dark\:text-indigo-400 {
 html.dark .dark\:text-orange-400 {
   color: #f97316;
 }
+
+/* ─── 원색 버튼·게이지 광량 완화 ───
+ * "버튼 대비가 너무 높아 눈이 아프다"는 피드백 대응. 컴포넌트마다 고치는 대신 채도 높은 500 톤
+ * 솔리드 배경(버튼·배지)을 여기서 한 단계 낮춘다. 파스텔 배지(50/600 조합)는 그대로.
+ *
+ * 라이트: 500 → 600, hover 600 → 700 (흰 글자 대비는 오히려 좋아지고 형광 느낌이 사라진다)
+ * 다크  : 500/600 → 700, 400(진행률 바) → 600 — 어두운 배경 위 광량을 더 낮춘다   */
+.bg-emerald-500 { background-color: #059669; }
+.hover\:bg-emerald-600:hover { background-color: #047857; }
+.bg-blue-500 { background-color: #2563eb; }
+.hover\:bg-blue-600:hover { background-color: #1d4ed8; }
+.bg-red-500 { background-color: #dc2626; }
+.hover\:bg-red-600:hover { background-color: #b91c1c; }
+.hover\:bg-red-500:hover { background-color: #dc2626; }
+
+html.dark .bg-emerald-500,
+html.dark .bg-emerald-600 {
+  background-color: #047857;
+}
+html.dark .hover\:bg-emerald-600:hover,
+html.dark .hover\:bg-emerald-700:hover {
+  background-color: #065f46;
+}
+html.dark .bg-blue-500,
+html.dark .bg-blue-600 {
+  background-color: #1d4ed8;
+}
+html.dark .hover\:bg-blue-600:hover,
+html.dark .hover\:bg-blue-700:hover {
+  background-color: #1e40af;
+}
+html.dark .bg-red-500,
+html.dark .bg-red-600 {
+  background-color: #b91c1c;
+}
+html.dark .bg-rose-500 {
+  background-color: #e11d48;
+}
+html.dark .bg-emerald-400 {
+  background-color: #059669;
+}
