@@ -6,16 +6,6 @@
       "newProject": "새 프로젝트",
       "newQaItem": "새 QA 항목"
     },
-    "projects": {
-      "title": "프로젝트",
-      "summary": "총 {total}개 · 고정 {pinned}개"
-    },
-    "projectCard": {
-      "pin": "상단 고정",
-      "unpin": "고정 해제",
-      "total": "전체 {count}",
-      "resolved": "완료 {count}"
-    },
     "stats": {
       "title": "QA 현황",
       "myOnly": "내 작업만",

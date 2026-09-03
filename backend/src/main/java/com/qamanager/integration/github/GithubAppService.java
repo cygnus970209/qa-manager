@@ -52,7 +52,7 @@ public class GithubAppService {
         m.put("name", "qa-manager");
         m.put("url", base);
         // 앱 생성 승인 후 GitHub 이 code 쿼리와 함께 돌려보내는 주소 (프론트 설정 화면).
-        m.put("redirect_url", base + "/admin?tab=settings&sub=github");
+        m.put("redirect_url", base + "/settings/github");
         m.put("public", false);
         // 웹훅은 1차(단방향) 범위 밖 — 비활성으로 선언만 해둔다.
         ObjectNode hook = m.putObject("hook_attributes");

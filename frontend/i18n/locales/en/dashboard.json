@@ -6,16 +6,6 @@
       "newProject": "New Project",
       "newQaItem": "New QA Item"
     },
-    "projects": {
-      "title": "Projects",
-      "summary": "{total} total · {pinned} pinned"
-    },
-    "projectCard": {
-      "pin": "Pin to top",
-      "unpin": "Unpin",
-      "total": "Total {count}",
-      "resolved": "Done {count}"
-    },
     "stats": {
       "title": "QA Overview",
       "myOnly": "My items only",

@@ -26,6 +26,14 @@ const auth = useAuthStore()
 
 const item = ref<QaItem | null>(null)
 const notifs = useNotificationsStore()
+const sidebar = useSidebarStore()
+
+// 상세 화면은 목록·이력 패널이 함께 서므로 앱 사이드바를 자동으로 접는다. 나갈 때 사용자 선호로 복원.
+onMounted(() => sidebar.force(true))
+onBeforeUnmount(() => {
+  sidebar.force(null)
+  sidebar.activeProjectId = null
+})
 const history = ref<QaHistoryEntry[]>([])
 const comments = ref<QaComment[]>([])
 const members = ref<Member[]>([])
@@ -89,6 +97,7 @@ async function load() {
   error.value = null
   try {
     item.value = await qaApi.get(qaId.value)
+    sidebar.activeProjectId = updateToProject.value.get(item.value.updateId) ?? null
     // 이 QA 를 봤으니 관련 안읽은 알림은 읽음 처리 (알림센터 뱃지 갱신). 페이지 로드를 막지 않게 기다리지 않는다.
     void notifs.markReadForQa(qaId.value)
     history.value = await qaApi.history(qaId.value)
@@ -104,6 +113,7 @@ async function load() {
     if (sideUpdates.value.length === 0) {
       sideUpdates.value = await updatesApi.listAll()
     }
+    if (item.value) sidebar.activeProjectId = updateToProject.value.get(item.value.updateId) ?? null
     // 초기 필터도 최초 1회만 산출(이동/필터 조정 시 사이드바 상태를 초기화하지 않기 위함).
     if (initialFilter.value === null && item.value) {
       initialFilter.value = resolveInitialFilter(allItems.value, item.value)
@@ -207,7 +217,7 @@ function goNext() {
       <!-- 좌측 목록 사이드바(마스터-디테일): lg 이상에서만 노출. v-show 로 접어도
            컴포넌트는 마운트 유지 → 이전/다음 이동용 순서(@update:order)는 계속 전달된다. -->
       <aside v-show="leftOpen" class="relative hidden w-72 shrink-0 lg:block">
-        <div class="sticky top-20">
+        <div class="sticky top-6">
           <!-- 박스 우측 가장자리에 붙은 접기 핸들 -->
           <button
             type="button"
@@ -236,7 +246,7 @@ function goNext() {
         v-show="!leftOpen"
         type="button"
         :title="$t('qa.detail.expandList')"
-        class="sticky top-20 hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200 lg:flex"
+        class="sticky top-6 hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200 lg:flex"
         @click="leftOpen = true"
       >
         <ChevronRight class="h-3.5 w-3.5" />
@@ -317,14 +327,14 @@ function goNext() {
           v-show="!rightOpen"
           type="button"
           :title="$t('qa.detail.expandHistory')"
-          class="hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200 lg:flex lg:sticky lg:top-20"
+          class="hidden h-16 shrink-0 flex-col items-center justify-center gap-1 self-start rounded-md border border-slate-200 bg-white px-1.5 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200 lg:flex lg:sticky lg:top-6"
           @click="rightOpen = true"
         >
           <ChevronLeft class="h-3.5 w-3.5" />
           <span class="text-[10px] [writing-mode:vertical-rl]">{{ $t('qa.detail.historyLabel') }}</span>
         </button>
         <aside v-show="rightOpen" class="relative w-full shrink-0 lg:w-80">
-          <div class="lg:sticky lg:top-20">
+          <div class="lg:sticky lg:top-6">
             <!-- 박스 좌측 가장자리에 붙은 접기 핸들 -->
             <button
               type="button"

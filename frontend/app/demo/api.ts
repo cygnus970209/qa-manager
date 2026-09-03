@@ -457,13 +457,14 @@ const ROUTES: Route[] = [
         ? db.state.qa
         : db.state.qa.filter((q) => q.testerId === uid || q.assignee1Id === uid || q.assignee2Id === uid)
       const count = (s: QaStatus) => list.filter((q) => q.status === s).length
-      const byProject = new Map<number, { count: number; resolved: number }>()
+      const byProject = new Map<number, { count: number; resolved: number; needsFix: number }>()
       for (const q of list) {
         const upd = db.state.updates.find((u) => u.id === q.updateId)
         if (!upd) continue
-        const s = byProject.get(upd.projectId) ?? { count: 0, resolved: 0 }
+        const s = byProject.get(upd.projectId) ?? { count: 0, resolved: 0, needsFix: 0 }
         s.count += 1
         if (q.status === 'fix_done' || q.status === 'confirmed') s.resolved += 1
+        if (q.status === 'needs_fix') s.needsFix += 1
         byProject.set(upd.projectId, s)
       }
       return {

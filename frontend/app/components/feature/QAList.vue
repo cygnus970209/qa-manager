@@ -4,12 +4,14 @@ import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import SearchableSelect from '~/components/base/SearchableSelect.vue'
 import { applyQaFilter, saveQaFilter, type QaFilterState } from '~/utils/qaFilter'
-import type { Member, ProjectUpdate, QaItem } from '~/types/api'
+import type { Member, Project, ProjectUpdate, QaItem } from '~/types/api'
 
 const props = defineProps<{
   items: QaItem[]
   updates: ProjectUpdate[]
   members?: Member[]
+  /** 주면 업데이트 열에 프로젝트 이름을 함께 보여준다 (대시보드처럼 여러 프로젝트가 섞인 목록) */
+  projects?: Project[]
 }>()
 
 const auth = useAuthStore()
@@ -67,6 +69,12 @@ const memberOptions = computed<Member[]>(() => props.members ?? [])
 
 function findUpdate(id: number) {
   return props.updates.find((u) => u.id === id)
+}
+
+const projectNameById = computed(() => new Map((props.projects ?? []).map((p) => [p.id, p.name])))
+function projectNameOf(updateId: number) {
+  const u = findUpdate(updateId)
+  return u ? projectNameById.value.get(u.projectId) ?? null : null
 }
 
 /** 상세창 사이드바 용. 현재 필터 상태를 저장해 상세에서 동일한 목록을 재현한다. */
@@ -173,7 +181,10 @@ function rememberFilter() {
         <thead>
           <tr class="border-b border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
             <th class="w-full px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('qa.fields.title') }}</th>
-            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400 hidden md:table-cell">{{ $t('qa.fields.update') }}</th>
+            <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400 hidden md:table-cell">
+              <template v-if="projects">{{ $t('qa.fields.project') }} · {{ $t('qa.fields.update') }}</template>
+              <template v-else>{{ $t('qa.fields.update') }}</template>
+            </th>
             <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('qa.fields.status') }}</th>
             <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('qa.fields.priority') }}</th>
             <th class="whitespace-nowrap px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400 hidden sm:table-cell">{{ $t('common.roles.assignee') }}</th>
@@ -194,10 +205,13 @@ function rememberFilter() {
                 <p class="line-clamp-2 text-xs text-slate-400 dark:text-slate-500">{{ item.description }}</p>
               </div>
             </td>
-            <td class="hidden px-5 py-4 md:table-cell">
-              <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                {{ findUpdate(item.updateId)?.version ?? '-' }}
-              </span>
+            <td class="hidden whitespace-nowrap px-5 py-4 md:table-cell">
+              <div class="flex flex-col items-start gap-1">
+                <span v-if="projects" class="text-xs text-slate-600 dark:text-slate-300">{{ projectNameOf(item.updateId) ?? '-' }}</span>
+                <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  {{ findUpdate(item.updateId)?.version ?? '-' }}
+                </span>
+              </div>
             </td>
             <td class="whitespace-nowrap px-5 py-4"><StatusBadge :status="item.status" /></td>
             <td class="whitespace-nowrap px-5 py-4"><PriorityBadge :priority="item.priority" /></td>

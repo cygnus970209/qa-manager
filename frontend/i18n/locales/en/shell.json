@@ -2,12 +2,43 @@
   "shell": {
     "nav": {
       "dashboard": "Dashboard",
-      "admin": "Admin"
+      "admin": "Admin",
+      "notifications": "Notifications",
+      "settings": "Settings"
+    },
+    "sidebar": {
+      "projects": "Projects",
+      "collapse": "Collapse sidebar (⌘B)",
+      "expand": "Expand sidebar (⌘B)",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "searchProjects": "Search projects",
+      "searchPlaceholder": "Project name...",
+      "newProject": "New project",
+      "noProjects": "No projects yet.",
+      "noMatch": "No matching projects.",
+      "needsFixBadge": "{n} need fixing",
+      "menu": {
+        "overview": "Overview",
+        "testCases": "Test cases",
+        "testFlow": "Test flows",
+        "testRuns": "Test runs"
+      }
     },
     "notifications": {
       "title": "Notifications",
       "markAllRead": "Mark all as read",
-      "empty": "No notifications."
+      "empty": "No notifications.",
+      "filterAll": "All",
+      "filterUnread": "Unread",
+      "filterMentions": "Mentions",
+      "unreadCount": "{n} unread",
+      "selectHint": "Pick a notification on the left to see the QA item here.",
+      "openDetail": "Open full page",
+      "noQa": "This notification is not linked to a QA item.",
+      "openProject": "Open project",
+      "loadFailed": "Could not load the QA item.",
+      "noMatch": "No notifications match this filter."
     },
     "user": {
       "editProfile": "Edit profile"
@@ -19,8 +50,75 @@
       "s3Failed": "S3 upload failed ({status})"
     },
     "settings": {
-      "title": "My Settings",
-      "subtitle": "Manage how you receive notifications and your Teams connection"
+      "title": "Settings",
+      "close": "Close",
+      "groups": {
+        "user": "User settings",
+        "app": "App settings",
+        "admin": "Admin"
+      },
+      "items": {
+        "account": "My account",
+        "notifications": "Notifications",
+        "teams": "MS Teams",
+        "appearance": "Appearance",
+        "language": "Language",
+        "desktop": "Desktop app",
+        "members": "Members",
+        "github": "GitHub"
+      },
+      "account": {
+        "title": "My account",
+        "subtitle": "Manage your profile image, name and password."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "subtitle": "Choose which notifications you receive."
+      },
+      "teams": {
+        "title": "MS Teams",
+        "subtitle": "Receive 1:1 notifications through the Teams bot."
+      },
+      "appearance": {
+        "title": "Appearance",
+        "subtitle": "Pick a theme. System follows your OS light/dark setting.",
+        "theme": "Theme"
+      },
+      "language": {
+        "title": "Language",
+        "subtitle": "Choose the display language."
+      },
+      "desktop": {
+        "title": "Desktop app",
+        "subtitle": "Check the installed desktop app's version, updates and notification permission.",
+        "notDesktop": "These settings are only available in the desktop app. You are viewing this in a browser.",
+        "download": "Download the desktop app",
+        "version": "Version",
+        "platform": "Platform",
+        "update": "Updates",
+        "updateDesc": "Downloads and installs a new version if one is available. The app also checks every 6 hours.",
+        "checkUpdate": "Check for updates",
+        "checking": "Checking...",
+        "notificationPermission": "Notification permission",
+        "permissionDesc": "Permission is required to receive new QA and comment alerts as system notifications.",
+        "permission": {
+          "granted": "Granted",
+          "denied": "Denied",
+          "not_determined": "Not asked yet",
+          "unsupported": "Not available on this platform"
+        },
+        "openSystemSettings": "Open system settings",
+        "requestPermission": "Request permission",
+        "unavailable": "This app version does not support this feature. Please update the app."
+      },
+      "members": {
+        "title": "Members",
+        "subtitle": "Add members and manage account roles."
+      },
+      "github": {
+        "title": "GitHub",
+        "subtitle": "Connect a GitHub App to export QA items as issues."
+      }
     }
   }
 }

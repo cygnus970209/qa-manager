@@ -2,12 +2,43 @@
   "shell": {
     "nav": {
       "dashboard": "대시보드",
-      "admin": "관리"
+      "admin": "관리",
+      "notifications": "알림",
+      "settings": "설정"
+    },
+    "sidebar": {
+      "projects": "프로젝트",
+      "collapse": "사이드바 접기 (⌘B)",
+      "expand": "사이드바 펼치기 (⌘B)",
+      "openMenu": "메뉴 열기",
+      "closeMenu": "메뉴 닫기",
+      "searchProjects": "프로젝트 검색",
+      "searchPlaceholder": "프로젝트 이름...",
+      "newProject": "새 프로젝트",
+      "noProjects": "프로젝트가 없습니다.",
+      "noMatch": "일치하는 프로젝트가 없습니다.",
+      "needsFixBadge": "수정필요 {n}건",
+      "menu": {
+        "overview": "개요",
+        "testCases": "테스트 케이스",
+        "testFlow": "테스트 플로우",
+        "testRuns": "테스트 런"
+      }
     },
     "notifications": {
       "title": "알림",
-      "markAllRead": "모두 읽기",
-      "empty": "알림이 없습니다."
+      "markAllRead": "모두 읽음 처리",
+      "empty": "알림이 없습니다.",
+      "filterAll": "전체",
+      "filterUnread": "안읽음",
+      "filterMentions": "멘션",
+      "unreadCount": "안읽음 {n}건",
+      "selectHint": "왼쪽 목록에서 알림을 고르면 여기에 QA 내용이 보입니다.",
+      "openDetail": "상세 페이지 열기",
+      "noQa": "이 알림에 연결된 QA 항목이 없습니다.",
+      "openProject": "프로젝트 열기",
+      "loadFailed": "QA 항목을 불러올 수 없습니다.",
+      "noMatch": "조건에 맞는 알림이 없습니다."
     },
     "user": {
       "editProfile": "내 정보 수정"
@@ -19,8 +50,75 @@
       "s3Failed": "S3 업로드 실패 ({status})"
     },
     "settings": {
-      "title": "내 설정",
-      "subtitle": "알림 수신 방식과 Teams 연동을 관리하세요"
+      "title": "설정",
+      "close": "닫기",
+      "groups": {
+        "user": "사용자 설정",
+        "app": "앱 설정",
+        "admin": "관리자"
+      },
+      "items": {
+        "account": "내 계정",
+        "notifications": "알림",
+        "teams": "MS Teams",
+        "appearance": "모양",
+        "language": "언어",
+        "desktop": "데스크톱 앱",
+        "members": "팀원 관리",
+        "github": "GitHub 연동"
+      },
+      "account": {
+        "title": "내 계정",
+        "subtitle": "프로필 이미지, 이름, 비밀번호를 관리합니다."
+      },
+      "notifications": {
+        "title": "알림",
+        "subtitle": "어떤 알림을 받을지 정합니다."
+      },
+      "teams": {
+        "title": "MS Teams",
+        "subtitle": "Teams 봇으로 1:1 알림을 받습니다."
+      },
+      "appearance": {
+        "title": "모양",
+        "subtitle": "테마를 고릅니다. 시스템 설정을 따르면 OS 의 라이트·다크 전환에 맞춰 바뀝니다.",
+        "theme": "테마"
+      },
+      "language": {
+        "title": "언어",
+        "subtitle": "화면에 표시할 언어를 고릅니다."
+      },
+      "desktop": {
+        "title": "데스크톱 앱",
+        "subtitle": "설치된 데스크톱 앱의 버전, 업데이트, 알림 권한을 확인합니다.",
+        "notDesktop": "데스크톱 앱에서만 사용할 수 있는 설정입니다. 지금은 브라우저에서 보고 있습니다.",
+        "download": "데스크톱 앱 내려받기",
+        "version": "버전",
+        "platform": "플랫폼",
+        "update": "업데이트",
+        "updateDesc": "새 버전이 있으면 내려받아 설치합니다. 앱은 6시간마다 자동으로도 확인합니다.",
+        "checkUpdate": "업데이트 확인",
+        "checking": "확인 중...",
+        "notificationPermission": "알림 권한",
+        "permissionDesc": "새 QA·코멘트 알림을 시스템 알림으로 받으려면 권한이 필요합니다.",
+        "permission": {
+          "granted": "허용됨",
+          "denied": "거부됨",
+          "not_determined": "아직 묻지 않음",
+          "unsupported": "이 플랫폼에서는 확인할 수 없음"
+        },
+        "openSystemSettings": "시스템 설정 열기",
+        "requestPermission": "권한 요청",
+        "unavailable": "이 앱 버전에서는 지원하지 않는 기능입니다. 앱을 업데이트해 주세요."
+      },
+      "members": {
+        "title": "팀원 관리",
+        "subtitle": "팀원을 추가하고 계정 권한을 관리합니다."
+      },
+      "github": {
+        "title": "GitHub 연동",
+        "subtitle": "GitHub App 을 연결하면 QA 를 이슈로 내보낼 수 있습니다."
+      }
     }
   }
 }

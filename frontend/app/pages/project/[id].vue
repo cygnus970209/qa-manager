@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { FileText, Wrench, Loader, Check, CheckCheck, Pause, RotateCcw, AlertTriangle, Plus, ArrowUpDown, ClipboardList, GitBranch, List, Bug } from '@lucide/vue'
+import { Plus, ArrowUpDown } from '@lucide/vue'
 import ProjectHeader from '~/components/feature/ProjectHeader.vue'
 import UpdateAccordion from '~/components/feature/UpdateAccordion.vue'
-import StatsCard from '~/components/feature/StatsCard.vue'
+import QaStatusSummary from '~/components/feature/QaStatusSummary.vue'
 import NewUpdateModal from '~/components/feature/NewUpdateModal.vue'
 import ReorderUpdateModal from '~/components/feature/ReorderUpdateModal.vue'
 import NewProjectModal from '~/components/feature/NewProjectModal.vue'
@@ -22,6 +22,7 @@ const updatesApi = useUpdates()
 const qaApi = useQa()
 const membersApi = useMembers()
 const auth = useAuthStore()
+const sidebar = useSidebarStore()
 const { t } = useI18n()
 
 const project = ref<Project | null>(null)
@@ -45,14 +46,15 @@ const updateEditTarget = ref<ProjectUpdate | null>(null)
 const updateDeleteOpen = ref(false)
 const updateDeleteTarget = ref<ProjectUpdate | null>(null)
 
-/* ─────────────── 탭: QA 현황 | 테스트 케이스 ─────────────── */
-type ProjectTab = 'qa' | 'tests'
-const activeTab = ref<ProjectTab>(route.query.tab === 'tests' ? 'tests' : 'qa')
-watch(activeTab, (v) => {
-  router.replace({ query: { ...route.query, tab: v === 'qa' ? undefined : v } })
+/* ─────────────── 화면: 개요(qa) | 테스트 케이스(tests) | 테스트 런(runs) ───────────────
+ * 앱 사이드바의 프로젝트 하위 메뉴가 쿼리(tab, view)로 고른다. */
+type ProjectTab = 'qa' | 'tests' | 'runs'
+const activeTab = computed<ProjectTab>(() => {
+  const tab = route.query.tab
+  return tab === 'tests' ? 'tests' : tab === 'runs' ? 'runs' : 'qa'
 })
-/** 테스트 케이스 탭 내부 뷰: 리스트 | 플로우(그래프) */
-const testView = ref<'list' | 'flow'>('list')
+/** 테스트 케이스 화면 내부 뷰: 리스트 | 플로우(그래프) */
+const testView = computed<'list' | 'flow'>(() => (route.query.view === 'flow' ? 'flow' : 'list'))
 
 /* ─────────────── 테스트 런 (업데이트 아코디언 요약) ─────────────── */
 const testingApi = useTesting()
@@ -72,6 +74,11 @@ async function loadRuns() {
   } catch {
     runs.value = []
   }
+}
+/** 테스트 런 목록 화면용: 최근 생성 순 */
+const sortedRuns = computed(() => [...runs.value].sort((a, b) => b.createdAt.localeCompare(a.createdAt)))
+function updateVersion(updateId: number) {
+  return updates.value.find((u) => u.id === updateId)?.version ?? '-'
 }
 
 const runModalOpen = ref(false)
@@ -164,9 +171,17 @@ const itemsByUpdate = computed(() => {
   return map
 })
 
+/** 상단 고정 토글 — 사이드바 정렬(고정 우선)에 바로 반영 */
+async function onTogglePin() {
+  if (!project.value) return
+  await projectsApi.togglePin(project.value.id)
+  project.value = await projectsApi.get(project.value.id)
+  void sidebar.reload()
+}
 async function onProjectStatus(status: 'ACTIVE' | 'PAUSED' | 'COMPLETED') {
   if (!project.value) return
   project.value = await projectsApi.update(project.value.id, { status })
+  void sidebar.reload()
 }
 async function onUpdateStatus(updateId: number, status: 'IN_PROGRESS' | 'TESTING' | 'RELEASED') {
   const updated = await updatesApi.update(updateId, { status })
@@ -175,6 +190,7 @@ async function onUpdateStatus(updateId: number, status: 'IN_PROGRESS' | 'TESTING
 async function onQaStatusChange(qaId: number, status: QaStatusUpper) {
   const updated = await qaApi.update(qaId, { status })
   items.value = items.value.map((q) => (q.id === qaId ? updated : q))
+  void sidebar.reload()
 }
 function onAddInlineQa(updateId: number) {
   qaDefaultUpdateId.value = updateId
@@ -188,15 +204,18 @@ function onUpdatesReordered(reordered: ProjectUpdate[]) {
 }
 function onQaCreated(q: QaItem) {
   items.value = [q, ...items.value]
+  void sidebar.reload()
 }
 
 function onProjectEdited(updated: Project) {
   project.value = updated
+  void sidebar.reload()
 }
 async function confirmProjectDelete() {
   if (!project.value) return
   await projectsApi.remove(project.value.id)
   projectDeleteOpen.value = false
+  await sidebar.reload()
   router.push('/')
 }
 
@@ -241,17 +260,13 @@ async function confirmUpdateDelete() {
         </div>
       </div>
       <!-- Stats skeleton -->
-      <section class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        <div v-for="i in 8" :key="i" class="h-[96px] animate-pulse rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <div class="flex items-start justify-between">
-            <div class="space-y-2">
-              <div class="h-3 w-16 rounded bg-slate-200 dark:bg-slate-800" />
-              <div class="h-7 w-10 rounded bg-slate-200 dark:bg-slate-800" />
-            </div>
-            <div class="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800/60" />
-          </div>
+      <div class="mt-6 h-[116px] animate-pulse rounded-xl border border-slate-200 bg-white px-6 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex h-full items-center gap-6">
+          <div class="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800/60" />
+          <div class="space-y-2"><div class="h-3 w-16 rounded bg-slate-200 dark:bg-slate-800" /><div class="h-7 w-12 rounded bg-slate-200 dark:bg-slate-800" /></div>
+          <div class="flex-1 space-y-3"><div class="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800/60" /><div class="h-3 w-2/3 rounded bg-slate-100 dark:bg-slate-800/60" /></div>
         </div>
-      </section>
+      </div>
       <!-- Updates skeleton -->
       <section class="mt-6 space-y-3">
         <div class="h-4 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
@@ -279,64 +294,60 @@ async function confirmUpdateDelete() {
         @change-status="onProjectStatus"
         @edit="projectEditOpen = true"
         @remove="projectDeleteOpen = true"
+        @toggle-pin="onTogglePin"
       />
 
-      <!-- 탭: QA 현황 | 테스트 케이스 -->
-      <div class="mt-6 inline-flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
-        <button
-          type="button"
-          :class="[
-            'flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
-            activeTab === 'qa' ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
-          ]"
-          @click="activeTab = 'qa'"
-        >
-          <Bug class="h-4 w-4" />
-          {{ $t('project.tabs.qa') }}
-        </button>
-        <button
-          type="button"
-          :class="[
-            'flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
-            activeTab === 'tests' ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
-          ]"
-          @click="activeTab = 'tests'"
-        >
-          <ClipboardList class="h-4 w-4" />
-          {{ $t('project.tabs.tests') }}
-        </button>
-      </div>
-
-      <!-- 테스트 케이스 탭 -->
-      <section v-if="activeTab === 'tests'" class="mt-4">
-        <div class="mb-3 flex items-center justify-between">
-          <div class="inline-flex rounded-lg border border-slate-200 p-0.5 dark:border-slate-800">
-            <button
-              type="button"
-              :class="[
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                testView === 'list' ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
-              ]"
-              @click="testView = 'list'"
-            >
-              <List class="h-3.5 w-3.5" />
-              {{ $t('project.testView.list') }}
-            </button>
-            <button
-              type="button"
-              :class="[
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                testView === 'flow' ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
-              ]"
-              @click="testView = 'flow'"
-            >
-              <GitBranch class="h-3.5 w-3.5" />
-              {{ $t('project.testView.flow') }}
-            </button>
-          </div>
-        </div>
+      <!-- 테스트 케이스 화면 (사이드바: 테스트 케이스 / 테스트 플로우) -->
+      <section v-if="activeTab === 'tests'" class="mt-6">
         <TestCaseListView v-if="testView === 'list'" :project-id="project.id" />
         <TestFlowView v-else :project-id="project.id" :updates="updates" />
+      </section>
+
+      <!-- 테스트 런 화면 -->
+      <section v-else-if="activeTab === 'runs'" class="mt-6">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $t('project.runs.title') }}</h2>
+          <span class="text-xs text-slate-400 dark:text-slate-500">{{ $t('project.runs.count', runs.length) }}</span>
+        </div>
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
+              <tr>
+                <th class="px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('project.runs.colName') }}</th>
+                <th class="w-40 px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('project.runs.colUpdate') }}</th>
+                <th class="w-28 px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('project.runs.colStatus') }}</th>
+                <th class="w-32 px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('project.runs.colCreated') }}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50 dark:divide-slate-800">
+              <tr
+                v-for="r in sortedRuns"
+                :key="r.id"
+                class="cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                @click="router.push(`/run/${r.id}`)"
+              >
+                <td class="px-5 py-3.5 font-medium text-slate-800 dark:text-slate-100">{{ r.name }}</td>
+                <td class="px-5 py-3.5">
+                  <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">{{ updateVersion(r.updateId) }}</span>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span
+                    :class="[
+                      'inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium',
+                      r.closedAt
+                        ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                        : 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
+                    ]"
+                  >{{ r.closedAt ? $t('project.runs.closed') : $t('project.runs.open') }}</span>
+                </td>
+                <td class="px-5 py-3.5 text-xs text-slate-400 dark:text-slate-500">{{ r.createdAt.slice(0, 10) }}</td>
+              </tr>
+              <tr v-if="runs.length === 0">
+                <td colspan="4" class="px-5 py-10 text-center text-sm text-slate-400 dark:text-slate-500">{{ $t('project.runs.empty') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <div v-show="activeTab === 'qa'">
@@ -352,20 +363,7 @@ async function confirmUpdateDelete() {
             {{ $t('project.stats.myOnly') }}
           </label>
         </div>
-        <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-          <StatsCard :title="$t('project.stats.totalQa')" :value="stats.total" :icon="FileText" icon-color="text-blue-500 dark:text-blue-400" icon-bg="bg-blue-50 dark:bg-blue-500/10" />
-          <StatsCard :title="$t('common.qaStatus.needs_fix')" :value="stats.needsFix" :icon="Wrench" icon-color="text-rose-500 dark:text-rose-400" icon-bg="bg-rose-50 dark:bg-rose-500/10" />
-          <StatsCard :title="$t('common.qaStatus.in_progress')" :value="stats.inProgress" :icon="Loader" icon-color="text-blue-500 dark:text-blue-400" icon-bg="bg-blue-50 dark:bg-blue-500/10" />
-          <StatsCard :title="$t('common.qaStatus.fix_done')" :value="stats.fixDone" :icon="Check" icon-color="text-amber-500 dark:text-amber-400" icon-bg="bg-amber-50 dark:bg-amber-500/10" />
-          <StatsCard
-            :title="$t('common.qaStatus.confirmed')" :value="stats.confirmed" :icon="CheckCheck"
-            icon-color="text-emerald-500 dark:text-emerald-400" icon-bg="bg-emerald-50 dark:bg-emerald-500/10"
-            :trend="$t('project.stats.completionRate', { rate: stats.total > 0 ? Math.round((stats.confirmed / stats.total) * 100) : 0 })"
-          />
-          <StatsCard :title="$t('common.qaStatus.on_hold')" :value="stats.onHold" :icon="Pause" icon-color="text-slate-500 dark:text-slate-400" icon-bg="bg-slate-100 dark:bg-slate-800" />
-          <StatsCard :title="$t('common.qaStatus.needs_recheck')" :value="stats.needsRecheck" :icon="RotateCcw" icon-color="text-purple-500 dark:text-purple-400" icon-bg="bg-purple-50 dark:bg-purple-500/10" />
-          <StatsCard :title="$t('common.priority.critical')" :value="stats.critical" :icon="AlertTriangle" icon-color="text-rose-500 dark:text-rose-400" icon-bg="bg-rose-50 dark:bg-rose-500/10" />
-        </div>
+        <QaStatusSummary :stats="stats" />
       </section>
 
       <section class="mt-6">

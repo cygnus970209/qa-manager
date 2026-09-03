@@ -236,6 +236,8 @@ export interface QaProjectSummary {
   projectId: number
   count: number
   resolved: number
+  /** 수정필요 상태 건수 (사이드바 배지) */
+  needsFix: number
 }
 
 /** GET /api/qa/dashboard-stats 응답. mine=true 조회 시 모든 수치가 '내 작업' 기준 */

@@ -165,7 +165,7 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
 </script>
 
 <template>
-  <div class="flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
     <!-- 필터 -->
     <div class="shrink-0 border-b border-slate-100 dark:border-slate-800">
       <!-- 헤더(항상 표시): 접기 토글 + 적용 개수 + 새로고침 + 결과 건수 -->

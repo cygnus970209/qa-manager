@@ -5,13 +5,14 @@
       "goToDashboard": "Go to dashboard"
     },
     "header": {
-      "dashboard": "Dashboard",
       "createdAt": "Created {date}",
       "updateCount": "1 update | {n} updates",
       "qaSummary": "{total} QA ({resolved} done)",
       "statusOption": "Status: {status}",
       "editProject": "Edit project",
-      "deleteProject": "Delete project"
+      "deleteProject": "Delete project",
+      "pin": "Pin to top",
+      "unpin": "Unpin"
     },
     "stats": {
       "title": "QA Overview",
@@ -82,16 +83,17 @@
       "empty": "No updates to reorder.",
       "saveFailed": "Failed to save the order."
     },
-    "tabs": {
-      "qa": "QA Board",
-      "tests": "Test Cases"
-    },
-    "testView": {
-      "list": "List",
-      "flow": "Flow"
-    },
     "runs": {
-      "defaultRunName": "{version} test run"
+      "defaultRunName": "{version} test run",
+      "title": "Test runs",
+      "count": "{n}",
+      "colName": "Name",
+      "colUpdate": "Update",
+      "colStatus": "Status",
+      "colCreated": "Created",
+      "closed": "Closed",
+      "open": "In progress",
+      "empty": "No test runs yet. Create one from an update on the overview."
     }
   }
 }

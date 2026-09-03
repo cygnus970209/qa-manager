@@ -5,13 +5,14 @@
       "goToDashboard": "대시보드로"
     },
     "header": {
-      "dashboard": "대시보드",
       "createdAt": "생성 {date}",
       "updateCount": "업데이트 {n}개",
       "qaSummary": "QA {total}건 (완료 {resolved})",
       "statusOption": "상태: {status}",
       "editProject": "프로젝트 수정",
-      "deleteProject": "프로젝트 삭제"
+      "deleteProject": "프로젝트 삭제",
+      "pin": "상단 고정",
+      "unpin": "고정 해제"
     },
     "stats": {
       "title": "QA 현황",
@@ -82,16 +83,17 @@
       "empty": "순서를 변경할 업데이트가 없습니다.",
       "saveFailed": "순서 저장에 실패했습니다."
     },
-    "tabs": {
-      "qa": "QA 현황",
-      "tests": "테스트 케이스"
-    },
-    "testView": {
-      "list": "리스트",
-      "flow": "플로우"
-    },
     "runs": {
-      "defaultRunName": "{version} 테스트"
+      "defaultRunName": "{version} 테스트",
+      "title": "테스트 런",
+      "count": "{n}개",
+      "colName": "이름",
+      "colUpdate": "업데이트",
+      "colStatus": "상태",
+      "colCreated": "생성일",
+      "closed": "종료",
+      "open": "진행중",
+      "empty": "아직 테스트 런이 없습니다. 개요의 업데이트에서 새 런을 만들 수 있습니다."
     }
   }
 }

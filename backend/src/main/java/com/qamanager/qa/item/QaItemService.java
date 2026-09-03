@@ -79,7 +79,7 @@ public class QaItemService {
         long total = 0;
         long critical = 0;
         Map<String, Long> byStatus = new HashMap<>();
-        Map<Long, long[]> byProject = new LinkedHashMap<>(); // projectId -> [count, resolved]
+        Map<Long, long[]> byProject = new LinkedHashMap<>(); // projectId -> [count, resolved, needsFix]
         for (Object[] row : qaRepository.dashboardRows(memberId)) {
             Long projectId = (Long) row[0];
             String status = (String) row[1];
@@ -88,10 +88,13 @@ public class QaItemService {
             total += cnt;
             byStatus.merge(status, cnt, Long::sum);
             if (QaPriority.CRITICAL.getCode().equals(priority)) critical += cnt;
-            long[] p = byProject.computeIfAbsent(projectId, k -> new long[2]);
+            long[] p = byProject.computeIfAbsent(projectId, k -> new long[3]);
             p[0] += cnt;
             if (QaStatus.FIX_DONE.getCode().equals(status) || QaStatus.CONFIRMED.getCode().equals(status)) {
                 p[1] += cnt;
+            }
+            if (QaStatus.NEEDS_FIX.getCode().equals(status)) {
+                p[2] += cnt;
             }
         }
         return new QaDto.DashboardStats(
@@ -104,7 +107,7 @@ public class QaItemService {
             byStatus.getOrDefault(QaStatus.NEEDS_RECHECK.getCode(), 0L),
             critical,
             byProject.entrySet().stream()
-                .map(e -> new QaDto.ProjectSummary(e.getKey(), e.getValue()[0], e.getValue()[1]))
+                .map(e -> new QaDto.ProjectSummary(e.getKey(), e.getValue()[0], e.getValue()[1], e.getValue()[2]))
                 .toList());
     }
 

@@ -89,8 +89,8 @@ public class QaDto {
         List<ProjectSummary> byProject
     ) {}
 
-    /** 프로젝트별 QA 개수/해결(수정완료+확인완료) 개수. */
-    public record ProjectSummary(Long projectId, long count, long resolved) {}
+    /** 프로젝트별 QA 개수/해결(수정완료+확인완료) 개수/수정필요 개수(사이드바 배지). */
+    public record ProjectSummary(Long projectId, long count, long resolved, long needsFix) {}
 
     public record CreateRequest(
         @NotNull Long updateId,

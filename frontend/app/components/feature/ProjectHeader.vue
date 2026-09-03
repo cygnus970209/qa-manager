@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Pencil, Trash2 } from '@lucide/vue'
+import { Pencil, Pin, PinOff, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import ExpandableText from '~/components/base/ExpandableText.vue'
 import type { Project, ProjectStatus } from '~/types/api'
@@ -14,9 +14,9 @@ const emit = defineEmits<{
   changeStatus: [status: 'ACTIVE' | 'PAUSED' | 'COMPLETED']
   edit: []
   remove: []
+  togglePin: []
 }>()
 
-const router = useRouter()
 
 const statusOptions: { code: ProjectStatus; uppercase: 'ACTIVE' | 'PAUSED' | 'COMPLETED' }[] = [
   { code: 'active',    uppercase: 'ACTIVE' },
@@ -36,15 +36,6 @@ function onSelectStatus(e: Event) {
 
 <template>
   <header class="rounded-xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-800 dark:bg-slate-900">
-    <button
-      class="mb-3 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-      type="button"
-      @click="router.push('/')"
-    >
-      <ArrowLeft class="h-3.5 w-3.5" />
-      {{ $t('project.header.dashboard') }}
-    </button>
-
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div class="min-w-0">
         <h1 class="truncate text-xl font-bold text-slate-800 md:text-2xl dark:text-slate-100">{{ project.name }}</h1>
@@ -59,6 +50,19 @@ function onSelectStatus(e: Event) {
       </div>
 
       <div class="flex shrink-0 items-center gap-3">
+        <button
+          type="button"
+          :class="[
+            'inline-flex h-8 w-8 items-center justify-center rounded-md border transition',
+            project.pinned
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20'
+              : 'border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200',
+          ]"
+          :title="project.pinned ? $t('project.header.unpin') : $t('project.header.pin')"
+          @click="emit('togglePin')"
+        >
+          <component :is="project.pinned ? Pin : PinOff" class="h-4 w-4" />
+        </button>
         <StatusBadge :status="project.status" />
         <select
           class="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"

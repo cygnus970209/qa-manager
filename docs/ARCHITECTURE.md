@@ -101,7 +101,9 @@ QA 저장 트랜잭션 커밋
 
 - **Nuxt 4 SSR** + 전역 인증 미들웨어. 하이드레이션 중에는 인증 부트스트랩을 건너뛰어 SSR/CSR 미스매치를 방지하고, refresh 쿠키가 있으면 리다이렉트를 보류하고 클라이언트 복구에 위임
 - `$api` 플러그인 — `credentials: 'include'`, SSR 쿠키 forward, **401 시 refresh 자동 재시도**(동시 요청의 중복 refresh 합치기), 데모 빌드에서는 localStorage mock 으로 통째 교체
-- 컴포넌트는 `base/`(범용 프리미티브 9종) 와 `feature/`(도메인 17종) 로 분리, composable 은 상태 없는 얇은 API 래퍼
+- 레이아웃 2종 — `layouts/default.vue`(앱 사이드바 + 본문, 모바일 드로어, `⌘B` 접기) / `layouts/settings.vue`(앱 사이드바 없는 전체 화면 설정, `ESC` 닫기). 설정에 들어오기 전 화면은 `middleware/settings-return.global.ts` 가 `useState` 에 기억해 닫을 때 복귀
+- `stores/sidebar.ts` — 프로젝트 목록 + 프로젝트별 집계(`dashboard-stats.byProject` 의 `needsFix` 배지)를 한 번 로드하고 프로젝트를 만들거나 고정/상태를 바꾼 페이지가 `reload()`. 접힘 상태는 사용자 선호(localStorage) 위에 페이지가 잠시 강제하는 값(QA 상세 = 자동 접힘)을 얹는 구조. 현재 프로젝트(`activeProjectId`)는 라우트(`/project/:id`)에서 얻고, QA 상세·알림 페이지처럼 라우트에 없는 화면은 페이지가 직접 설정
+- 컴포넌트는 `base/`(범용 프리미티브) 와 `feature/`(도메인, 설정 화면은 `feature/settings/`) 로 분리, composable 은 상태 없는 얇은 API 래퍼. `useDesktop` 은 데스크톱 브리지(버전 · 업데이트 확인 · 알림 권한) 접근 — 브라우저/구버전 앱에서는 null
 - 타입(`app/types/api.ts`)은 백엔드 DTO 와 1:1 수기 매핑 (springdoc ↔ openapi-typescript 자동 생성 전환 예정)
 - QA 목록 필터를 sessionStorage 로 상세 사이드바와 공유, 상세 간 이동은 `router.replace` 로 히스토리 오염 방지
 - 보안 헤더/CSP 를 `routeRules` 로 전 응답에 부여 (GitHub App manifest 제출을 위한 `form-action https://github.com` 포함)
@@ -110,9 +112,10 @@ QA 저장 트랜잭션 커밋
 
 - 서버: `SseEmitterRegistry` 가 사용자별 emitter 목록을 관리 (`ConcurrentHashMap` + `CopyOnWriteArrayList`) — 다중 탭/기기 동시 구독, 타임아웃 30분, 끊긴 연결 자동 정리. **25초마다 `:keep-alive` 코멘트**를 보내 프록시 유휴 타임아웃(nginx 기본 60초)에 걸리지 않게 함
 - 클라이언트: `EventSource` 는 쿠키 제어가 불가능해 **`fetch` + `ReadableStream`** 으로 직접 스트림을 파싱해 구독. 스트림이 끝나면 **지수 백오프(1초→30초)로 자동 재연결**하고 재연결 시 목록을 재조회해 놓친 알림을 동기화. keep-alive 가 90초 없으면 죽은 연결로 보고 끊고 재연결. 401/403 이면 중단(재로그인 시 재개)
-- 알림 데이터는 `title`(QA 제목 스냅샷) + `message`(본문) — 코멘트류 본문은 `<문구>: <댓글 발췌 200자>` (`NotificationService`). 알림센터 첫 줄·데스크톱/Teams 알림 제목이 `title`
+- 알림 데이터는 `title`(QA 제목 스냅샷) + `message`(본문) — 코멘트류 본문은 `<문구>: <댓글 발췌 200자>` (`NotificationService`). 알림 페이지 첫 줄·데스크톱/Teams 알림 제목이 `title`
 - 인앱 알림은 트랜잭션 안에서 DB 저장 + SSE 푸시, Teams 발송만 afterCommit 비동기로 분리
-- 데스크톱(qa-manager-desktop)은 웹뷰에 `window.__QAM_DESKTOP__` 브리지를 주입 — 스토어가 새 알림을 `notify({ title, body, tag })` 로 넘기고, 클릭 시 `onNotificationClick(tag)` 로 되돌려 받아 해당 QA 로 이동. 브리지가 없으면 무동작(Tauri 비종속 인터페이스)
+- 데스크톱(qa-manager-desktop)은 웹뷰에 `window.__QAM_DESKTOP__` 브리지를 주입 — 스토어가 새 알림을 `notify({ title, body, tag })` 로 넘기고, 클릭 시 `onNotificationClick(tag)` 로 되돌려 받아 해당 QA 로 이동. 설정 > 데스크톱 앱 화면은 같은 브리지의 `getInfo` / `checkForUpdate` / `getNotificationPermission` / `requestNotificationPermission` / `openNotificationSettings` 를 쓴다. 브리지가 없으면 무동작(Tauri 비종속 인터페이스)
+- 알림 페이지(`/notifications`)는 스토어의 목록을 그대로 쓰고, 고른 알림의 QA 는 상세 페이지와 같은 `QAInfoPanel` · `QACommentSection` 으로 그 자리에서 렌더링
 
 ## 5. DB 스키마 히스토리 (Flyway)
 
@@ -136,7 +139,7 @@ QA 저장 트랜잭션 커밋
 | V15 | 계정 권한 `account_role` (ADMIN / MEMBER) — 기존 멤버는 전원 ADMIN 으로 백필 |
 | V16 | 테스트 케이스 관리 — `test_suite` / `test_case` / 테스트 런 테이블 |
 | V17 | 테스트 런 실행 항목의 플랫폼(PC / Android / iOS) 구분 |
-| V18 | 알림 `title` 컬럼 — QA 제목 스냅샷 (알림센터 첫 줄 · 데스크톱/Teams 알림 제목) |
+| V18 | 알림 `title` 컬럼 — QA 제목 스냅샷 (알림 페이지 첫 줄 · 데스크톱/Teams 알림 제목) |
 
 ## 6. 기술 결정 기록
 

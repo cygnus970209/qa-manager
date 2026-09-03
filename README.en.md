@@ -64,11 +64,16 @@ The full feature guide, screen by screen, lives in **[docs/FEATURES.md](docs/FEA
 - Comments with one-level replies, `@mention` autocomplete, 8 emoji reactions, submit with `Ctrl+Enter`
 - Image and PDF attachments (paste from clipboard) with a wheel-zoom/drag lightbox
 
+### Layout
+- **App sidebar** — menu (dashboard/notifications/admin) + project tree (pinned first, needs-fix count badges, per-project overview/test cases/flows/runs sub-menu). Collapses to an icon strip with `⌘B`, **collapses automatically on QA detail**, becomes a drawer on mobile
+- **Dashboard** — a single QA status summary card (total, completion rate, status ratio bar, critical) + the full QA list (with a project column)
+- **Discord-style settings** — user settings (account/notifications/MS Teams), app settings (appearance/language/desktop app) and admin (members/GitHub) on a full-screen page, closed with `ESC`
+
 ### Notifications
 - In-app real-time notifications (SSE) — six types: QA created, status changed, assignee assigned, comment, reply, mention
 - Each notification has a **title (the QA title) and a body** — comment/reply/mention bodies include an excerpt of the comment
 - **MS Teams bot** proactive 1:1 messages (Adaptive Cards + deep links) — per-type on/off and quiet hours
-- Notification center dropdown: unread badge, mark all as read, click to jump to the QA item. **Opening a QA detail page marks its notifications as read**
+- **Notifications page** — list on the left (all/unread/mentions filter, mark all as read) | the selected notification's QA item and comments on the right. **Opening a QA detail page marks its notifications as read**
 - Automatic SSE reconnection plus a server keep-alive — notifications keep flowing even when the app stays open for hours
 
 ### GitHub integration
@@ -77,7 +82,7 @@ The full feature guide, screen by screen, lives in **[docs/FEATURES.md](docs/FEA
 - Put `#issue-number` in a commit message and the related commits appear on the QA detail page
 
 ### Security
-- **Account roles (admin/member)** — only admins can access the admin pages, manage members, grant roles, and configure global integrations. Regular members get a personal settings page (notifications/Teams)
+- **Account roles (admin/member)** — only admins can access the admin pages, manage members, grant roles, and configure global integrations (GitHub). The admin group in settings is shown to admins only
 - JWT in HttpOnly cookies + refresh rotation + Redis token blacklist
 - **IP-conditional email OTP 2FA** — a 6-digit email code is required only for logins from outside trusted IPs (e.g. the office)
 - API audit log (every write request recorded), X-Forwarded-For trust-boundary handling, CSP and other security headers
@@ -87,10 +92,10 @@ The full feature guide, screen by screen, lives in **[docs/FEATURES.md](docs/FEA
 - macOS (Universal, Developer ID signed and notarized) / Windows / Linux — download from [Releases](https://github.com/cygnus970209/qa-manager-desktop/releases); the app **updates itself** afterwards
 
 ### Operations
-- Admin area with 4 tabs (projects/QA/members/settings) + a step-by-step Teams delivery diagnostic tool
+- Admin area (projects/QA management) + member management in settings, with a step-by-step Teams delivery diagnostic tool
 - Full-stack Docker Compose deployment (DB + Redis + BE + FE) with Flyway migrations applied automatically
 - Built-in **demo mode** build that runs as a static site with no backend
-- **i18n (Korean/English)** — auto-detects the browser language and remembers it via cookie, with instant switching from the navbar/login screen. Even the demo seed data is provided per language
+- **i18n (Korean/English)** — auto-detects the browser language and remembers it via cookie, with instant switching from Settings > Language or the login screen. Even the demo seed data is provided per language
 - **Dark mode** — follows the OS setting (system/light/dark three-way toggle), supported on every screen, no FOUC
 
 ---
