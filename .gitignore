@@ -39,3 +39,6 @@ docs/openapi.json
 # 실제 App ID 가 든 작업본과 빌드 산출물은 추적하지 않는다. 템플릿(manifest.example.json)만 커밋.
 teams-app/manifest.json
 teams-app/qa-manager-teams-app.zip
+
+# deploy.sh 가 기록하는 활성 색(blue/green)
+.deploy-active

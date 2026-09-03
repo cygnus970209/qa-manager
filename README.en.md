@@ -90,6 +90,7 @@ The full feature guide, screen by screen, lives in **[docs/FEATURES.md](docs/FEA
 ### Desktop app
 - **[qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop)** (Tauri) — a lightweight desktop shell: add your server URL and connect. Stays in the tray with **native OS notifications and a dock badge** (notifications keep arriving even with the window closed), and **clicking a notification jumps straight to the QA item**
 - macOS (Universal, Developer ID signed and notarized) / Windows / Linux — download from [Releases](https://github.com/cygnus970209/qa-manager-desktop/releases); the app **updates itself** afterwards
+- When the server (web app) is redeployed, a "new version · reload" banner appears inside the app, so there is no need to restart it (`⌘R`/`F5` reloads too)
 
 ### Operations
 - Admin area (projects/QA management) + member management in settings, with a step-by-step Teams delivery diagnostic tool

@@ -55,8 +55,8 @@ docker compose up -d --build
 최초 빌드는 5~10분 정도. 두 번째부터는 Gradle/npm 의존성 캐시로 빨라짐.
 
 기본 노출 포트 (`docker-compose.yml` 기준):
-- 프론트엔드: `http://<HOST>:3247`
-- 백엔드: `http://<HOST>:8357`
+- 프론트엔드: `http://<HOST>:3247` (초록: 3248 — 아래 무중단 배포 참고)
+- 백엔드: `http://<HOST>:8357` (초록: 8358)
 - DB: `<HOST>:13307` (운영에선 방화벽/보안그룹으로 허용 IP 를 제한하거나 db `ports` 섹션 제거 권장)
 - Redis: 외부 미노출 (compose 네트워크 내부 전용)
 
@@ -66,10 +66,32 @@ docker compose up -d --build
 docker compose ps                    # 상태 확인
 docker compose logs -f backend       # 로그 추적
 docker compose restart backend       # 재시작
-docker compose pull && docker compose up -d --build   # 업데이트
+./deploy.sh                          # 업데이트 (무중단 — 아래 참고)
+docker compose up -d --build         # 업데이트 (단순 — 백엔드가 뜨는 30초쯤 끊김)
 docker compose down                  # 종료 (DB 데이터 유지)
 docker compose down -v               # 종료 + DB 볼륨 삭제 (주의)
 ```
+
+### 무중단 배포 (`deploy.sh`)
+
+`docker compose up -d --build` 는 컨테이너를 내렸다 새로 띄우므로 백엔드가 기동되는 동안(약 30초) API 가 끊깁니다.
+`deploy.sh` 는 **파랑/초록 두 벌**을 번갈아 써서 끊김을 없앱니다.
+
+```bash
+git pull && ./deploy.sh              # ENV_FILE=.env.prod ./deploy.sh 처럼 env 파일 지정 가능
+```
+
+동작:
+1. 이미지 빌드 (`backend`, `frontend` — 두 색이 같은 이미지 태그를 씀)
+2. 지금 꺼져 있는 색을 새 이미지로 기동 (`backend-green`/`frontend-green` 은 profile `green`)
+3. 새 색의 헬스체크가 `healthy` 가 될 때까지 대기 (기본 180초, 실패하면 새 색을 내리고 **롤백**)
+4. 옛 색을 graceful 하게 정지 — 처리 중인 요청은 마치고, SSE 는 끊어 클라이언트가 새 색으로 재연결
+5. 활성 색을 `.deploy-active` 에 기록
+
+전제:
+- **nginx upstream 에 두 색의 포트가 모두 있어야 합니다** — [`docs/nginx.example.conf`](./nginx.example.conf) 처럼 백엔드 `8357`·`8358`, 프론트 `3247`·`3248`. 꺼진 쪽은 nginx 가 `max_fails`/`fail_timeout` 으로 건너뜁니다.
+- 새 백엔드가 뜨면서 Flyway 마이그레이션이 먼저 적용되고 잠시 옛 백엔드도 같은 DB 를 씁니다. 컬럼 삭제·이름 변경처럼 옛 코드를 깨뜨리는 스키마 변경은 두 번에 나눠 배포하세요.
+- 웹앱은 새 빌드를 감지하면 화면에 "새 버전 · 새로고침" 배너를 띄우고 다음 화면 이동 때 새 버전으로 다시 불러옵니다 (데스크톱 앱 포함).
 
 ### 백업
 
@@ -86,8 +108,8 @@ docker exec -i qa-manager-db sh -c 'mariadb -u root -p"$MARIADB_ROOT_PASSWORD" "
 운영 시 80/443 단일 진입점이 필요하면 호스트에 Nginx / Caddy 를 두고 프록시:
 
 ```
-/        → 프론트엔드 (호스트 직접 실행: 127.0.0.1:3000 / compose: 127.0.0.1:3247)
-/api, /swagger-ui.html, /v3/api-docs → 백엔드 (호스트 직접 실행: 127.0.0.1:8080 / compose: 127.0.0.1:8357)
+/        → 프론트엔드 (호스트 직접 실행: 127.0.0.1:3000 / compose: 127.0.0.1:3247 + 3248)
+/api, /swagger-ui.html, /v3/api-docs → 백엔드 (호스트 직접 실행: 127.0.0.1:8080 / compose: 127.0.0.1:8357 + 8358)
 ```
 
 **바로 쓸 수 있는 예시:** [`docs/nginx.example.conf`](./nginx.example.conf)

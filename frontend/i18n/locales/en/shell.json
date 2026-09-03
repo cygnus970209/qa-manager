@@ -119,6 +119,11 @@
         "title": "GitHub",
         "subtitle": "Connect a GitHub App to export QA items as issues."
       }
+    },
+    "update": {
+      "available": "A new version has been deployed.",
+      "reload": "Reload",
+      "later": "Later"
     }
   }
 }

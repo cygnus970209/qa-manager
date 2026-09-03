@@ -1,6 +1,9 @@
 server:
   port: 8080
   forward-headers-strategy: framework
+  # 무중단 배포(deploy.sh): 옛 컨테이너를 내릴 때 새 요청은 거절하고 처리 중인 요청은 마친 뒤 종료한다.
+  # SSE 스트림은 SseEmitterRegistry(SmartLifecycle) 가 이 단계보다 먼저 닫아 대기 시간을 끌지 않는다.
+  shutdown: graceful
 
 spring:
   application:
@@ -13,6 +16,10 @@ spring:
   threads:
     virtual:
       enabled: true
+
+  lifecycle:
+    # graceful shutdown 에서 처리 중인 요청을 기다리는 최대 시간 (docker stop_grace_period 40s 보다 짧게)
+    timeout-per-shutdown-phase: 30s
 
   datasource:
     url: jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:qa_manager}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul

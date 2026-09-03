@@ -90,6 +90,7 @@
 ### 데스크톱 앱
 - **[qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop)** (Tauri) — 서버 URL 을 추가해 접속하는 경량 데스크톱 셸. 트레이 상주 + **네이티브 OS 알림·독 뱃지**(창을 닫아도 알림 수신), **알림 클릭 시 해당 QA 로 바로 이동**
 - macOS(Universal · Developer ID 서명·공증) / Windows / Linux — [Releases](https://github.com/cygnus970209/qa-manager-desktop/releases) 에서 내려받고, 이후에는 **앱이 스스로 업데이트**
+- 서버(웹앱)를 새로 배포하면 앱 안에 "새 버전 · 새로고침" 배너가 떠서 껐다 켤 필요가 없음 (`⌘R`/`F5` 새로고침 지원)
 
 ### 운영
 - 관리자 페이지(프로젝트/QA 관리) + 설정의 팀원 관리 · Teams 발송 단계별 진단 도구

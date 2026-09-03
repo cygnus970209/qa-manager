@@ -66,6 +66,12 @@ export default defineNuxtConfig({
     port: 3000,
   },
 
+  // 새 빌드 감지 주기(기본 1시간 → 10분). 발견하면 app:manifest:update → 배너 + 다음 화면 이동 때 재로드.
+  // 배포 직후에는 SSE 재연결 시점에 즉시 확인한다 (composables/useAppUpdate.ts).
+  experimental: {
+    checkOutdatedBuildInterval: 10 * 60 * 1000,
+  },
+
   app: {
     head: {
       title: 'QA Manager',

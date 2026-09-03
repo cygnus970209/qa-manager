@@ -43,6 +43,7 @@ const STALE_MS = 90_000
 
 export const useNotificationsStore = defineStore('notifications', () => {
   const router = useRouter()
+  const appUpdate = useAppUpdate()
   const items = ref<Notification[]>([])
   const unreadCount = computed(() => items.value.filter((n) => !n.read).length)
 
@@ -173,6 +174,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
         // 끊긴 동안 놓친 알림 동기화 (SSE 로 겹쳐 들어오는 건 prepend 가 걸러낸다)
         needResync = false
         try { await load() } catch { /* 다음 재연결 때 다시 시도 */ }
+        // 서버가 재시작됐다면 새 빌드가 배포됐을 가능성이 크다 — 바로 확인해 배너를 띄운다
+        void appUpdate.check()
       }
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
