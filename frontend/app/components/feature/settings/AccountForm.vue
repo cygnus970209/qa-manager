@@ -102,7 +102,7 @@ const labelCls = 'block text-xs font-medium text-slate-600 dark:text-slate-300'
 </script>
 
 <template>
-  <form class="max-w-xl space-y-6" @submit.prevent="onSubmit">
+  <form class="max-w-3xl space-y-6" @submit.prevent="onSubmit">
     <!-- 프로필 카드 -->
     <div class="flex items-center gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">

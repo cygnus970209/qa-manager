@@ -58,7 +58,7 @@ const btnCls = 'inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bo
 
     <ClientOnly>
       <!-- 브라우저에서 보는 경우 -->
-      <div v-if="!desktop.isDesktop.value" class="max-w-xl space-y-4">
+      <div v-if="!desktop.isDesktop.value" class="max-w-3xl space-y-4">
         <div class="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-slate-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-slate-200">
           <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-500 dark:text-blue-400" />
           <p>{{ $t('shell.settings.desktop.notDesktop') }}</p>
@@ -73,7 +73,7 @@ const btnCls = 'inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bo
         </a>
       </div>
 
-      <div v-else class="max-w-xl space-y-3">
+      <div v-else class="max-w-3xl space-y-3">
         <!-- 버전 -->
         <SettingRow :icon="Monitor" :title="$t('shell.settings.desktop.version')" :description="info ? `${platformLabel} · v${info.version}` : $t('shell.settings.desktop.unavailable')" />
 

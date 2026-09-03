@@ -26,7 +26,7 @@ const timeCls = 'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm f
     <div v-if="loading" class="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
       <Loader2 class="h-4 w-4 animate-spin" /> {{ $t('admin.settings.loadingSettings') }}
     </div>
-    <div v-else class="max-w-xl space-y-5">
+    <div v-else class="max-w-3xl space-y-5">
       <i18n-t keypath="admin.settings.scopeNotice" scope="global" tag="p" class="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
         <template #teams><span class="font-medium text-slate-600 dark:text-slate-300">{{ $t('admin.settings.scopeNoticeTeams') }}</span></template>
       </i18n-t>

@@ -122,7 +122,7 @@ async function removeGithubApp() {
 </script>
 
 <template>
-  <div class="max-w-xl space-y-5">
+  <div class="max-w-3xl space-y-5">
     <div v-if="githubLoading" class="flex items-center gap-2 py-6 text-sm text-slate-400 dark:text-slate-500">
       <Loader2 class="h-4 w-4 animate-spin" /> {{ $t('admin.github.checkingStatus') }}
     </div>

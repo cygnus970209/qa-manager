@@ -37,7 +37,7 @@ async function sendTest() {
     <div v-if="loading" class="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
       <Loader2 class="h-4 w-4 animate-spin" /> {{ $t('admin.settings.loadingSettings') }}
     </div>
-    <div v-else class="max-w-xl space-y-5">
+    <div v-else class="max-w-3xl space-y-5">
       <SettingRow :icon="MonitorSmartphone" :title="$t('admin.settings.teamsMasterTitle')" :description="$t('admin.settings.teamsMasterDesc')">
         <template #control><ToggleSwitch v-model="settings.teamsNotifyEnabled" /></template>
       </SettingRow>

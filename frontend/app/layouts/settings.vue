@@ -85,8 +85,8 @@ const itemActive = 'bg-emerald-50 font-medium text-emerald-700 dark:bg-emerald-5
 <template>
   <div class="flex min-h-screen bg-white text-gray-900 dark:bg-slate-950 dark:text-slate-100">
     <!-- 왼쪽 항목 목록 (md 이상) -->
-    <div class="hidden w-[300px] shrink-0 justify-end border-r border-slate-200 bg-slate-50 py-[60px] pl-5 pr-2 dark:border-slate-800 dark:bg-slate-900 md:flex xl:w-[320px]">
-      <nav class="flex w-[218px] flex-col gap-0.5">
+    <div class="hidden w-[260px] shrink-0 justify-end border-r border-slate-200 bg-slate-50 py-12 pl-4 pr-2 dark:border-slate-800 dark:bg-slate-900 md:flex xl:w-[300px]">
+      <nav class="flex w-full max-w-[218px] flex-col gap-0.5">
         <template v-for="(g, gi) in groups" :key="g.label">
           <div v-if="gi > 0" class="mx-2.5 my-2 h-px bg-slate-200 dark:bg-slate-800" />
           <p class="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ $t(g.label) }}</p>
@@ -130,11 +130,11 @@ const itemActive = 'bg-emerald-50 font-medium text-emerald-700 dark:bg-emerald-5
         </div>
       </div>
 
-      <div class="flex min-w-0 flex-1 px-4 py-6 md:px-10 md:py-[60px]">
-        <div class="min-w-0 max-w-[740px] flex-1">
+      <div class="flex min-w-0 flex-1 px-4 py-6 md:px-8 md:py-12">
+        <div class="min-w-0 max-w-[1280px] flex-1">
           <slot />
         </div>
-        <div class="ml-6 hidden shrink-0 flex-col items-center gap-1.5 md:flex">
+        <div class="ml-5 hidden shrink-0 flex-col items-center gap-1.5 md:flex">
           <button
             type="button"
             class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-300 text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-500 dark:hover:text-slate-100"

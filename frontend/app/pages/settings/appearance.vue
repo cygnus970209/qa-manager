@@ -22,7 +22,7 @@ function select(v: 'light' | 'dark' | 'system') {
 
     <p class="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ $t('shell.settings.appearance.theme') }}</p>
     <ClientOnly>
-      <div class="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+      <div class="grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
         <button
           v-for="opt in options"
           :key="opt.value"

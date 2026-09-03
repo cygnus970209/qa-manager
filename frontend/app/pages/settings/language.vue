@@ -13,7 +13,7 @@ async function select(code: 'ko' | 'en') {
 <template>
   <div>
     <SettingsHeader :title="$t('shell.settings.language.title')" :subtitle="$t('shell.settings.language.subtitle')" />
-    <div class="max-w-md overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div class="max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <button
         v-for="l in locales"
         :key="l.code"

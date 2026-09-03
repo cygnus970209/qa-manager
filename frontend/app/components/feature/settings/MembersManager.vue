@@ -158,13 +158,13 @@ const actionBtn = 'flex h-8 w-8 items-center justify-center rounded-lg text-slat
         <table v-else class="w-full text-left text-sm">
           <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
             <tr>
-              <th class="w-12 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">#</th>
-              <th class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.name') }}</th>
-              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.username') }}</th>
-              <th class="w-40 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.role') }}</th>
-              <th class="w-32 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.accountRole.header') }}</th>
-              <th class="w-24 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.assignedHeader') }}</th>
-              <th class="w-40 px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.table.actions') }}</th>
+              <th class="w-12 whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">#</th>
+              <th class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.name') }}</th>
+              <th class="w-32 whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.username') }}</th>
+              <th class="w-40 whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.fields.role') }}</th>
+              <th class="w-32 whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.accountRole.header') }}</th>
+              <th class="w-24 whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.members.assignedHeader') }}</th>
+              <th class="w-40 whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ $t('admin.table.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -174,11 +174,11 @@ const actionBtn = 'flex h-8 w-8 items-center justify-center rounded-lg text-slat
                 <div class="flex items-center gap-3">
                   <img v-if="m.avatarUrl" :src="m.avatarUrl" :alt="m.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover dark:bg-slate-800" />
                   <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ m.name.charAt(0) }}</div>
-                  <span class="font-medium text-slate-800 dark:text-slate-100">{{ m.name }}</span>
+                  <span class="whitespace-nowrap font-medium text-slate-800 dark:text-slate-100">{{ m.name }}</span>
                 </div>
               </td>
-              <td class="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{{ m.username }}</td>
-              <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ m.role ?? '-' }}</td>
+              <td class="whitespace-nowrap px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{{ m.username }}</td>
+              <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">{{ m.role ?? '-' }}</td>
               <td class="px-4 py-3">
                 <!-- 자기 자신의 권한은 변경 불가(잠금 방지) — 배지로만 표시 -->
                 <span
@@ -205,7 +205,7 @@ const actionBtn = 'flex h-8 w-8 items-center justify-center rounded-lg text-slat
                 </select>
               </td>
               <td class="px-4 py-3">
-                <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <span class="whitespace-nowrap rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                   {{ $t('admin.members.assignedCount', memberAssignedCount(m.id)) }}
                 </span>
               </td>
