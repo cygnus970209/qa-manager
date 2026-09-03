@@ -25,9 +25,13 @@ A static demo that runs without a backend (your changes are stored only in your 
   Recommended capture list: see docs/images/README.md (Korean)
 -->
 
-| Dashboard                              | QA detail (three-pane view)           |
+| Dashboard (sidebar + summary card)      | QA detail (three-pane view · sidebar auto-collapses) |
 |----------------------------------------|---------------------------------------|
 | ![Dashboard](docs/images/dashboard.jpg) | ![QA detail](docs/images/qa-detail.jpg) |
+
+| Project detail (sidebar tree · QA per update)  | Settings (Discord-style full screen)     |
+|------------------------------------------------|------------------------------------------|
+| ![Project detail](docs/images/project-detail.jpg) | ![Settings](docs/images/settings.jpg) |
 
 | Comments · Mentions · Emoji reactions   | GitHub issue & commit tracking                 |
 |-----------------------------------------|------------------------------------------------|
@@ -37,9 +41,9 @@ A static demo that runs without a backend (your changes are stored only in your 
 |--------------------------------------------|----------------------------------------|
 | ![Flow editor](docs/images/test-flow.jpg)  | ![Test run](docs/images/test-run.jpg)  |
 
-| Real-time notification center                     | Email OTP two-step login                  |
+| Notifications page (list │ QA content)            | Email OTP two-step login                  |
 |---------------------------------------------------|-------------------------------------------|
-| ![Notification center](docs/images/notification-center.jpg) | ![OTP login](docs/images/login-otp.jpg) |
+| ![Notifications](docs/images/notifications.jpg)   | ![OTP login](docs/images/login-otp.jpg) |
 
 ---
 

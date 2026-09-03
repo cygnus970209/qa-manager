@@ -121,7 +121,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 8. 알림
 
-![알림센터](images/notification-center.jpg)
+![알림 페이지](images/notifications.jpg)
 
 ### 인앱 실시간 알림 (SSE)
 
@@ -182,7 +182,7 @@ QA Manager 의 모든 기능을 화면 단위로 정리한 문서입니다.
 
 ## 11. 설정 · 관리자 페이지
 
-![관리자 설정](images/admin-settings.jpg)
+![설정](images/settings.jpg)
 
 ### 설정 (`/settings/*`)
 
