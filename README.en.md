@@ -36,7 +36,7 @@ Real-time notifications, an MS Teams bot, GitHub issue and commit tracking, test
 - **Collaboration** — comments, replies, `@mentions`, emoji reactions, image/PDF attachments
 - **Notifications** — in-app real-time (SSE) plus 1:1 MS Teams bot messages. The notifications page shows the list and the QA item side by side
 - **GitHub integration** — issues created and synced from QA items, commits tracked via `#number` in commit messages
-- **UI** — project tree sidebar (`⌘B` to collapse), Discord-style settings, dark mode, Korean/English
+- **UI** — project tree sidebar (`⌘B` to collapse), full-screen settings, dark mode, Korean/English
 - **Desktop app** — [qa-manager-desktop](https://github.com/cygnus970209/qa-manager-desktop) (Tauri) with native notifications and auto-update
 - **Security & operations** — admin/member roles, IP-conditional email OTP, API audit log, zero-downtime Docker Compose deploys, demo-mode build
 

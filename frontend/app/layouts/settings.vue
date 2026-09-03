@@ -2,7 +2,7 @@
 import { Bell, GitBranch, Languages, LogOut, Monitor, MonitorSmartphone, Palette, UserRound, Users, X } from '@lucide/vue'
 
 /**
- * 설정 레이아웃 — 앱 사이드바 없이 전체 화면으로 열린다 (Discord 식).
+ * 설정 레이아웃 — 앱 사이드바 없이 전체 화면으로 열린다 — 설정 항목만 남기고 나머지 UI 는 닫는다.
  * 왼쪽: 세 묶음(사용자 설정 / 앱 설정 / 관리자)의 항목 목록 + 로그아웃. 오른쪽: 항목 내용 + 닫기(ESC).
  * 닫기는 설정에 들어오기 전 화면으로 돌아간다 (middleware/settings-return.global.ts).
  */
