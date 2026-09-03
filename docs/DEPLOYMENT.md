@@ -89,7 +89,8 @@ git pull && ./deploy.sh              # ENV_FILE=.env.prod ./deploy.sh 처럼 env
 5. 활성 색을 `.deploy-active` 에 기록
 
 전제:
-- **nginx upstream 에 두 색의 포트가 모두 있어야 합니다** — [`docs/nginx.example.conf`](./nginx.example.conf) 처럼 백엔드 `8357`·`8358`, 프론트 `3247`·`3248`. 꺼진 쪽은 nginx 가 `max_fails`/`fail_timeout` 으로 건너뜁니다.
+- **nginx upstream 에 두 색의 포트가 모두 있고, 초록(`8358`·`3248`)은 `backup` 이어야 합니다** — [`docs/nginx.example.conf`](./nginx.example.conf) 참고. 파랑이 살아 있으면 모든 요청이 파랑으로 가고, 파랑을 내리면 초록으로 넘어갑니다. `backup` 없이 두 색을 번갈아 쓰면 HTML 은 새 빌드에서, JS 청크(`/_nuxt/*.js`)는 옛 빌드에서 받아 `Failed to fetch dynamically imported module` 오류가 납니다.
+- 배포 전에 열어 둔 화면은 옛 청크를 요청하다 실패할 수 있는데, 웹앱이 청크 로드 실패를 감지하면 스스로 새로고침합니다(1분에 한 번만).
 - 새 백엔드가 뜨면서 Flyway 마이그레이션이 먼저 적용되고 잠시 옛 백엔드도 같은 DB 를 씁니다. 컬럼 삭제·이름 변경처럼 옛 코드를 깨뜨리는 스키마 변경은 두 번에 나눠 배포하세요.
 - 웹앱은 새 빌드를 감지하면 화면에 "새 버전 · 새로고침" 배너를 띄우고 다음 화면 이동 때 새 버전으로 다시 불러옵니다 (데스크톱 앱 포함).
 

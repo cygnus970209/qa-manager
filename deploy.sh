@@ -4,11 +4,12 @@
 #
 # backend·frontend 를 파랑(기본 서비스)과 초록(profile: green) 두 벌로 두고,
 # 지금 켜져 있는 색의 반대 색을 새 이미지로 띄운 뒤 정상(healthy)이 되면 이전 색을 내린다.
-# 두 색이 겹치는 동안 nginx 가 둘 다에게 요청을 보내므로(upstream 에 두 포트 등록) 끊김이 없다.
+# nginx upstream 에 두 색이 있어(초록은 backup) 한 색을 내리는 순간 다른 색이 받으므로 끊김이 없다.
 #
 # 사용:   git pull && ./deploy.sh
-# 전제:   docs/nginx.example.conf 처럼 upstream 에 파랑/초록 포트가 모두 있을 것
-#         (백엔드 8357/8358, 프론트 3247/3248). 없으면 초록이 켜진 동안 요청이 가지 않는다.
+# 전제:   docs/nginx.example.conf 처럼 upstream 에 파랑/초록 포트가 모두 있고 초록은 `backup` 일 것
+#         (백엔드 8357/8358, 프론트 3247/3248). backup 이 없으면 두 색이 겹치는 동안 요청이 번갈아
+#         가서 새 HTML + 옛 JS 청크 조합으로 화면이 깨진다.
 # 환경:   ENV_FILE (기본 .env) / HEALTH_TIMEOUT (기본 180초)
 # 주의:   새 백엔드가 뜨면서 Flyway 마이그레이션이 먼저 적용되고 잠시 옛 백엔드도 같은 DB 를 쓴다.
 #         컬럼 삭제·이름 변경처럼 옛 코드가 깨지는 스키마 변경은 두 단계로 나눠 배포할 것.
