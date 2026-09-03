@@ -85,6 +85,7 @@ git pull && ./deploy.sh              # ENV_FILE=.env.prod ./deploy.sh 처럼 env
 1. 이미지 빌드 (`backend`, `frontend` — 두 색이 같은 이미지 태그를 씀)
 2. 지금 꺼져 있는 색을 새 이미지로 기동 (`backend-green`/`frontend-green` 은 profile `green`)
 3. 새 색의 헬스체크가 `healthy` 가 될 때까지 대기 (기본 180초, 실패하면 새 색을 내리고 **롤백**)
+   - 백엔드는 `wget --spider /actuator/health`(DB·Redis 포함, 메일 제외), 프론트는 `/auth/login` 응답으로 판단. 백엔드 이미지에 `wget` 을 설치해 두었으니 `docker inspect --format '{{.State.Health.Status}}' qa-manager-backend` 가 `healthy` 인지 먼저 확인하면 문제를 빨리 찾을 수 있습니다
 4. 옛 색을 graceful 하게 정지 — 처리 중인 요청은 마치고, SSE 는 끊어 클라이언트가 새 색으로 재연결
 5. 활성 색을 `.deploy-active` 에 기록
 

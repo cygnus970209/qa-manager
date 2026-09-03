@@ -16,6 +16,12 @@ RUN ./gradlew --no-daemon clean bootJar -x test
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 
+# 헬스체크(docker-compose healthcheck: wget --spider /actuator/health)용 — temurin JRE 이미지에는 wget/curl 이 없다.
+# 이게 없으면 컨테이너가 영원히 unhealthy 라 deploy.sh(무중단 배포)가 새 색을 띄우지 못한다.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/*
+
 # 실행용 비루트 유저
 RUN groupadd --system app && useradd --system --gid app --no-create-home app
 

@@ -79,6 +79,11 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+  health:
+    # /actuator/health 는 docker healthcheck·무중단 배포(deploy.sh)의 기준이다.
+    # SMTP 가 잠시 안 되는 것 때문에 앱 전체를 DOWN 으로 보고 배포를 막지 않도록 메일 지표는 뺀다 (DB·Redis 는 포함).
+    mail:
+      enabled: false
 
 springdoc:
   swagger-ui:
