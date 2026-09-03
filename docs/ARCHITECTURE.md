@@ -36,6 +36,40 @@ flowchart LR
 - 운영 배포는 Docker Compose 4컨테이너(db · redis · backend · frontend), 앞단에 Nginx 리버스 프록시([예시 설정](nginx.example.conf))
 - 데모 배포는 백엔드 없이 정적 SPA 단일 컨테이너 ([DEMO.md](DEMO.md))
 
+### 저장소 구조
+
+```
+qa-manager/
+├── frontend/                    # Nuxt 4 (운영: SSR / 데모: 정적 SPA)
+│   ├── app/
+│   │   ├── components/          # base(공용 UI) · feature(도메인) · feature/settings(설정 화면)
+│   │   ├── composables/         # useQa, useGithub, useUpload, useDesktop, …
+│   │   ├── demo/                # 데모 모드 mock 백엔드 (localStorage)
+│   │   ├── layouts/             # default(사이드바 + 본문) · settings(전체 화면 설정) · blank(로그인)
+│   │   ├── pages/               # /, /project/:id, /qa/:id, /notifications, /settings/*, /admin, /run/:id, /auth/login
+│   │   ├── stores/              # auth · notifications · sidebar (Pinia)
+│   │   └── types/               # 백엔드 DTO 1:1 타입
+│   ├── Dockerfile               # SSR 운영용
+│   └── Dockerfile.demo          # 데모 정적 서빙용 (nginx)
+├── backend/                     # Spring Boot 4 · Java 25
+│   └── src/main/
+│       ├── java/com/qamanager/
+│       │   ├── auth/            # JWT · 쿠키 · 블랙리스트 / otp: 이메일 OTP 2FA
+│       │   ├── audit/           # API 요청 감사 로그
+│       │   ├── project/ projectupdate/
+│       │   ├── qa/              # item · comment · shared
+│       │   ├── notification/    # 인앱 + SSE / teams: Teams 봇
+│       │   ├── integration/github/  # GitHub App 연동
+│       │   └── member/ file/ config/ common/
+│       └── resources/db/migration/  # Flyway
+├── teams-app/                   # Teams 앱 매니페스트 패키지
+├── docs/                        # 문서 위키
+├── deploy.sh                    # 무중단 배포 (blue/green)
+├── docker-compose.yml           # 운영 풀스택 (DB + Redis + BE + FE, 파랑/초록)
+├── docker-compose.demo.yml      # 데모 전용 (정적 SPA 단일 컨테이너)
+└── .env.example                 # 환경변수 템플릿 (항목별 주석)
+```
+
 ## 2. 백엔드 구조
 
 ### 도메인별 수직 슬라이스
@@ -161,3 +195,8 @@ QA 저장 트랜잭션 커밋
 
 - 단위 테스트: 알림 수신자 중복 제거, QA 서비스 (JUnit 5 + Mockito)
 - API 문서: springdoc-openapi — 실행 중 `/swagger-ui.html`, 정적 레퍼런스는 [API.md](API.md)
+
+### 그 밖의 구현 포인트
+
+- **Teams 웹훅 자체 JWT 검증** — Bot Framework OpenID JWKS 서명 검증 + serviceUrl claim 대조로 위조 요청 차단
+- **XFF 신뢰 경계** — OTP 의 신뢰 IP 판정에 X-Forwarded-For 를 "오른쪽에서 신뢰 프록시 수만큼" 파싱해 헤더 위조 방지
