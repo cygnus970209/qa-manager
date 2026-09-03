@@ -277,5 +277,5 @@ export const useNotificationsStore = defineStore('notifications', () => {
     })
   }
 
-  return { items, unreadCount, load, markRead, markAllRead, markReadForQa, openNotification, connect, disconnect }
+  return { items, unreadCount, load, ensureLoaded, markRead, markAllRead, markReadForQa, openNotification, connect, disconnect }
 })

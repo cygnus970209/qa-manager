@@ -102,7 +102,7 @@ QA 저장 트랜잭션 커밋
 - **Nuxt 4 SSR** + 전역 인증 미들웨어. 하이드레이션 중에는 인증 부트스트랩을 건너뛰어 SSR/CSR 미스매치를 방지하고, refresh 쿠키가 있으면 리다이렉트를 보류하고 클라이언트 복구에 위임
 - `$api` 플러그인 — `credentials: 'include'`, SSR 쿠키 forward, **401 시 refresh 자동 재시도**(동시 요청의 중복 refresh 합치기), 데모 빌드에서는 localStorage mock 으로 통째 교체
 - 레이아웃 2종 — `layouts/default.vue`(앱 사이드바 + 본문, 모바일 드로어, `⌘B` 접기) / `layouts/settings.vue`(앱 사이드바 없는 전체 화면 설정, `ESC` 닫기). 설정에 들어오기 전 화면은 `middleware/settings-return.global.ts` 가 `useState` 에 기억해 닫을 때 복귀
-- `stores/sidebar.ts` — 프로젝트 목록 + 프로젝트별 집계(`dashboard-stats.byProject` 의 `needsFix` 배지)를 한 번 로드하고 프로젝트를 만들거나 고정/상태를 바꾼 페이지가 `reload()`. 접힘 상태는 사용자 선호(localStorage) 위에 페이지가 잠시 강제하는 값(QA 상세 = 자동 접힘)을 얹는 구조. 현재 프로젝트(`activeProjectId`)는 라우트(`/project/:id`)에서 얻고, QA 상세·알림 페이지처럼 라우트에 없는 화면은 페이지가 직접 설정
+- `stores/sidebar.ts` — 프로젝트 목록 + 프로젝트별 집계(`dashboard-stats.byProject`)를 한 번 로드하고 프로젝트를 만들거나 고정/상태를 바꾼 페이지가 `reload()`. 접힘 상태는 사용자 선호(localStorage) 위에 페이지가 잠시 강제하는 값(QA 상세 = 자동 접힘)을 얹는 구조. 프로젝트 배지는 알림 스토어에서 파생 — 그 프로젝트의 안읽은 알림 중 마지막으로 프로젝트를 연 뒤(localStorage `qam-project-seen` 의 알림 id) 온 것의 수라, 프로젝트를 열면 알림 읽음 상태를 건드리지 않고도 지워진다. 현재 프로젝트(`activeProjectId`)는 라우트(`/project/:id`)에서 얻고, QA 상세·알림 페이지처럼 라우트에 없는 화면은 페이지가 직접 설정
 - 컴포넌트는 `base/`(범용 프리미티브) 와 `feature/`(도메인, 설정 화면은 `feature/settings/`) 로 분리, composable 은 상태 없는 얇은 API 래퍼. `useDesktop` 은 데스크톱 브리지(버전 · 업데이트 확인 · 알림 권한) 접근 — 브라우저/구버전 앱에서는 null
 - 타입(`app/types/api.ts`)은 백엔드 DTO 와 1:1 수기 매핑 (springdoc ↔ openapi-typescript 자동 생성 전환 예정)
 - QA 목록 필터를 sessionStorage 로 상세 사이드바와 공유, 상세 간 이동은 `router.replace` 로 히스토리 오염 방지

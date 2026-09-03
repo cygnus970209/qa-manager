@@ -3,6 +3,8 @@ import type { Project, QaProjectSummary } from '~/types/api'
 
 /** 접힘 상태 localStorage 키 (사용자별이 아니라 브라우저별로 기억) */
 const COLLAPSED_KEY = 'qam-sidebar-collapsed'
+/** 프로젝트별 "여기까지 확인함" 알림 id — 배지 계산용 */
+const SEEN_KEY = 'qam-project-seen'
 
 /**
  * 앱 사이드바 상태.
@@ -10,6 +12,8 @@ const COLLAPSED_KEY = 'qam-sidebar-collapsed'
  *   고정/상태를 바꾼 페이지가 reload() 로 갱신한다.
  * - 접힘: 사용자 선호(localStorage) 위에 페이지가 잠시 강제하는 값(QA 상세 = 자동 접힘)을 얹는다.
  *   강제 중에 사용자가 펼치면 그 페이지에서만 펼쳐지고, 페이지를 나가면 선호값으로 돌아간다.
+ * - 프로젝트 배지: 그 프로젝트의 안읽은 알림 중 "마지막으로 프로젝트를 연 뒤" 온 것의 수.
+ *   프로젝트를 열면(markSeen) 지워지고, 알림을 읽어도 줄어든다. 알림 자체의 읽음 상태는 건드리지 않는다.
  */
 export const useSidebarStore = defineStore('sidebar', () => {
   const projects = ref<Project[]>([])
@@ -29,10 +33,49 @@ export const useSidebarStore = defineStore('sidebar', () => {
   /** 현재 화면이 속한 프로젝트 — 사이드바 트리에서 펼쳐 보여줄 항목. 페이지가 설정/해제한다 */
   const activeProjectId = ref<number | null>(null)
 
+  /* ─── 프로젝트별 새 알림 배지 ─── */
+  const notifs = useNotificationsStore()
+  /** projectId → 마지막으로 확인한 시점의 최대 알림 id */
+  const seen = ref<Record<number, number>>({})
+
+  function loadSeen() {
+    try {
+      const raw = localStorage.getItem(SEEN_KEY)
+      if (raw) seen.value = JSON.parse(raw)
+    } catch { /* 손상된 값은 무시 */ }
+  }
+  function persistSeen() {
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify(seen.value)) } catch { /* ignore */ }
+  }
+
+  /** 프로젝트의 새 알림 수 (안읽음 + 마지막 확인 이후) */
+  function badge(projectId: number) {
+    const last = seen.value[projectId] ?? 0
+    let n = 0
+    for (const x of notifs.items) {
+      if (!x.read && x.projectId === projectId && x.id > last) n++
+    }
+    return n
+  }
+
+  /** 프로젝트를 열었다 — 지금까지 온 알림은 확인한 것으로 보고 배지를 지운다 */
+  async function markSeen(projectId: number) {
+    try { await notifs.ensureLoaded() } catch { /* 알림을 못 불러오면 배지도 없다 */ }
+    let maxId = seen.value[projectId] ?? 0
+    for (const x of notifs.items) {
+      if (x.projectId === projectId && x.id > maxId) maxId = x.id
+    }
+    if (maxId !== (seen.value[projectId] ?? 0)) {
+      seen.value = { ...seen.value, [projectId]: maxId }
+      persistSeen()
+    }
+  }
+
   function initPref() {
     try {
       collapsedPref.value = localStorage.getItem(COLLAPSED_KEY) === '1'
     } catch { /* localStorage 접근 불가(프라이빗 모드 등) */ }
+    loadSeen()
   }
 
   function setCollapsed(v: boolean) {
@@ -94,6 +137,7 @@ export const useSidebarStore = defineStore('sidebar', () => {
   return {
     projects, stats, loaded,
     collapsed, mobileOpen, activeProjectId,
+    badge, markSeen,
     initPref, setCollapsed, toggle, force,
     load, ensureLoaded, reload, reset,
   }

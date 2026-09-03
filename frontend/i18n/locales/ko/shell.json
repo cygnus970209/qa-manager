@@ -17,13 +17,13 @@
       "newProject": "새 프로젝트",
       "noProjects": "프로젝트가 없습니다.",
       "noMatch": "일치하는 프로젝트가 없습니다.",
-      "needsFixBadge": "수정필요 {n}건",
       "menu": {
         "overview": "개요",
         "testCases": "테스트 케이스",
         "testFlow": "테스트 플로우",
         "testRuns": "테스트 런"
-      }
+      },
+      "newNotifications": "새 알림 {n}건"
     },
     "notifications": {
       "title": "알림",

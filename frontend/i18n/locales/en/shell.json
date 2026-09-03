@@ -17,13 +17,13 @@
       "newProject": "New project",
       "noProjects": "No projects yet.",
       "noMatch": "No matching projects.",
-      "needsFixBadge": "{n} need fixing",
       "menu": {
         "overview": "Overview",
         "testCases": "Test cases",
         "testFlow": "Test flows",
         "testRuns": "Test runs"
-      }
+      },
+      "newNotifications": "{n} new notifications"
     },
     "notifications": {
       "title": "Notifications",

@@ -44,8 +44,9 @@ const groups = computed(() => [filtered.value.filter((p) => p.pinned), filtered.
 const routeProjectId = computed(() => (route.path.startsWith('/project/') ? Number(route.params.id) : null))
 const currentProjectId = computed(() => routeProjectId.value ?? sidebar.activeProjectId)
 
-function needsFix(p: Project) {
-  return sidebar.stats.get(p.id)?.needsFix ?? 0
+/** 프로젝트의 새 알림 수 — 프로젝트를 열면 지워진다 (stores/sidebar.ts) */
+function badge(p: Project) {
+  return sidebar.badge(p.id)
 }
 function dotClass(p: Project) {
   if (p.status === 'active') return 'bg-emerald-400'
@@ -194,9 +195,9 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
                 <span :class="['h-2 w-2 shrink-0 rounded-full', dotClass(p)]" />
                 <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
                 <span
-                  v-if="needsFix(p) > 0"
+                  v-if="badge(p) > 0"
                   class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-50 px-1.5 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
-                >{{ needsFix(p) }}</span>
+                >{{ badge(p) }}</span>
               </NuxtLink>
             </template>
             <p v-if="sidebar.loaded && sidebar.projects.length === 0" class="px-3 py-3 text-xs text-slate-400 dark:text-slate-500">{{ $t('shell.sidebar.noProjects') }}</p>
@@ -296,10 +297,10 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
             <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
             <ChevronDown v-if="p.id === currentProjectId" class="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
             <span
-              v-else-if="needsFix(p) > 0"
+              v-else-if="badge(p) > 0"
               class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-50 px-1.5 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
-              :title="$t('shell.sidebar.needsFixBadge', { n: needsFix(p) })"
-            >{{ needsFix(p) }}</span>
+              :title="$t('shell.sidebar.newNotifications', { n: badge(p) })"
+            >{{ badge(p) }}</span>
           </NuxtLink>
           <div v-if="p.id === currentProjectId" class="mb-1.5 ml-[23px] mt-0.5 flex flex-col gap-0.5 border-l border-slate-200 dark:border-slate-800">
             <NuxtLink

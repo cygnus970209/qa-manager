@@ -117,6 +117,15 @@ async function load() {
 watch(projectId, () => { if (import.meta.client) load() })
 if (import.meta.client) onMounted(load)
 
+// 프로젝트를 열면 사이드바의 새 알림 배지를 지운다. 보는 동안 온 알림도 나갈 때 확인한 것으로 본다.
+if (import.meta.client) {
+  watch(projectId, (id, prev) => {
+    if (prev != null) void sidebar.markSeen(prev)
+    void sidebar.markSeen(id)
+  }, { immediate: true })
+  onBeforeUnmount(() => { void sidebar.markSeen(projectId.value) })
+}
+
 // '내 작업만' 체크 시 내가 테스터/담당자로 지정된 QA 만 수치에 반영한다.
 const myOnly = ref(false)
 function isMine(q: QaItem) {

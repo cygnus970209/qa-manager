@@ -65,7 +65,7 @@ The full feature guide, screen by screen, lives in **[docs/FEATURES.md](docs/FEA
 - Image and PDF attachments (paste from clipboard) with a wheel-zoom/drag lightbox
 
 ### Layout
-- **App sidebar** — menu (dashboard/notifications/admin) + project tree (pinned first, needs-fix count badges, per-project overview/test cases/flows/runs sub-menu). Collapses to an icon strip with `⌘B`, **collapses automatically on QA detail**, becomes a drawer on mobile
+- **App sidebar** — menu (dashboard/notifications/admin) + project tree (pinned first, new-notification badges, per-project overview/test cases/flows/runs sub-menu). Collapses to an icon strip with `⌘B`, **collapses automatically on QA detail**, becomes a drawer on mobile
 - **Dashboard** — a single QA status summary card (total, completion rate, status ratio bar, critical) + the full QA list (with a project column)
 - **Discord-style settings** — user settings (account/notifications/MS Teams), app settings (appearance/language/desktop app) and admin (members/GitHub) on a full-screen page, closed with `ESC`
 
