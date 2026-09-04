@@ -1,5 +1,7 @@
 package com.qamanager.project;
 
+import jakarta.persistence.EntityListeners;
+import com.qamanager.search.SearchIndexListener;
 import com.qamanager.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +12,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "project")
+@EntityListeners(SearchIndexListener.class) // 검색 인덱스 갱신 (커밋 후)
 public class Project extends BaseEntity {
 
     @Id

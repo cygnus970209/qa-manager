@@ -1,5 +1,7 @@
 package com.qamanager.qa.comment;
 
+import jakarta.persistence.EntityListeners;
+import com.qamanager.search.SearchIndexListener;
 import com.qamanager.common.BaseEntity;
 import com.qamanager.member.TeamMember;
 import com.qamanager.qa.item.QaItem;
@@ -22,6 +24,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "qa_comment")
+@EntityListeners(SearchIndexListener.class) // 검색 인덱스 갱신 (커밋 후)
 public class QaComment extends BaseEntity {
 
     @Id

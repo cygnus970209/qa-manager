@@ -122,10 +122,25 @@ async function load() {
     error.value = e?.data?.message ?? t('qa.detail.loadError')
   } finally {
     loading.value = false
+    // 코멘트 섹션은 로딩이 끝나야 렌더링되므로 그 뒤에 앵커로 이동
+    scrollToHashComment()
   }
 }
 if (import.meta.client) onMounted(load)
 watch(qaId, () => { if (import.meta.client) load() })
+
+/** 검색 결과(코멘트)에서 들어온 경우 — #comment-<id> 로 스크롤하고 잠시 강조 */
+function scrollToHashComment() {
+  const hash = route.hash
+  if (!hash.startsWith('#comment-')) return
+  nextTick(() => {
+    const el = document.getElementById(hash.slice(1))
+    if (!el) return
+    el.scrollIntoView({ block: 'center' })
+    el.classList.add('ring-2', 'ring-emerald-300', 'dark:ring-emerald-500/40')
+    setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-300', 'dark:ring-emerald-500/40'), 2500)
+  })
+}
 
 /* ─── 사이드바 수동 새로고침 ───
  * 페이지 재사용(고정 key)으로 목록은 최초 1회만 로드되므로, 최신화는 이 버튼으로 한다. */

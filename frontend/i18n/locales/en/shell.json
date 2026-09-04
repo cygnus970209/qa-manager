@@ -4,7 +4,8 @@
       "dashboard": "Dashboard",
       "admin": "Admin",
       "notifications": "Notifications",
-      "settings": "Settings"
+      "settings": "Settings",
+      "search": "Search"
     },
     "sidebar": {
       "projects": "Projects",
@@ -76,7 +77,8 @@
         "language": "Language",
         "desktop": "Desktop app",
         "members": "Members",
-        "github": "GitHub"
+        "github": "GitHub",
+        "searchIndex": "Search index"
       },
       "account": {
         "title": "My account",
@@ -128,12 +130,45 @@
       "github": {
         "title": "GitHub",
         "subtitle": "Connect a GitHub App to export QA items as issues."
+      },
+      "searchIndex": {
+        "title": "Search index",
+        "subtitle": "Status of the index used by search. Rebuild it if results look stale.",
+        "docs": "Indexed documents",
+        "total": "{n} total",
+        "unavailable": "Could not load the status.",
+        "reindex": "Rebuild",
+        "reindexing": "Rebuilding…",
+        "done": "Index rebuilt ({n} documents).",
+        "failed": "Could not rebuild the index.",
+        "hint": "The index updates automatically whenever a QA item, comment, project, update or test case changes, and fills itself on startup if empty. Rebuilding takes a few seconds for a few thousand documents."
       }
     },
     "update": {
       "available": "A new version has been deployed.",
       "reload": "Reload",
       "later": "Later"
+    },
+    "search": {
+      "title": "Search",
+      "subtitle": "Find QA items, comments, projects, updates and test cases at once. Press ⌘K anywhere.",
+      "placeholder": "Search titles, content, #QA number…",
+      "hint": "Type at least two characters to search.",
+      "paletteHint": "Type at least two characters. ↑↓ to move · Enter to open",
+      "minLength": "Type at least two characters.",
+      "empty": "No matching results.",
+      "failed": "Search failed.",
+      "resultCount": "{n} results",
+      "allProjects": "All projects",
+      "showAll": "Show all results ({n})",
+      "types": {
+        "all": "All",
+        "qa": "QA",
+        "comment": "Comments",
+        "project": "Projects",
+        "update": "Updates",
+        "test_case": "Test cases"
+      }
     }
   }
 }

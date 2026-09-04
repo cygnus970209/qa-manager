@@ -201,6 +201,9 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
           class="absolute right-1 top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-medium text-white"
         >{{ notifs.unreadCount }}</span>
       </NuxtLink>
+      <NuxtLink to="/search" :class="[stripBase, route.path.startsWith('/search') ? stripActive : stripIdle]" :title="$t('shell.nav.search')">
+        <Search class="h-[18px] w-[18px]" />
+      </NuxtLink>
       <NuxtLink v-if="isAdmin" to="/admin" :class="[stripBase, route.path.startsWith('/admin') ? stripActive : stripIdle]" :title="$t('shell.nav.admin')">
         <Users class="h-[18px] w-[18px]" />
       </NuxtLink>
@@ -292,6 +295,11 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
           v-if="notifs.unreadCount > 0"
           class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-medium text-white"
         >{{ notifs.unreadCount }}</span>
+      </NuxtLink>
+      <NuxtLink to="/search" :class="[menuBase, route.path.startsWith('/search') ? menuActive : menuIdle]">
+        <Search :class="['h-4 w-4 shrink-0', route.path.startsWith('/search') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500']" />
+        <span class="flex-1 truncate">{{ $t('shell.nav.search') }}</span>
+        <kbd class="rounded border border-slate-200 px-1 py-px text-[10px] text-slate-400 dark:border-slate-700 dark:text-slate-500">⌘K</kbd>
       </NuxtLink>
       <NuxtLink v-if="isAdmin" to="/admin" :class="[menuBase, route.path.startsWith('/admin') ? menuActive : menuIdle]">
         <Users :class="['h-4 w-4 shrink-0', route.path.startsWith('/admin') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500']" />

@@ -1,5 +1,7 @@
 package com.qamanager.qa.item;
 
+import jakarta.persistence.EntityListeners;
+import com.qamanager.search.SearchIndexListener;
 import com.qamanager.common.BaseEntity;
 import com.qamanager.member.TeamMember;
 import com.qamanager.projectupdate.ProjectUpdate;
@@ -24,6 +26,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "qa_item")
+@EntityListeners(SearchIndexListener.class) // 검색 인덱스 갱신 (커밋 후)
 public class QaItem extends BaseEntity {
 
     @Id

@@ -53,6 +53,13 @@ const activeTab = computed<ProjectTab>(() => {
   const tab = route.query.tab
   return tab === 'tests' ? 'tests' : tab === 'runs' ? 'runs' : 'qa'
 })
+/** 검색 결과(업데이트)에서 들어온 경우 — 그 업데이트를 펼치고 스크롤 */
+const focusUpdateId = computed(() => (typeof route.query.update === 'string' ? Number(route.query.update) : null))
+watch([loading, focusUpdateId], ([isLoading, id]) => {
+  if (isLoading || id == null) return
+  nextTick(() => document.getElementById(`update-${id}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+})
+
 /** 테스트 케이스 화면 내부 뷰: 리스트 | 플로우(그래프) */
 const testView = computed<'list' | 'flow'>(() => (route.query.view === 'flow' ? 'flow' : 'list'))
 
@@ -429,11 +436,12 @@ async function confirmUpdateDelete() {
         <div v-else class="flex flex-col gap-3">
           <UpdateAccordion
             v-for="u in visibleUpdates"
+            :id="`update-${u.id}`"
             :key="u.id"
             :update="u"
             :items="itemsByUpdate.get(u.id) ?? []"
             :runs="runsByUpdate.get(u.id) ?? []"
-            :default-open="u === visibleUpdates[0]"
+            :default-open="focusUpdateId != null ? u.id === focusUpdateId : u === visibleUpdates[0]"
             @change-status="onUpdateStatus"
             @add-qa="onAddInlineQa"
             @new-run="onNewRun"

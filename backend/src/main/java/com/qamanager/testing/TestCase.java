@@ -1,5 +1,7 @@
 package com.qamanager.testing;
 
+import jakarta.persistence.EntityListeners;
+import com.qamanager.search.SearchIndexListener;
 import com.qamanager.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,6 +20,7 @@ import lombok.Getter;
 @Getter
 @Entity
 @Table(name = "test_case")
+@EntityListeners(SearchIndexListener.class) // 검색 인덱스 갱신 (커밋 후)
 public class TestCase extends BaseEntity {
 
     public enum Origin { MANUAL, FLOW }

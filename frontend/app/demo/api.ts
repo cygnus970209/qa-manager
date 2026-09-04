@@ -51,6 +51,53 @@ const lower = (v: string | undefined): string => (v ?? '').toLowerCase()
  * 챌린지는 인메모리 보관 — 새로고침하면 만료되어 처음부터 다시 로그인 (백엔드 만료와 동일 UX). */
 const OTP_DEMO_CODE = '123456'
 
+/** 데모 통합 검색 — 서버의 search_document 와 같은 종류·정렬(제목 일치 → 본문 일치)을 부분 일치로 흉내 낸다 */
+function demoSearch(db: DemoDb, q: string, types: string[], projectId: number | null, page: number, size: number) {
+  const query = q.trim().toLowerCase()
+  const words = query.split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 0)
+  type Doc = { type: string; id: number; title: string; body: string; projectId: number | null; updateId: number | null; qaItemId: number | null; status: string | null; updatedAt: string | null }
+  const docs: Doc[] = []
+  const projectOfUpdate = (updateId: number) => db.state.updates.find((u) => u.id === updateId)?.projectId ?? null
+  for (const p of db.state.projects) docs.push({ type: 'project', id: p.id, title: p.name, body: p.description ?? '', projectId: p.id, updateId: null, qaItemId: null, status: p.status, updatedAt: p.updatedAt })
+  for (const u of db.state.updates) docs.push({ type: 'update', id: u.id, title: `${u.version} ${u.title}`, body: u.description ?? '', projectId: u.projectId, updateId: u.id, qaItemId: null, status: u.status, updatedAt: u.updatedAt })
+  for (const x of db.state.qa) docs.push({ type: 'qa', id: x.id, title: x.title, body: (x.category ? `[${x.category}] ` : '') + (x.description ?? ''), projectId: projectOfUpdate(x.updateId), updateId: x.updateId, qaItemId: x.id, status: x.status, updatedAt: x.updatedAt })
+  for (const c of db.state.comments) {
+    const x = db.state.qa.find((y) => y.id === c.qaItemId)
+    if (!x) continue
+    docs.push({ type: 'comment', id: c.id, title: `#${x.id} ${x.title}`, body: c.content, projectId: projectOfUpdate(x.updateId), updateId: x.updateId, qaItemId: x.id, status: x.status, updatedAt: c.updatedAt })
+  }
+  for (const tc of db.state.testCases) docs.push({ type: 'test_case', id: tc.id, title: tc.title, body: [tc.precondition ?? '', ...tc.steps.map((st) => `${st.action} → ${st.expected}`)].join('\n'), projectId: tc.projectId, updateId: null, qaItemId: null, status: tc.priority, updatedAt: tc.updatedAt })
+  const matches = (d: Doc) => {
+    if (words.length === 0) return false
+    const text = `${d.title}\n${d.body}`.toLowerCase()
+    return words.every((w) => text.includes(w))
+  }
+  let hits = docs.filter((d) => matches(d) && (projectId == null || d.projectId === projectId))
+  const digits = query.startsWith('#') ? query.slice(1) : query
+  if (/^\d{1,9}$/.test(digits)) {
+    const direct = docs.find((d) => d.type === 'qa' && d.id === Number(digits) && (projectId == null || d.projectId === projectId))
+    if (direct) hits = [direct, ...hits.filter((d) => !(d.type === 'qa' && d.id === direct.id))]
+  }
+  const counts: Record<string, number> = { qa: 0, comment: 0, project: 0, update: 0, test_case: 0 }
+  for (const d of hits) counts[d.type] = (counts[d.type] ?? 0) + 1
+  const filtered = types.length > 0 ? hits.filter((d) => types.includes(d.type)) : hits
+  const titleHit = (d: Doc) => (d.title.toLowerCase().includes(query) ? 1 : 0)
+  filtered.sort((a, b) => titleHit(b) - titleHit(a) || String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')))
+  const snippet = (body: string) => {
+    const flat = body.replace(/\s+/g, ' ').trim()
+    const at = words.map((w) => flat.toLowerCase().indexOf(w)).find((i) => i >= 0) ?? -1
+    if (at < 0) return flat.length > 120 ? flat.slice(0, 120) + '…' : flat
+    const start = Math.max(0, at - 60)
+    return (start > 0 ? '…' : '') + flat.slice(start, at + 120) + (at + 120 < flat.length ? '…' : '')
+  }
+  const items = filtered.slice(page * size, page * size + size).map((d) => ({
+    type: d.type, id: d.id, title: d.title, snippet: snippet(d.body), projectId: d.projectId,
+    projectName: db.state.projects.find((p) => p.id === d.projectId)?.name ?? null,
+    updateId: d.updateId, qaItemId: d.qaItemId, status: d.status, updatedAt: d.updatedAt,
+  }))
+  return { query: q, total: filtered.length, counts, items, page, size }
+}
+
 /** 프로젝트 정렬: 핀 우선 → 사용자별 저장 순서 → 배열 순서(신규가 앞). 서버 ProjectService.list 와 같은 규칙 */
 function sortedProjects(db: DemoDb) {
   const uid = db.state.currentUserId
@@ -246,6 +293,36 @@ const ROUTES: Route[] = [
   },
 
   /* ── Projects ── */
+  /* ── Search ── */
+  {
+    method: 'GET',
+    pattern: /^\/api\/search$/,
+    handler: ({ query, db }) => {
+      requireUser(db)
+      const types = typeof query.types === 'string' && query.types ? String(query.types).split(',') : []
+      const projectId = query.projectId != null && query.projectId !== '' ? Number(query.projectId) : null
+      const size = Math.min(Math.max(Number(query.size) || 20, 1), 50)
+      return demoSearch(db, String(query.q ?? ''), types, projectId, Math.max(0, Number(query.page) || 0), size)
+    },
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/search\/stats$/,
+    handler: ({ db }) => {
+      requireUser(db)
+      const counts = { qa: db.state.qa.length, comment: db.state.comments.length, project: db.state.projects.length, update: db.state.updates.length, test_case: db.state.testCases.length }
+      return { counts, total: Object.values(counts).reduce((a, b) => a + b, 0) }
+    },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/search\/reindex$/,
+    handler: ({ db }) => {
+      requireUser(db)
+      const counts = { qa: db.state.qa.length, comment: db.state.comments.length, project: db.state.projects.length, update: db.state.updates.length, test_case: db.state.testCases.length }
+      return { counts, total: Object.values(counts).reduce((a, b) => a + b, 0) }
+    },
+  },
   {
     method: 'GET',
     pattern: /^\/api\/projects$/,

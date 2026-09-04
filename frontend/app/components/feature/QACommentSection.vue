@@ -489,7 +489,7 @@ function memberInitial(name: string) {
       </div>
 
       <div v-else class="space-y-5 p-4 md:p-5">
-        <div v-for="root in tree.top" :key="root.id">
+        <div v-for="root in tree.top" :id="`comment-${root.id}`" :key="root.id" class="scroll-mt-6 rounded-lg transition-shadow">
           <!-- 루트 댓글 -->
           <div class="flex gap-3">
             <div class="shrink-0">
@@ -631,7 +631,7 @@ function memberInitial(name: string) {
 
           <!-- 답글 목록 -->
           <div v-if="(tree.childrenMap.get(root.id) ?? []).length > 0" class="ml-11 mt-3 space-y-3 border-l-2 border-slate-100 pl-4 dark:border-slate-800">
-            <div v-for="child in tree.childrenMap.get(root.id) ?? []" :key="child.id" class="flex gap-3">
+            <div v-for="child in tree.childrenMap.get(root.id) ?? []" :id="`comment-${child.id}`" :key="child.id" class="flex scroll-mt-6 gap-3 rounded-lg transition-shadow">
               <div class="shrink-0">
                 <img v-if="child.author.avatarUrl" :src="child.author.avatarUrl" :alt="child.author.name" class="h-8 w-8 rounded-full bg-slate-100 object-cover dark:bg-slate-800" />
                 <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">{{ memberInitial(child.author.name) }}</div>

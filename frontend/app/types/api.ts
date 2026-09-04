@@ -536,3 +536,38 @@ export interface TestRunDetail {
   run: TestRun
   cases: TestRunCase[]
 }
+
+/* ─────────────── 통합 검색 ─────────────── */
+
+export type SearchType = 'qa' | 'comment' | 'project' | 'update' | 'test_case'
+
+export interface SearchItem {
+  type: SearchType
+  id: number
+  title: string
+  /** 본문 발췌 (질의어 주변) */
+  snippet: string
+  projectId: number | null
+  projectName: string | null
+  updateId: number | null
+  qaItemId: number | null
+  status: string | null
+  updatedAt: string | null
+}
+
+/** GET /api/search 응답 */
+export interface SearchResponse {
+  query: string
+  total: number
+  /** 종류별 건수 (종류 필터와 무관) */
+  counts: Partial<Record<SearchType, number>>
+  items: SearchItem[]
+  page: number
+  size: number
+}
+
+/** 검색 인덱스 현황 (관리자) */
+export interface SearchStats {
+  counts: Partial<Record<SearchType, number>>
+  total: number
+}

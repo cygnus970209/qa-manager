@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Bell, Menu, ShieldCheck } from '@lucide/vue'
 import AppSidebar from '~/components/feature/AppSidebar.vue'
+import SearchPalette from '~/components/feature/SearchPalette.vue'
 
 /**
  * 기본 레이아웃: 왼쪽 사이드바 + 본문.
@@ -13,6 +14,7 @@ const auth = useAuthStore()
 const notifs = useNotificationsStore()
 const sidebar = useSidebarStore()
 const route = useRoute()
+const paletteOpen = useState<boolean>('search-palette-open', () => false)
 
 async function start() {
   await Promise.all([
@@ -36,7 +38,15 @@ watch(() => auth.isAuthenticated, (v) => {
 onBeforeUnmount(() => notifs.disconnect())
 
 function onKeydown(e: KeyboardEvent) {
-  if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'b') return
+  if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey) return
+  const key = e.key.toLowerCase()
+  // ⌘K: 검색 팔레트 (입력 중에도 동작)
+  if (key === 'k') {
+    e.preventDefault()
+    paletteOpen.value = !paletteOpen.value
+    return
+  }
+  if (key !== 'b') return
   const t = e.target as HTMLElement | null
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
   e.preventDefault()
@@ -96,5 +106,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <slot />
       </main>
     </div>
+    <SearchPalette />
   </div>
 </template>

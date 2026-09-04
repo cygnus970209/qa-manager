@@ -28,6 +28,7 @@ async function load() {
     ])
     suites.value = s
     cases.value = c
+    openFromQuery()
   } catch (e) {
     console.error('TestCaseListView load failed', e)
     loadError.value = true
@@ -36,6 +37,17 @@ async function load() {
   }
 }
 onMounted(load)
+
+/** 검색 결과에서 ?case=<id> 로 들어온 경우 해당 케이스의 스위트를 고르고 편집 창을 연다 */
+const route = useRoute()
+function openFromQuery() {
+  const raw = route.query.case
+  if (typeof raw !== 'string') return
+  const target = cases.value.find((c) => c.id === Number(raw))
+  if (!target) return
+  selected.value = target.suiteId ?? 'none'
+  openEdit(target)
+}
 
 const sortedSuites = computed(() => [...suites.value].sort((a, b) => a.sortOrder - b.sortOrder))
 const unsortedCount = computed(() => cases.value.filter((c) => c.suiteId == null).length)

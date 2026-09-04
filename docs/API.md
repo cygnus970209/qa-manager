@@ -111,3 +111,11 @@ purpose: `qa_image` · `comment_image` · `avatar`. 이미지 5종 + PDF(아바�
 |---|---|---|
 | POST | `/api/teams/messages` | Teams Bot Framework 웹훅 (봇 JWT 서명 검증) |
 | GET | `/api/ping` | 헬스체크 |
+
+### 통합 검색
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/search?q=&types=&projectId=&page=&size=` | QA·코멘트·프로젝트·업데이트·테스트 케이스 검색. `types` 는 `qa,comment,project,update,test_case` 콤마 구분(없으면 전체), `size` 최대 50. 응답: `{ query, total, counts{종류별}, items[{ type, id, title, snippet, projectId, projectName, updateId, qaItemId, status, updatedAt }], page, size }`. `#123`/`123` 은 그 번호의 QA 를 맨 앞에 |
+| GET | `/api/search/stats` | 인덱스 현황 `{ counts, total }` (관리자) |
+| POST | `/api/search/reindex` | 인덱스 전체 재생성 → `{ counts, total }` (관리자) |

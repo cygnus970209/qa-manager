@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bell, GitBranch, Languages, LogOut, Monitor, Palette, UserRound, Users, X } from '@lucide/vue'
+import { Bell, DatabaseZap, GitBranch, Languages, LogOut, Monitor, Palette, UserRound, Users, X } from '@lucide/vue'
 
 /**
  * 설정 레이아웃 — 앱 사이드바 없이 전체 화면으로 열린다 — 설정 항목만 남기고 나머지 UI 는 닫는다.
@@ -41,6 +41,7 @@ const groups = computed<{ label: string; items: Item[] }[]>(() => {
       items: [
         { to: '/settings/members', icon: Users, label: 'shell.settings.items.members' },
         { to: '/settings/github', icon: GitBranch, label: 'shell.settings.items.github' },
+        { to: '/settings/search-index', icon: DatabaseZap, label: 'shell.settings.items.searchIndex' },
       ],
     })
   }
