@@ -37,7 +37,7 @@ public class SearchIndexBootstrap implements ApplicationRunner {
         if (!empty) return;
         Thread t = new Thread(() -> {
             try {
-                indexService.reindexAll();
+                indexService.reindexAll("startup");
             } catch (RuntimeException e) {
                 log.warn("검색 인덱스 초기 생성 실패 — 설정 > 검색 인덱스에서 다시 만들 수 있습니다: {}", e.toString());
             }
@@ -49,7 +49,7 @@ public class SearchIndexBootstrap implements ApplicationRunner {
     @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
     public void nightlyReindex() {
         try {
-            indexService.reindexAll();
+            indexService.reindexAll("schedule");
         } catch (RuntimeException e) {
             // 파랑/초록이 잠시 겹쳐 둘 다 돌면 한쪽이 유니크 키에 걸릴 수 있다 — 다른 쪽이 완료하므로 무시
             log.warn("검색 인덱스 야간 재생성 실패: {}", e.toString());

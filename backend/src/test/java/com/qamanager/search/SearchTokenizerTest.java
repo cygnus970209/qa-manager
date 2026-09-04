@@ -28,6 +28,17 @@ class SearchTokenizerTest {
     }
 
     @Test
+    void 색인은_띄어쓰기_경계의_글자_쌍도_넣어_붙여쓴_질의와_맞는다() {
+        String indexed = SearchTokenizer.indexText("카드 결제 화면");
+        assertThat(indexed.split(" ")).contains("드결0", "제화0");
+        // 붙여 쓴 질의 → 띄어 쓴 문서, 띄어 쓴 질의 → 붙여 쓴 문서 모두 토큰이 포함된다
+        assertThat(List.of(indexed.split(" "))).containsAll(List.of(SearchTokenizer.booleanQuery("카드결제").replace("+", "").split(" ")));
+        assertThat(List.of(SearchTokenizer.indexText("카드결제").split(" "))).containsAll(List.of(SearchTokenizer.booleanQuery("카드 결제").replace("+", "").split(" ")));
+        // 구두점으로 나뉜 곳은 이어 붙이지 않는다
+        assertThat(SearchTokenizer.indexText("결제(토스)").split(" ")).doesNotContain("제토0");
+    }
+
+    @Test
     void 단어_안의_부분_문자열도_같은_토큰을_만들어_매칭된다() {
         List<String> indexed = SearchTokenizer.tokens("카드결제 화면");
         List<String> query = SearchTokenizer.tokens("결제");

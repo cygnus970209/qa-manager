@@ -98,6 +98,21 @@ function demoSearch(db: DemoDb, q: string, types: string[], projectId: number | 
   return { query: q, total: filtered.length, counts, items, page, size }
 }
 
+/** 데모 인덱스 현황/검사 — 데모는 원본에서 바로 검색하므로 항상 일치 */
+let demoReindexAt: string | null = null
+function demoSearchCounts(db: DemoDb) {
+  return { qa: db.state.qa.length, comment: db.state.comments.length, project: db.state.projects.length, update: db.state.updates.length, test_case: db.state.testCases.length }
+}
+function demoSearchStatus(db: DemoDb) {
+  const counts = demoSearchCounts(db)
+  return { indexed: counts, source: counts, total: Object.values(counts).reduce((a, b) => a + b, 0), lastReindexAt: demoReindexAt, lastReindexMs: demoReindexAt ? 12 : null, lastTrigger: demoReindexAt ? 'manual' : null, running: false }
+}
+function demoSearchCheck(db: DemoDb) {
+  const counts = demoSearchCounts(db)
+  const byType = Object.fromEntries(Object.entries(counts).map(([k, n]) => [k, { source: n, indexed: n, missing: 0, orphan: 0, stale: 0, sampleMissing: [], sampleOrphan: [], sampleStale: [] }]))
+  return { checkedAt: new Date().toISOString().slice(0, 19), ok: true, issues: 0, byType }
+}
+
 /** 프로젝트 정렬: 핀 우선 → 사용자별 저장 순서 → 배열 순서(신규가 앞). 서버 ProjectService.list 와 같은 규칙 */
 function sortedProjects(db: DemoDb) {
   const uid = db.state.currentUserId
@@ -292,6 +307,39 @@ const ROUTES: Route[] = [
     },
   },
 
+  /* ── Projects ── */
+  /* ── Search ── */
+  {
+    method: 'GET',
+    pattern: /^\/api\/search$/,
+    handler: ({ query, db }) => {
+      requireUser(db)
+      const types = typeof query.types === 'string' && query.types ? String(query.types).split(',') : []
+      const projectId = query.projectId != null && query.projectId !== '' ? Number(query.projectId) : null
+      const size = Math.min(Math.max(Number(query.size) || 20, 1), 50)
+      return demoSearch(db, String(query.q ?? ''), types, projectId, Math.max(0, Number(query.page) || 0), size)
+    },
+  },
+  {
+    method: 'GET',
+    pattern: /^\/api\/search\/status$/,
+    handler: ({ db }) => { requireUser(db); return demoSearchStatus(db) },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/search\/check$/,
+    handler: ({ db }) => { requireUser(db); return demoSearchCheck(db) },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/search\/repair$/,
+    handler: ({ db }) => { requireUser(db); return demoSearchCheck(db) },
+  },
+  {
+    method: 'POST',
+    pattern: /^\/api\/search\/reindex$/,
+    handler: ({ db }) => { requireUser(db); demoReindexAt = new Date().toISOString().slice(0, 19); return demoSearchStatus(db) },
+  },
   /* ── Projects ── */
   /* ── Search ── */
   {

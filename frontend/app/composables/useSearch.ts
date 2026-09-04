@@ -1,4 +1,4 @@
-import type { SearchResponse, SearchStats, SearchType } from '~/types/api'
+import type { SearchCheck, SearchResponse, SearchStatus, SearchType } from '~/types/api'
 
 export function useSearch() {
   const api = useApi()
@@ -15,9 +15,13 @@ export function useSearch() {
         },
       }),
     /** 인덱스 현황 (관리자) */
-    stats: () => api<SearchStats>('/api/search/stats'),
+    status: () => api<SearchStatus>('/api/search/status'),
+    /** 원본과 대조해 누락·고아·내용 변경을 찾는다 (관리자, 읽기 전용) */
+    check: () => api<SearchCheck>('/api/search/check', { method: 'POST' }),
+    /** 검사에서 나온 불일치만 고친다 → 다시 검사한 결과 (관리자) */
+    repair: () => api<SearchCheck>('/api/search/repair', { method: 'POST' }),
     /** 인덱스 전체 재생성 (관리자) */
-    reindex: () => api<SearchStats>('/api/search/reindex', { method: 'POST' }),
+    reindex: () => api<SearchStatus>('/api/search/reindex', { method: 'POST' }),
   }
 }
 

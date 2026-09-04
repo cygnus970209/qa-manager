@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/search")
@@ -38,19 +37,34 @@ public class SearchController {
         return searchService.search(q, types, projectId, Math.max(page, 0), safeSize);
     }
 
-    /** 인덱스 현황 (관리자) */
-    @GetMapping("/stats")
-    public SearchDto.Stats stats() {
+    /* ─────────────── 관리자: 인덱스 현황 · 검사 · 복구 · 재생성 ─────────────── */
+
+    /** 종류별 원본/색인 건수, 마지막 재생성 정보 */
+    @GetMapping("/status")
+    public SearchDto.Status status() {
         CurrentUser.requireAdmin();
-        Map<String, Long> counts = indexService.counts();
-        return new SearchDto.Stats(counts, counts.values().stream().mapToLong(Long::longValue).sum());
+        return indexService.status();
     }
 
-    /** 인덱스 전체 재생성 (관리자) — 몇천 건 기준 수 초 */
-    @PostMapping("/reindex")
-    public SearchDto.Stats reindex() {
+    /** 원본과 문서를 대조해 누락·고아·내용 변경을 찾는다 (읽기 전용) */
+    @PostMapping("/check")
+    public SearchDto.Check check() {
         CurrentUser.requireAdmin();
-        Map<String, Long> counts = indexService.reindexAll();
-        return new SearchDto.Stats(counts, counts.values().stream().mapToLong(Long::longValue).sum());
+        return indexService.check();
+    }
+
+    /** 검사에서 나온 불일치만 고친다 → 고친 뒤 다시 검사한 결과 */
+    @PostMapping("/repair")
+    public SearchDto.Check repair() {
+        CurrentUser.requireAdmin();
+        return indexService.repair();
+    }
+
+    /** 인덱스 전체 재생성 — 몇천 건 기준 수 초 */
+    @PostMapping("/reindex")
+    public SearchDto.Status reindex() {
+        CurrentUser.requireAdmin();
+        indexService.reindexAll("manual");
+        return indexService.status();
     }
 }

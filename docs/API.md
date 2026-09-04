@@ -117,5 +117,7 @@ purpose: `qa_image` · `comment_image` · `avatar`. 이미지 5종 + PDF(아바�
 | 메서드 | 경로 | 설명 |
 |---|---|---|
 | GET | `/api/search?q=&types=&projectId=&page=&size=` | QA·코멘트·프로젝트·업데이트·테스트 케이스 검색. `types` 는 `qa,comment,project,update,test_case` 콤마 구분(없으면 전체), `size` 최대 50. 응답: `{ query, total, counts{종류별}, items[{ type, id, title, snippet, projectId, projectName, updateId, qaItemId, status, updatedAt }], page, size }`. `#123`/`123` 은 그 번호의 QA 를 맨 앞에 |
-| GET | `/api/search/stats` | 인덱스 현황 `{ counts, total }` (관리자) |
-| POST | `/api/search/reindex` | 인덱스 전체 재생성 → `{ counts, total }` (관리자) |
+| GET | `/api/search/status` | 인덱스 현황 `{ indexed{종류별}, source{종류별}, total, lastReindexAt, lastReindexMs, lastTrigger, running }` (관리자) |
+| POST | `/api/search/check` | 원본과 대조 → `{ checkedAt, ok, issues, byType{ source, indexed, missing, orphan, stale, sample* } }` (관리자, 읽기 전용) |
+| POST | `/api/search/repair` | 검사 불일치(누락·내용 변경은 다시 쓰고 고아는 삭제)만 고친 뒤 다시 검사한 결과 (관리자) |
+| POST | `/api/search/reindex` | 인덱스 전체 재생성 → 현황 (관리자). 진행 중이면 409 |

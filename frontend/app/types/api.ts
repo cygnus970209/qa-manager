@@ -566,8 +566,36 @@ export interface SearchResponse {
   size: number
 }
 
-/** 검색 인덱스 현황 (관리자) */
-export interface SearchStats {
-  counts: Partial<Record<SearchType, number>>
+/** 검색 인덱스 현황 (관리자) — 원본/색인 건수, 마지막 재생성 */
+export interface SearchStatus {
+  indexed: Record<SearchType, number>
+  source: Record<SearchType, number>
   total: number
+  lastReindexAt: string | null
+  lastReindexMs: number | null
+  /** startup | schedule | manual | repair */
+  lastTrigger: string | null
+  running: boolean
+}
+
+/** 색인 상태 검사 결과 (관리자) */
+export interface SearchCheck {
+  checkedAt: string
+  ok: boolean
+  issues: number
+  byType: Record<SearchType, SearchTypeReport>
+}
+
+export interface SearchTypeReport {
+  source: number
+  indexed: number
+  /** 원본에는 있는데 문서가 없음 */
+  missing: number
+  /** 문서는 있는데 원본이 없음 */
+  orphan: number
+  /** 내용이 바뀌었는데 문서가 갱신되지 않음 */
+  stale: number
+  sampleMissing: number[]
+  sampleOrphan: number[]
+  sampleStale: number[]
 }

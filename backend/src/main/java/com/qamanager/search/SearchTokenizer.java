@@ -17,6 +17,9 @@ import java.util.Set;
  *  - InnoDB 기본 최소 토큰 길이(innodb_ft_min_token_size=3) 미만은 색인되지 않는다 → DB 옵션을 바꾸지 않아도 되게
  *  - "on", "to" 같은 영문 불용어(기본 stopword 목록)와 겹치지 않게
  * 한 글자 단어는 글자 + "00" 로 만든다.
+ *
+ * 띄어쓰기: 질의 "결제 오류" 는 두 단어의 토큰이 모두 있어야 한다(AND). 색인은 띄어쓰기 경계의 글자 쌍
+ * ("카드 결제" 의 "드결")도 토큰으로 넣어, 붙여 쓴 질의("카드결제")로 띄어 쓴 문서를 찾고 그 반대도 되게 한다.
  */
 public final class SearchTokenizer {
 
@@ -47,8 +50,24 @@ public final class SearchTokenizer {
         return out;
     }
 
+    /** 색인용 토큰 문자열 = 단어 토큰 + 공백(띄어쓰기)으로만 나뉜 인접 단어 사이의 글자 쌍 */
     public static String indexText(String text) {
-        return String.join(" ", tokens(text));
+        List<String> out = new ArrayList<>(tokens(text));
+        if (text != null) {
+            String lower = text.toLowerCase(Locale.ROOT);
+            String[] chunks = lower.trim().split("\\s+");
+            for (int i = 0; i + 1 < chunks.length; i++) {
+                int[] a = chunks[i].codePoints().toArray();
+                int[] b = chunks[i + 1].codePoints().toArray();
+                if (a.length == 0 || b.length == 0) continue;
+                int last = a[a.length - 1];
+                int first = b[0];
+                if (Character.isLetterOrDigit(last) && Character.isLetterOrDigit(first)) {
+                    out.add(new String(new int[]{last, first}, 0, 2) + "0");
+                }
+            }
+        }
+        return String.join(" ", out);
     }
 
     /**
