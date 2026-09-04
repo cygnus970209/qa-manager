@@ -11,6 +11,8 @@
       "projects": "Projects",
       "collapse": "Collapse sidebar (⌘B)",
       "expand": "Expand sidebar (⌘B)",
+      "collapseMenu": "Collapse menu",
+      "expandMenu": "Expand menu",
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
       "searchProjects": "Search projects",

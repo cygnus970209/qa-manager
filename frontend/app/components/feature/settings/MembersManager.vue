@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Edit3, KeyRound, Send, ShieldCheck, Trash2, UserPlus } from '@lucide/vue'
 import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { useSelectOptions } from '~/composables/useSelectOptions'
 import MemberModal from '~/components/feature/MemberModal.vue'
 import TeamsTestResultModal from '~/components/feature/TeamsTestResultModal.vue'
 import type { AccountRole, Member, QaItem, TeamsTestResult } from '~/types/api'
@@ -10,6 +12,7 @@ const membersApi = useMembers()
 const qaApi = useQa()
 const auth = useAuthStore()
 const { t } = useI18n()
+const { accountRole: accountRoleOptions } = useSelectOptions()
 const { confirmDialog, alertDialog } = useAppDialog()
 
 const members = ref<Member[]>([])
@@ -106,21 +109,16 @@ async function resetPassword(m: Member) {
   }
 }
 /** 계정 권한(ADMIN/MEMBER) 변경. 실패/취소 시 select 를 원래 값으로 되돌린다. */
-async function onAccountRoleChange(m: Member, e: Event) {
-  const select = e.target as HTMLSelectElement
-  const next = select.value as AccountRole
+/** 셀렉트는 m.accountRole 에 묶여 있어(controlled) 취소/실패 시 따로 되돌릴 것이 없다 */
+async function onAccountRoleChange(m: Member, next: AccountRole) {
   const prev = m.accountRole ?? 'MEMBER'
   if (next === prev) return
   const roleLabel = t(`common.accountRole.${next.toLowerCase()}`)
-  if (!(await confirmDialog({ message: t('admin.members.accountRole.confirm', { name: m.name, role: roleLabel }) }))) {
-    select.value = prev
-    return
-  }
+  if (!(await confirmDialog({ message: t('admin.members.accountRole.confirm', { name: m.name, role: roleLabel }) }))) return
   try {
     const updated = await membersApi.updateAccountRole(m.id, next)
     members.value = members.value.map((x) => (x.id === m.id ? updated : x))
   } catch (err: any) {
-    select.value = prev
     await alertDialog({ message: err?.data?.message ?? t('admin.members.accountRole.failed'), danger: true })
   }
 }
@@ -194,15 +192,14 @@ const actionBtn = 'flex h-8 w-8 items-center justify-center rounded-lg text-slat
                   <ShieldCheck v-if="(m.accountRole ?? 'MEMBER') === 'ADMIN'" class="h-3 w-3" />
                   {{ $t(`common.accountRole.${(m.accountRole ?? 'MEMBER').toLowerCase()}`) }}
                 </span>
-                <select
+                <AppSelect
                   v-else
-                  :value="m.accountRole ?? 'MEMBER'"
-                  class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-                  @change="onAccountRoleChange(m, $event)"
-                >
-                  <option value="ADMIN">{{ $t('common.accountRole.admin') }}</option>
-                  <option value="MEMBER">{{ $t('common.accountRole.member') }}</option>
-                </select>
+                  class="inline-block"
+                  size="xs"
+                  :model-value="m.accountRole ?? 'MEMBER'"
+                  :options="accountRoleOptions"
+                  @update:model-value="(v) => onAccountRoleChange(m, v)"
+                />
               </td>
               <td class="px-4 py-3">
                 <span class="whitespace-nowrap rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">

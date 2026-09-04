@@ -3,6 +3,8 @@ import { ChevronDown, Pencil, Plus, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ExpandableText from '~/components/base/ExpandableText.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { upperOptions, useSelectOptions } from '~/composables/useSelectOptions'
 import { emptyQaFilter, saveQaFilter } from '~/utils/qaFilter'
 import TestRunSummary from '~/components/feature/testing/TestRunSummary.vue'
 import type { ProjectUpdate, QaItem, QaStatus, QaStatusUpper, TestRun, UpdateStatus } from '~/types/api'
@@ -47,13 +49,18 @@ const upperStatus = computed<'IN_PROGRESS' | 'TESTING' | 'RELEASED'>(() => {
   }
 })
 
-function onChangeStatus(e: Event) {
-  const v = (e.target as HTMLSelectElement).value as 'IN_PROGRESS' | 'TESTING' | 'RELEASED'
+const { t } = useI18n()
+const { updateStatus, qaStatus } = useSelectOptions()
+/** "상태: 진행중" 꼴 라벨, 값은 API enum */
+const statusOptions = computed(() => upperOptions(updateStatus.value)
+  .map((o) => ({ value: o.value, label: t('project.accordion.statusOption', { status: o.label }) })))
+const qaStatusOptions = computed(() => upperOptions(qaStatus.value))
+
+function onChangeStatus(v: 'IN_PROGRESS' | 'TESTING' | 'RELEASED') {
   emit('changeStatus', props.update.id, v)
 }
 
-function onChangeQaStatus(qaId: number, e: Event) {
-  const v = (e.target as HTMLSelectElement).value as QaStatusUpper
+function onChangeQaStatus(qaId: number, v: QaStatusUpper) {
   emit('changeQaStatus', qaId, v)
 }
 
@@ -99,16 +106,13 @@ function rememberFilter() {
     <div v-if="open" class="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
       <ExpandableText v-if="update.description" :text="update.description" :lines="3" class="mb-3" />
       <div class="mb-3 flex items-center gap-2">
-        <select
-          class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-          :value="upperStatus"
-          @change="onChangeStatus"
+        <AppSelect
+          size="xs"
+          :model-value="upperStatus"
+          :options="statusOptions"
+          @update:model-value="onChangeStatus"
           @click.stop
-        >
-          <option value="IN_PROGRESS">{{ $t('project.accordion.statusOption', { status: $t('common.updateStatus.in_progress') }) }}</option>
-          <option value="TESTING">{{ $t('project.accordion.statusOption', { status: $t('common.updateStatus.testing') }) }}</option>
-          <option value="RELEASED">{{ $t('project.accordion.statusOption', { status: $t('common.updateStatus.released') }) }}</option>
-        </select>
+        />
         <button
           type="button"
           class="ml-auto inline-flex items-center gap-1 rounded-md bg-blue-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-600"
@@ -152,19 +156,13 @@ function rememberFilter() {
               <p v-if="q.description" class="mt-0.5 line-clamp-1 text-xs text-slate-400 dark:text-slate-500">{{ q.description }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-2">
-              <select
-                :value="q.status.toUpperCase()"
-                class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
+              <AppSelect
+                size="xs"
+                :model-value="(q.status.toUpperCase() as QaStatusUpper)"
+                :options="qaStatusOptions"
+                @update:model-value="(v) => onChangeQaStatus(q.id, v)"
                 @click.stop
-                @change="onChangeQaStatus(q.id, $event)"
-              >
-                <option value="NEEDS_FIX">{{ $t('common.qaStatus.needs_fix') }}</option>
-                <option value="IN_PROGRESS">{{ $t('common.qaStatus.in_progress') }}</option>
-                <option value="FIX_DONE">{{ $t('common.qaStatus.fix_done') }}</option>
-                <option value="CONFIRMED">{{ $t('common.qaStatus.confirmed') }}</option>
-                <option value="ON_HOLD">{{ $t('common.qaStatus.on_hold') }}</option>
-                <option value="NEEDS_RECHECK">{{ $t('common.qaStatus.needs_recheck') }}</option>
-              </select>
+              />
               <PriorityBadge :priority="q.priority" />
             </div>
           </div>

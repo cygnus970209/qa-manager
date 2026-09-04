@@ -7,6 +7,8 @@ import {
   Loader2,
 } from '@lucide/vue'
 import StatsCard from '~/components/feature/StatsCard.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { useSelectOptions } from '~/composables/useSelectOptions'
 import type { Project, ProjectStatus, ProjectUpdate, QaItem, QaPriority, QaStatus, QaStatusUpper } from '~/types/api'
 
 const router = useRouter()
@@ -15,6 +17,7 @@ const qaApi = useQa()
 const updatesApi = useUpdates()
 const auth = useAuthStore()
 const { t } = useI18n()
+const { projectStatus: projectStatusOptions, qaStatus: qaStatusOptions } = useSelectOptions()
 const { confirmDialog, alertDialog } = useAppDialog()
 
 // 관리자 전용 페이지 — 일반 멤버는 대시보드로 돌려보낸다 (API 는 백엔드 403 으로 별도 보호됨)
@@ -233,15 +236,15 @@ async function changeQaStatus(q: QaItem, next: QaStatus) {
             <tr v-for="p in projects" :key="p.id" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60">
               <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ p.name }}</td>
               <td class="px-4 py-3">
-                <select
-                  :value="p.status"
-                  :class="['cursor-pointer rounded-full border-0 px-2 py-1 text-xs font-medium outline-none', projectStatusConfig[p.status].bg, projectStatusConfig[p.status].color]"
-                  @change="changeProjectStatus(p, ($event.target as HTMLSelectElement).value as ProjectStatus)"
-                >
-                  <option value="active">{{ $t(projectStatusConfig.active.label) }}</option>
-                  <option value="paused">{{ $t(projectStatusConfig.paused.label) }}</option>
-                  <option value="completed">{{ $t(projectStatusConfig.completed.label) }}</option>
-                </select>
+                <AppSelect
+                  class="inline-block"
+                  variant="plain"
+                  size="xs"
+                  :trigger-class="`cursor-pointer rounded-full px-2 py-1 text-xs font-medium ${projectStatusConfig[p.status].bg} ${projectStatusConfig[p.status].color}`"
+                  :model-value="p.status"
+                  :options="projectStatusOptions"
+                  @update:model-value="(v) => changeProjectStatus(p, v)"
+                />
               </td>
               <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ projectQaCount(p.id) }}</td>
               <td class="px-4 py-3 text-slate-500 dark:text-slate-400">{{ p.createdAt ? p.createdAt.slice(0, 10) : '-' }}</td>
@@ -281,18 +284,15 @@ async function changeQaStatus(q: QaItem, next: QaStatus) {
                 <span :class="['text-xs font-semibold', priorityConfig[q.priority].color]">{{ $t(priorityConfig[q.priority].label) }}</span>
               </td>
               <td class="px-4 py-3">
-                <select
-                  :value="q.status"
-                  :class="['cursor-pointer rounded-full border-0 px-2 py-1 text-xs font-medium outline-none', qaStatusConfig[q.status].bg, qaStatusConfig[q.status].color]"
-                  @change="changeQaStatus(q, ($event.target as HTMLSelectElement).value as QaStatus)"
-                >
-                  <option value="needs_fix">{{ $t(qaStatusConfig.needs_fix.label) }}</option>
-                  <option value="in_progress">{{ $t(qaStatusConfig.in_progress.label) }}</option>
-                  <option value="fix_done">{{ $t(qaStatusConfig.fix_done.label) }}</option>
-                  <option value="confirmed">{{ $t(qaStatusConfig.confirmed.label) }}</option>
-                  <option value="on_hold">{{ $t(qaStatusConfig.on_hold.label) }}</option>
-                  <option value="needs_recheck">{{ $t(qaStatusConfig.needs_recheck.label) }}</option>
-                </select>
+                <AppSelect
+                  class="inline-block"
+                  variant="plain"
+                  size="xs"
+                  :trigger-class="`cursor-pointer rounded-full px-2 py-1 text-xs font-medium ${qaStatusConfig[q.status].bg} ${qaStatusConfig[q.status].color}`"
+                  :model-value="q.status"
+                  :options="qaStatusOptions"
+                  @update:model-value="(v) => changeQaStatus(q, v)"
+                />
               </td>
               <td class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
                 <div class="flex flex-col gap-0.5">

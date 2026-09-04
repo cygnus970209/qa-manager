@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import AppDialog from '~/components/base/AppDialog.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { upperOptions, useSelectOptions } from '~/composables/useSelectOptions'
 import type { ProjectUpdate, UpdateCreateRequest } from '~/types/api'
 
 const props = defineProps<{
@@ -16,6 +18,8 @@ const emit = defineEmits<{
 
 const updates = useUpdates()
 const { t } = useI18n()
+const { updateStatus } = useSelectOptions()
+const statusOptions = computed(() => upperOptions(updateStatus.value))
 
 const mode = computed<'create' | 'edit'>(() => props.mode ?? 'create')
 
@@ -91,14 +95,7 @@ async function onSubmit() {
         </label>
         <label class="block">
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('project.updateModal.status') }}</span>
-          <select
-            v-model="form.status"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
-          >
-            <option value="IN_PROGRESS">{{ $t('common.updateStatus.in_progress') }}</option>
-            <option value="TESTING">{{ $t('common.updateStatus.testing') }}</option>
-            <option value="RELEASED">{{ $t('common.updateStatus.released') }}</option>
-          </select>
+          <AppSelect v-model="form.status" class="mt-1" size="md" :options="statusOptions" />
         </label>
       </div>
       <label class="block">

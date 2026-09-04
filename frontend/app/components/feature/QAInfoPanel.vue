@@ -5,7 +5,8 @@ import PriorityBadge from '~/components/base/PriorityBadge.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
 import QaRefText from '~/components/base/QaRefText.vue'
 import QaTagTextarea from '~/components/base/QaTagTextarea.vue'
-import SearchableSelect from '~/components/base/SearchableSelect.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { useSelectOptions } from '~/composables/useSelectOptions'
 import { attachmentFileName, isPdfUrl, openPdfInNewTab } from '~/utils/attachments'
 import type { GithubCommit, Member, ProjectUpdate, QaItem, QaPatchRequest, QaStatusUpper } from '~/types/api'
 
@@ -27,6 +28,7 @@ const qaApi = useQa()
 const upload = useUpload()
 const github = useGithub()
 const { t } = useI18n()
+const { qaStatus: qaStatusOptions, priority: priorityOptions } = useSelectOptions()
 const { confirmDialog } = useAppDialog()
 
 const editing = ref(false)
@@ -326,30 +328,26 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       <!-- 업데이트(버전) 이동: 같은 프로젝트의 다른 버전으로 즉시 이동 -->
       <div v-if="(updates?.length ?? 0) > 0" class="inline-flex items-center gap-1">
         <span class="text-slate-400 dark:text-slate-500">{{ $t('qa.fields.update') }}</span>
-        <select
-          :value="item.updateId"
+        <AppSelect
+          class="max-w-[180px]"
+          size="xs"
+          :model-value="item.updateId"
           :disabled="saving"
-          class="max-w-[180px] truncate rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-          @change="onMoveUpdate(Number(($event.target as HTMLSelectElement).value))"
-        >
-          <option v-for="u in updates" :key="u.id" :value="u.id">{{ u.version }} · {{ u.title }}</option>
-        </select>
+          :options="updates ?? []"
+          :key-fn="(u: ProjectUpdate) => u.id"
+          :label-fn="(u: ProjectUpdate) => `${u.version} · ${u.title}`"
+          @update:model-value="onMoveUpdate"
+        />
       </div>
       <!-- 비편집 모드에서도 상태 즉시 변경 가능 -->
-      <select
+      <AppSelect
         v-if="!editing"
-        :value="item.status"
+        size="xs"
+        :model-value="item.status"
         :disabled="saving"
-        class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-        @change="onQuickStatusChange(($event.target as HTMLSelectElement).value as any)"
-      >
-        <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
-        <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
-        <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
-        <option value="confirmed">{{ $t('common.qaStatus.confirmed') }}</option>
-        <option value="on_hold">{{ $t('common.qaStatus.on_hold') }}</option>
-        <option value="needs_recheck">{{ $t('common.qaStatus.needs_recheck') }}</option>
-      </select>
+        :options="qaStatusOptions"
+        @update:model-value="onQuickStatusChange"
+      />
       <PriorityBadge :priority="item.priority" />
       <!-- GitHub 이슈 배지 (open=초록, closed=보라) -->
       <a
@@ -372,50 +370,56 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       <template v-if="!editing">
         <div class="inline-flex items-center gap-1">
           <span class="text-slate-400 dark:text-slate-500">{{ $t('common.roles.tester') }}</span>
-          <SearchableSelect
+          <AppSelect
             class="w-32"
+            size="xs"
+            searchable
+            clearable
             :model-value="item.tester?.id ?? null"
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('common.actions.search')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
+            :search-placeholder="$t('common.actions.search')"
+            :placeholder="$t('qa.common.unassigned')"
             :disabled="saving"
-            @update:model-value="(v) => onQuickMemberChange('tester', v as number | null)"
+            @update:model-value="(v) => onQuickMemberChange('tester', v)"
           />
         </div>
         <div class="inline-flex items-center gap-1">
           <span class="text-slate-400 dark:text-slate-500">{{ $t('common.roles.assignee1') }}</span>
-          <SearchableSelect
+          <AppSelect
             class="w-32"
+            size="xs"
+            searchable
+            clearable
             :model-value="item.assignee1?.id ?? null"
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('common.actions.search')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
+            :search-placeholder="$t('common.actions.search')"
+            :placeholder="$t('qa.common.unassigned')"
             :disabled="saving"
-            @update:model-value="(v) => onQuickMemberChange('assignee1', v as number | null)"
+            @update:model-value="(v) => onQuickMemberChange('assignee1', v)"
           />
         </div>
         <div class="inline-flex items-center gap-1">
           <span class="text-slate-400 dark:text-slate-500">{{ $t('common.roles.assignee2') }}</span>
-          <SearchableSelect
+          <AppSelect
             class="w-32"
+            size="xs"
+            searchable
+            clearable
             :model-value="item.assignee2?.id ?? null"
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('common.actions.search')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
+            :search-placeholder="$t('common.actions.search')"
+            :placeholder="$t('qa.common.unassigned')"
             :disabled="saving"
-            @update:model-value="(v) => onQuickMemberChange('assignee2', v as number | null)"
+            @update:model-value="(v) => onQuickMemberChange('assignee2', v)"
           />
         </div>
       </template>
@@ -456,23 +460,11 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
         <label class="block">
           <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('qa.fields.status') }}</span>
-          <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-            <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
-            <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
-            <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
-            <option value="confirmed">{{ $t('common.qaStatus.confirmed') }}</option>
-            <option value="on_hold">{{ $t('common.qaStatus.on_hold') }}</option>
-            <option value="needs_recheck">{{ $t('common.qaStatus.needs_recheck') }}</option>
-          </select>
+          <AppSelect v-model="form.status" class="mt-1" size="sm" :options="qaStatusOptions" />
         </label>
         <label class="block">
           <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('qa.fields.priority') }}</span>
-          <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-            <option value="low">{{ $t('common.priority.low') }}</option>
-            <option value="medium">{{ $t('common.priority.medium') }}</option>
-            <option value="high">{{ $t('common.priority.high') }}</option>
-            <option value="critical">{{ $t('common.priority.critical') }}</option>
-          </select>
+          <AppSelect v-model="form.priority" class="mt-1" size="sm" :options="priorityOptions" />
         </label>
         <label class="block">
           <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('qa.fields.category') }}</span>
@@ -482,47 +474,50 @@ async function onQuickMemberChange(slot: 'tester' | 'assignee1' | 'assignee2', i
       <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
         <div>
           <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('qa.fields.testerAuthor') }}</span>
-          <SearchableSelect
+          <AppSelect
+            v-model="form.testerId"
             class="mt-1"
-            :model-value="form.testerId"
+            size="sm"
+            searchable
+            clearable
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('qa.common.memberSearchPlaceholder')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
-            @update:model-value="(v) => form.testerId = v as number | null"
+            :search-placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :placeholder="$t('qa.common.unassigned')"
           />
         </div>
         <div>
           <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('common.roles.assignee1') }}</span>
-          <SearchableSelect
+          <AppSelect
+            v-model="form.assignee1Id"
             class="mt-1"
-            :model-value="form.assignee1Id"
+            size="sm"
+            searchable
+            clearable
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('qa.common.memberSearchPlaceholder')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
-            @update:model-value="(v) => form.assignee1Id = v as number | null"
+            :search-placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :placeholder="$t('qa.common.unassigned')"
           />
         </div>
         <div>
           <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('common.roles.assignee2') }}</span>
-          <SearchableSelect
+          <AppSelect
+            v-model="form.assignee2Id"
             class="mt-1"
-            :model-value="form.assignee2Id"
+            size="sm"
+            searchable
+            clearable
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('qa.common.memberSearchPlaceholder')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
-            @update:model-value="(v) => form.assignee2Id = v as number | null"
+            :search-placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :placeholder="$t('qa.common.unassigned')"
           />
         </div>
       </div>

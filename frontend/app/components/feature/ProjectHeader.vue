@@ -2,7 +2,9 @@
 import { Pencil, Pin, PinOff, Trash2 } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import ExpandableText from '~/components/base/ExpandableText.vue'
-import type { Project, ProjectStatus } from '~/types/api'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { upperOptions, useSelectOptions } from '~/composables/useSelectOptions'
+import type { Project } from '~/types/api'
 
 const props = defineProps<{
   project: Project
@@ -17,19 +19,17 @@ const emit = defineEmits<{
   togglePin: []
 }>()
 
-
-const statusOptions: { code: ProjectStatus; uppercase: 'ACTIVE' | 'PAUSED' | 'COMPLETED' }[] = [
-  { code: 'active',    uppercase: 'ACTIVE' },
-  { code: 'paused',    uppercase: 'PAUSED' },
-  { code: 'completed', uppercase: 'COMPLETED' },
-]
+const { t } = useI18n()
+const { projectStatus } = useSelectOptions()
+/** "상태: 진행중" 꼴 라벨, 값은 API enum */
+const statusOptions = computed(() => upperOptions(projectStatus.value)
+  .map((o) => ({ value: o.value, label: t('project.header.statusOption', { status: o.label }) })))
 
 const progress = computed(() => (props.totalQA > 0
   ? Math.round((props.resolvedCount / props.totalQA) * 100)
   : 0))
 
-function onSelectStatus(e: Event) {
-  const v = (e.target as HTMLSelectElement).value as 'ACTIVE' | 'PAUSED' | 'COMPLETED'
+function onSelectStatus(v: 'ACTIVE' | 'PAUSED' | 'COMPLETED') {
   emit('changeStatus', v)
 }
 </script>
@@ -64,15 +64,12 @@ function onSelectStatus(e: Event) {
           <component :is="project.pinned ? Pin : PinOff" class="h-4 w-4" />
         </button>
         <StatusBadge :status="project.status" />
-        <select
-          class="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-          :value="project.status === 'active' ? 'ACTIVE' : project.status === 'paused' ? 'PAUSED' : 'COMPLETED'"
-          @change="onSelectStatus"
-        >
-          <option v-for="opt in statusOptions" :key="opt.uppercase" :value="opt.uppercase">
-            {{ $t('project.header.statusOption', { status: $t('common.projectStatus.' + opt.code) }) }}
-          </option>
-        </select>
+        <AppSelect
+          size="sm"
+          :model-value="project.status === 'active' ? 'ACTIVE' : project.status === 'paused' ? 'PAUSED' : 'COMPLETED'"
+          :options="statusOptions"
+          @update:model-value="onSelectStatus"
+        />
         <button
           type="button"
           class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-emerald-400"

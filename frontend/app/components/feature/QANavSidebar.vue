@@ -2,6 +2,8 @@
 import { Search, Inbox, X, ChevronDown, RefreshCw } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { useSelectOptions } from '~/composables/useSelectOptions'
 import { applyQaFilter, saveQaFilter, type QaFilterState } from '~/utils/qaFilter'
 import type { Project, ProjectUpdate, QaItem } from '~/types/api'
 
@@ -40,6 +42,16 @@ const projectId = ref(props.initialFilter.projectId)
 const updateId = ref(props.initialFilter.updateId)
 const status = ref(props.initialFilter.status)
 const priority = ref(props.initialFilter.priority)
+
+const { t } = useI18n()
+const { qaStatus: qaStatusOpts, priority: priorityOpts } = useSelectOptions()
+const projectFilterOptions = computed(() => [
+  { value: 'all', label: t('qa.filter.allProjects') },
+  ...props.projects.map((p) => ({ value: String(p.id), label: p.name })),
+])
+const statusFilterOptions = computed(() => [{ value: 'all', label: t('qa.filter.allStatuses') }, ...qaStatusOpts.value])
+/** 긴급 → 낮음 순 */
+const priorityFilterOptions = computed(() => [{ value: 'all', label: t('qa.filter.allPriorities') }, ...[...priorityOpts.value].reverse()])
 const search = ref(props.initialFilter.search)
 
 // 컨트롤로 노출하지 않는 나머지 필터(테스터/담당자/내것만)는 초기값을 그대로 적용하되,
@@ -99,6 +111,10 @@ const updateOptions = computed(() => {
     : props.updates.filter((u) => String(u.projectId) === projectId.value)
   return hideReleased.value ? base.filter((u) => u.status !== 'released') : base
 })
+const updateFilterOptions = computed(() => [
+  { value: 'all', label: t('qa.filter.allUpdates') },
+  ...updateOptions.value.map((u) => ({ value: String(u.id), label: `${u.version} - ${u.title}` })),
+])
 // 프로젝트를 바꾸면 그 프로젝트에 속하지 않는 업데이트 선택은 해제.
 watch(projectId, (pid) => {
   if (pid === 'all' || updateId.value === 'all') return
@@ -208,22 +224,8 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
           class="w-full rounded-lg border border-slate-200 py-1.5 pl-8 pr-2 text-xs focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-emerald-500/20"
         />
       </div>
-      <select
-        v-model="projectId"
-        class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-      >
-        <option value="all">{{ $t('qa.filter.allProjects') }}</option>
-        <option v-for="p in projects" :key="p.id" :value="String(p.id)">{{ p.name }}</option>
-      </select>
-      <select
-        v-model="updateId"
-        class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-      >
-        <option value="all">{{ $t('qa.filter.allUpdates') }}</option>
-        <option v-for="u in updateOptions" :key="u.id" :value="String(u.id)">
-          {{ u.version }} - {{ u.title }}
-        </option>
-      </select>
+      <AppSelect v-model="projectId" size="sm" rounded="lg" :options="projectFilterOptions" />
+      <AppSelect v-model="updateId" size="sm" rounded="lg" :options="updateFilterOptions" />
       <label class="flex cursor-pointer select-none items-center gap-1.5 px-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
         <input
           v-model="hideReleased"
@@ -233,28 +235,8 @@ watch(() => props.currentId, () => scrollCurrentIntoView())
         {{ $t('qa.filter.hideReleasedUpdates') }}
       </label>
       <div class="flex gap-2">
-        <select
-          v-model="status"
-          class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-        >
-          <option value="all">{{ $t('qa.filter.allStatuses') }}</option>
-          <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
-          <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
-          <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
-          <option value="confirmed">{{ $t('common.qaStatus.confirmed') }}</option>
-          <option value="on_hold">{{ $t('common.qaStatus.on_hold') }}</option>
-          <option value="needs_recheck">{{ $t('common.qaStatus.needs_recheck') }}</option>
-        </select>
-        <select
-          v-model="priority"
-          class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-        >
-          <option value="all">{{ $t('qa.filter.allPriorities') }}</option>
-          <option value="critical">{{ $t('common.priority.critical') }}</option>
-          <option value="high">{{ $t('common.priority.high') }}</option>
-          <option value="medium">{{ $t('common.priority.medium') }}</option>
-          <option value="low">{{ $t('common.priority.low') }}</option>
-        </select>
+        <AppSelect v-model="status" class="min-w-0 flex-1" size="sm" rounded="lg" :options="statusFilterOptions" />
+        <AppSelect v-model="priority" class="min-w-0 flex-1" size="sm" rounded="lg" :options="priorityFilterOptions" />
       </div>
         <div v-if="hasExtra" class="px-0.5">
           <button

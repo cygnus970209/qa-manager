@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { FileText } from '@lucide/vue'
 import AppDialog from '~/components/base/AppDialog.vue'
-import SearchableSelect from '~/components/base/SearchableSelect.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { upperOptions, useSelectOptions } from '~/composables/useSelectOptions'
 import QaTagTextarea from '~/components/base/QaTagTextarea.vue'
 import { attachmentFileName, isPdfUrl } from '~/utils/attachments'
 import type { Member, Project, ProjectUpdate, QaCreateRequest, QaItem } from '~/types/api'
@@ -24,6 +25,9 @@ const upload = useUpload()
 
 const auth = useAuthStore()
 const { t } = useI18n()
+const { qaStatus, priority } = useSelectOptions()
+const statusOptions = computed(() => upperOptions(qaStatus.value))
+const priorityOptions = computed(() => upperOptions(priority.value))
 const { confirmDialog } = useAppDialog()
 
 const form = reactive<{
@@ -233,26 +237,28 @@ async function onSubmit() {
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.project') }}</span>
-          <select
+          <AppSelect
             v-model="form.projectId"
-            required
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
-          >
-            <option :value="null" disabled>{{ $t('qa.modal.selectProject') }}</option>
-            <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
+            class="mt-1"
+            size="md"
+            :options="projects"
+            :key-fn="(p: Project) => p.id"
+            :label-fn="(p: Project) => p.name"
+            :placeholder="$t('qa.modal.selectProject')"
+          />
         </label>
         <label class="block">
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.update') }}</span>
-          <select
+          <AppSelect
             v-model="form.updateId"
-            required
+            class="mt-1"
+            size="md"
             :disabled="filteredUpdates.length === 0"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 disabled:bg-slate-100 dark:disabled:bg-slate-800"
-          >
-            <option :value="null" disabled>{{ $t('qa.modal.selectUpdate') }}</option>
-            <option v-for="u in filteredUpdates" :key="u.id" :value="u.id">{{ u.version }} – {{ u.title }}</option>
-          </select>
+            :options="filteredUpdates"
+            :key-fn="(u: ProjectUpdate) => u.id"
+            :label-fn="(u: ProjectUpdate) => `${u.version} – ${u.title}`"
+            :placeholder="$t('qa.modal.selectUpdate')"
+          />
         </label>
       </div>
 
@@ -266,14 +272,16 @@ async function onSubmit() {
           <span class="text-xs text-slate-600 dark:text-slate-300">{{ $t('qa.modal.createGithubIssue') }}</span>
         </label>
         <span v-if="githubRepos.length === 1" class="text-xs text-slate-400 dark:text-slate-500">({{ githubRepos[0]?.fullName }})</span>
-        <select
+        <AppSelect
           v-else
           v-model="form.githubRepo"
+          class="min-w-0 flex-1"
+          size="xs"
           :disabled="!form.createGithubIssue"
-          class="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-        >
-          <option v-for="r in githubRepos" :key="r.fullName" :value="r.fullName">{{ r.fullName }}</option>
-        </select>
+          :options="githubRepos"
+          :key-fn="(r: { fullName: string }) => r.fullName"
+          :label-fn="(r: { fullName: string }) => r.fullName"
+        />
       </div>
 
       <label class="block">
@@ -311,70 +319,61 @@ async function onSubmit() {
         </label>
         <label class="block">
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.status') }}</span>
-          <select v-model="form.status" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500">
-            <option value="NEEDS_FIX">{{ $t('common.qaStatus.needs_fix') }}</option>
-            <option value="IN_PROGRESS">{{ $t('common.qaStatus.in_progress') }}</option>
-            <option value="FIX_DONE">{{ $t('common.qaStatus.fix_done') }}</option>
-            <option value="CONFIRMED">{{ $t('common.qaStatus.confirmed') }}</option>
-            <option value="ON_HOLD">{{ $t('common.qaStatus.on_hold') }}</option>
-            <option value="NEEDS_RECHECK">{{ $t('common.qaStatus.needs_recheck') }}</option>
-          </select>
+          <AppSelect v-model="form.status" class="mt-1" size="md" :options="statusOptions" />
         </label>
         <label class="block">
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.priority') }}</span>
-          <select v-model="form.priority" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500">
-            <option value="LOW">{{ $t('common.priority.low') }}</option>
-            <option value="MEDIUM">{{ $t('common.priority.medium') }}</option>
-            <option value="HIGH">{{ $t('common.priority.high') }}</option>
-            <option value="CRITICAL">{{ $t('common.priority.critical') }}</option>
-          </select>
+          <AppSelect v-model="form.priority" class="mt-1" size="md" :options="priorityOptions" />
         </label>
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('qa.fields.testerAuthor') }}</span>
-          <SearchableSelect
+          <AppSelect
+            v-model="form.testerId"
             class="mt-1"
-            :model-value="form.testerId"
+            size="md"
+            searchable
+            clearable
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('qa.common.memberSearchPlaceholder')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
-            @update:model-value="(v) => form.testerId = v as number | null"
+            :search-placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :placeholder="$t('qa.common.unassigned')"
           />
         </div>
         <div>
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('common.roles.assignee1') }}</span>
-          <SearchableSelect
+          <AppSelect
+            v-model="form.assignee1Id"
             class="mt-1"
-            :model-value="form.assignee1Id"
+            size="md"
+            searchable
+            clearable
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('qa.common.memberSearchPlaceholder')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
-            @update:model-value="(v) => form.assignee1Id = v as number | null"
+            :search-placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :placeholder="$t('qa.common.unassigned')"
           />
         </div>
         <div>
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('common.roles.assignee2') }}</span>
-          <SearchableSelect
+          <AppSelect
+            v-model="form.assignee2Id"
             class="mt-1"
-            :model-value="form.assignee2Id"
+            size="md"
+            searchable
+            clearable
             :options="members"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => m.name"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('qa.common.memberSearchPlaceholder')"
-            :empty-label="$t('qa.common.unassigned')"
-            clearable
-            @update:model-value="(v) => form.assignee2Id = v as number | null"
+            :search-placeholder="$t('qa.common.memberSearchPlaceholder')"
+            :placeholder="$t('qa.common.unassigned')"
           />
         </div>
       </div>

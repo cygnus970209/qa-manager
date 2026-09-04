@@ -5,6 +5,7 @@ import QAList from '~/components/feature/QAList.vue'
 import NewProjectModal from '~/components/feature/NewProjectModal.vue'
 import NewQAModal from '~/components/feature/NewQAModal.vue'
 import TeamsSetupNotice from '~/components/feature/TeamsSetupNotice.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
 import type { Member, Project, ProjectUpdate, QaPage, QaDashboardStats } from '~/types/api'
 
 /**
@@ -30,6 +31,8 @@ const teamsNoticeOpen = ref(false)
 const qaPage = ref<QaPage | null>(null)
 const pageNum = ref(0)
 const pageSize = ref(10)
+const { t } = useI18n()
+const pageSizeOptions = computed(() => [10, 50, 100].map((n) => ({ value: n, label: t('dashboard.qaList.pageSizeOption', { n }) })))
 
 // 대시보드 수치는 집계 API 사용.
 const overallStats = ref<QaDashboardStats | null>(null)
@@ -179,14 +182,7 @@ async function onQaCreated() {
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span>{{ $t('dashboard.qaList.perPage') }}</span>
-            <select
-              v-model.number="pageSize"
-              class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-            >
-              <option :value="10">{{ $t('dashboard.qaList.pageSizeOption', { n: 10 }) }}</option>
-              <option :value="50">{{ $t('dashboard.qaList.pageSizeOption', { n: 50 }) }}</option>
-              <option :value="100">{{ $t('dashboard.qaList.pageSizeOption', { n: 100 }) }}</option>
-            </select>
+            <AppSelect v-model="pageSize" size="xs" :options="pageSizeOptions" />
             <span v-if="qaPage">{{ $t('dashboard.qaList.totalCount', { count: qaPage.totalElements.toLocaleString() }) }}</span>
           </div>
           <div class="flex items-center gap-1">

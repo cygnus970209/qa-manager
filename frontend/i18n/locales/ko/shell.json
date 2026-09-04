@@ -11,6 +11,8 @@
       "projects": "프로젝트",
       "collapse": "사이드바 접기 (⌘B)",
       "expand": "사이드바 펼치기 (⌘B)",
+      "collapseMenu": "하위 메뉴 접기",
+      "expandMenu": "하위 메뉴 펼치기",
       "openMenu": "메뉴 열기",
       "closeMenu": "메뉴 닫기",
       "searchProjects": "프로젝트 검색",

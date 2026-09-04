@@ -2,7 +2,8 @@
 import { Search, Inbox } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
 import PriorityBadge from '~/components/base/PriorityBadge.vue'
-import SearchableSelect from '~/components/base/SearchableSelect.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { useSelectOptions } from '~/composables/useSelectOptions'
 import { applyQaFilter, saveQaFilter, type QaFilterState } from '~/utils/qaFilter'
 import type { Member, Project, ProjectUpdate, QaItem } from '~/types/api'
 
@@ -67,6 +68,16 @@ const filtered = computed(() => applyQaFilter(
 
 const memberOptions = computed<Member[]>(() => props.members ?? [])
 
+const { t } = useI18n()
+const { qaStatus, priority } = useSelectOptions()
+const statusFilterOptions = computed(() => [{ value: 'all', label: t('qa.filter.allStatuses') }, ...qaStatus.value])
+/** 긴급 → 낮음 순 */
+const priorityFilterOptions = computed(() => [{ value: 'all', label: t('qa.filter.allPriorities') }, ...[...priority.value].reverse()])
+const updateFilterOptions = computed(() => [
+  { value: 'all', label: t('qa.filter.allUpdates') },
+  ...updateOptions.value.map((u) => ({ value: String(u.id), label: `${u.version} - ${u.title}` })),
+])
+
 function findUpdate(id: number) {
   return props.updates.find((u) => u.id === id)
 }
@@ -97,37 +108,9 @@ function rememberFilter() {
             class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-emerald-500/20"
           />
         </div>
-        <select
-          v-model="statusFilter"
-          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-        >
-          <option value="all">{{ $t('qa.filter.allStatuses') }}</option>
-          <option value="needs_fix">{{ $t('common.qaStatus.needs_fix') }}</option>
-          <option value="in_progress">{{ $t('common.qaStatus.in_progress') }}</option>
-          <option value="fix_done">{{ $t('common.qaStatus.fix_done') }}</option>
-          <option value="confirmed">{{ $t('common.qaStatus.confirmed') }}</option>
-          <option value="on_hold">{{ $t('common.qaStatus.on_hold') }}</option>
-          <option value="needs_recheck">{{ $t('common.qaStatus.needs_recheck') }}</option>
-        </select>
-        <select
-          v-model="priorityFilter"
-          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-        >
-          <option value="all">{{ $t('qa.filter.allPriorities') }}</option>
-          <option value="critical">{{ $t('common.priority.critical') }}</option>
-          <option value="high">{{ $t('common.priority.high') }}</option>
-          <option value="medium">{{ $t('common.priority.medium') }}</option>
-          <option value="low">{{ $t('common.priority.low') }}</option>
-        </select>
-        <select
-          v-model="updateFilter"
-          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-        >
-          <option value="all">{{ $t('qa.filter.allUpdates') }}</option>
-          <option v-for="u in updateOptions" :key="u.id" :value="String(u.id)">
-            {{ u.version }} - {{ u.title }}
-          </option>
-        </select>
+        <AppSelect v-model="statusFilter" class="min-w-[7.5rem]" size="md" rounded="lg" :options="statusFilterOptions" />
+        <AppSelect v-model="priorityFilter" class="min-w-[7.5rem]" size="md" rounded="lg" :options="priorityFilterOptions" />
+        <AppSelect v-model="updateFilter" class="min-w-[9rem] max-w-[16rem]" size="md" rounded="lg" :options="updateFilterOptions" />
         <label class="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
           <input
             v-model="hideReleased"
@@ -142,29 +125,33 @@ function rememberFilter() {
       <div class="flex flex-wrap items-center gap-2.5 text-xs">
         <span class="text-slate-400 dark:text-slate-500">{{ $t('qa.list.membersLabel') }}</span>
         <div class="min-w-[180px]">
-          <SearchableSelect
-            :model-value="testerFilter"
+          <AppSelect
+            v-model="testerFilter"
+            size="md"
+            rounded="lg"
+            searchable
+            clearable
             :options="memberOptions"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => $t('qa.list.testerOption', { name: m.name })"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('qa.list.searchTester')"
-            :empty-label="$t('qa.list.allTesters')"
-            clearable
-            @update:model-value="(v) => testerFilter = v as number | null"
+            :search-placeholder="$t('qa.list.searchTester')"
+            :placeholder="$t('qa.list.allTesters')"
           />
         </div>
         <div class="min-w-[180px]">
-          <SearchableSelect
-            :model-value="assigneeFilter"
+          <AppSelect
+            v-model="assigneeFilter"
+            size="md"
+            rounded="lg"
+            searchable
+            clearable
             :options="memberOptions"
             :key-fn="(m: Member) => m.id"
             :label-fn="(m: Member) => $t('qa.list.assigneeOption', { name: m.name })"
             :search-fn="(m: Member) => m.role ?? ''"
-            :placeholder="$t('qa.list.searchAssignee')"
-            :empty-label="$t('qa.list.allAssignees')"
-            clearable
-            @update:model-value="(v) => assigneeFilter = v as number | null"
+            :search-placeholder="$t('qa.list.searchAssignee')"
+            :placeholder="$t('qa.list.allAssignees')"
           />
         </div>
         <label v-if="auth.user" class="ml-2 inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1.5 dark:border-slate-800">

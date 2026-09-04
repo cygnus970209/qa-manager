@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { TriangleAlert, Route } from '@lucide/vue'
 import AppDialog from '~/components/base/AppDialog.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import type { SelectOption } from '~/composables/useSelectOptions'
 import type { FlowPath } from '~/utils/flowPaths'
 import type { FlowGraph, ProjectUpdate, TestSuite } from '~/types/api'
 
@@ -29,6 +31,10 @@ const maxPaths = MAX_PATHS
 
 const checked = ref<boolean[]>([])
 const suiteSel = ref<number | 'new'>('new')
+const suiteOptions = computed<SelectOption<number | 'new'>[]>(() => [
+  ...props.suites.map((s) => ({ value: s.id, label: s.name })),
+  { value: 'new', label: t('testflow.pathModal.newSuiteOption') },
+])
 const newSuiteName = ref('')
 const creating = ref(false)
 const error = ref<string | null>(null)
@@ -166,13 +172,7 @@ async function onSubmit() {
       <!-- 대상 스위트 -->
       <div>
         <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('testflow.pathModal.targetSuite') }}</span>
-        <select
-          v-model="suiteSel"
-          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option v-for="s in suites" :key="s.id" :value="s.id">{{ s.name }}</option>
-          <option value="new">{{ $t('testflow.pathModal.newSuiteOption') }}</option>
-        </select>
+        <AppSelect v-model="suiteSel" class="mt-1" size="md" :options="suiteOptions" />
         <input
           v-if="suiteSel === 'new'"
           v-model="newSuiteName"

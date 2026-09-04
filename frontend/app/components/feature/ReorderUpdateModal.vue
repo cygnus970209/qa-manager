@@ -3,6 +3,7 @@ import draggable from 'vuedraggable'
 import { GripVertical } from '@lucide/vue'
 import AppDialog from '~/components/base/AppDialog.vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
+import { sortableOptions } from '~/utils/sortable'
 import type { ProjectUpdate } from '~/types/api'
 
 const props = defineProps<{
@@ -50,10 +51,9 @@ async function onSave() {
     <draggable
       v-model="list"
       item-key="id"
-      handle=".drag-handle"
       tag="ul"
       class="flex flex-col gap-2"
-      ghost-class="opacity-50"
+      v-bind="sortableOptions"
     >
       <template #item="{ element: u }">
         <li class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900">

@@ -26,6 +26,8 @@ import {
 import { formatDate } from '~/utils/format'
 import DeleteConfirmModal from '~/components/base/DeleteConfirmModal.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import type { SelectOption } from '~/composables/useSelectOptions'
 import TestFlowPathModal from '~/components/feature/testing/TestFlowPathModal.vue'
 import type { FlowEdge, FlowGraph, FlowNode, FlowNodeType, ProjectUpdate, TestFlowSummary, TestSuite } from '~/types/api'
 
@@ -108,6 +110,10 @@ let suppressChanges = false
 let pendingFit = false
 
 const projectUpdates = computed(() => props.updates.filter((u) => u.projectId === props.projectId))
+const linkedUpdateOptions = computed<SelectOption<number | null>[]>(() => [
+  { value: null, label: t('testflow.toolbar.noLinkedUpdate') },
+  ...projectUpdates.value.map((u) => ({ value: u.id, label: `${u.version} · ${u.title}` })),
+])
 
 // 캔버스 스냅 그리드 (SnapGrid 튜플 타입)
 const snapGrid: [number, number] = [10, 10]
@@ -284,10 +290,8 @@ async function commitRename() {
   }
 }
 
-async function onUpdateSelChange(e: Event) {
-  const el = e.target as HTMLSelectElement
+async function onUpdateSelChange(id: number | null) {
   if (selectedFlowId.value == null) return
-  const id = el.value === '' ? null : Number(el.value)
   const prev = linkedUpdateId.value
   linkedUpdateId.value = id
   try {
@@ -297,7 +301,6 @@ async function onUpdateSelChange(e: Event) {
     if (f) f.updateId = id
   } catch (err: any) {
     linkedUpdateId.value = prev
-    el.value = prev == null ? '' : String(prev)
     error.value = err?.data?.message ?? t('testflow.messages.linkUpdateFailed')
   }
 }
@@ -817,16 +820,14 @@ onBeforeUnmount(() => {
             />
 
             <!-- 연결 업데이트 -->
-            <select
-              :value="linkedUpdateId ?? ''"
+            <AppSelect
+              class="max-w-[220px]"
+              size="sm"
               :title="$t('testflow.toolbar.linkedUpdate')"
-              :aria-label="$t('testflow.toolbar.linkedUpdate')"
-              class="max-w-[220px] rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              @change="onUpdateSelChange"
-            >
-              <option value="">{{ $t('testflow.toolbar.noLinkedUpdate') }}</option>
-              <option v-for="u in projectUpdates" :key="u.id" :value="u.id">{{ u.version }} · {{ u.title }}</option>
-            </select>
+              :model-value="linkedUpdateId"
+              :options="linkedUpdateOptions"
+              @update:model-value="onUpdateSelChange"
+            />
 
             <!-- 삭제 -->
             <button

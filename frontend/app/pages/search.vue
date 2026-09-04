@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Bug, ClipboardList, Folder, Inbox, MessageSquare, Search, Tag } from '@lucide/vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import type { SelectOption } from '~/composables/useSelectOptions'
 import { highlight, searchItemPath } from '~/composables/useSearch'
 import type { Project, SearchItem, SearchResponse, SearchType } from '~/types/api'
 
@@ -30,6 +32,10 @@ const projectId = ref<number | null>(typeof route.query.project === 'string' && 
 const page = ref(0)
 
 const projects = ref<Project[]>([])
+const projectOptions = computed<SelectOption<number | null>[]>(() => [
+  { value: null, label: t('shell.search.allProjects') },
+  ...projects.value.map((p) => ({ value: p.id, label: p.name })),
+])
 const result = ref<SearchResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -158,13 +164,7 @@ function open(item: SearchItem) {
           <span v-if="result" class="ml-1 text-slate-400 dark:text-slate-500">{{ result.counts[tp.key] ?? 0 }}</span>
         </button>
       </div>
-      <select
-        v-model="projectId"
-        class="ml-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-500/20"
-      >
-        <option :value="null">{{ $t('shell.search.allProjects') }}</option>
-        <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-      </select>
+      <AppSelect v-model="projectId" class="ml-auto min-w-[10rem] max-w-[16rem]" size="md" rounded="lg" :options="projectOptions" />
     </div>
 
     <!-- 결과 -->

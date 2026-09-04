@@ -320,7 +320,7 @@ function checkMention(el: HTMLTextAreaElement, mode: 'new' | 'edit' | 'reply') {
   const lastAt = before.lastIndexOf('@')
   const lastHash = before.lastIndexOf('#')
 
-  // 아래 공간이 부족하면 위로 띄운다 (SearchableSelect 와 동일 패턴)
+  // 아래 공간이 부족하면 위로 띄운다 (AppSelect 와 동일 패턴)
   const rect = el.getBoundingClientRect()
   const spaceBelow = window.innerHeight - rect.bottom
   const spaceAbove = rect.top

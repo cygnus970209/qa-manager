@@ -2,6 +2,8 @@
 import { ChevronDown, ChevronUp, ImagePlus, LoaderCircle, Plus, Trash2, X } from '@lucide/vue'
 import AppDialog from '~/components/base/AppDialog.vue'
 import ImageLightbox from '~/components/base/ImageLightbox.vue'
+import AppSelect from '~/components/base/AppSelect.vue'
+import { useSelectOptions, type SelectOption } from '~/composables/useSelectOptions'
 import type { QaPriority, TestCase, TestStep, TestSuite } from '~/types/api'
 
 const props = defineProps<{
@@ -16,6 +18,11 @@ const emit = defineEmits<{ close: []; saved: [testCase: TestCase] }>()
 
 const testing = useTesting()
 const { t } = useI18n()
+const { priority: priorityOptions } = useSelectOptions()
+const suiteOptions = computed<SelectOption<number | null>[]>(() => [
+  { value: null, label: t('testcase.suite.unsorted') },
+  ...props.suites.map((s) => ({ value: s.id, label: s.name })),
+])
 
 const form = reactive<{
   title: string
@@ -171,25 +178,11 @@ async function onSubmit() {
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('testcase.modal.suiteLabel') }}</span>
-          <select
-            v-model="form.suiteId"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          >
-            <option :value="null">{{ $t('testcase.suite.unsorted') }}</option>
-            <option v-for="s in suites" :key="s.id" :value="s.id">{{ s.name }}</option>
-          </select>
+          <AppSelect v-model="form.suiteId" class="mt-1" size="md" :options="suiteOptions" />
         </label>
         <label class="block">
           <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{ $t('testcase.modal.priorityLabel') }}</span>
-          <select
-            v-model="form.priority"
-            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          >
-            <option value="low">{{ $t('common.priority.low') }}</option>
-            <option value="medium">{{ $t('common.priority.medium') }}</option>
-            <option value="high">{{ $t('common.priority.high') }}</option>
-            <option value="critical">{{ $t('common.priority.critical') }}</option>
-          </select>
+          <AppSelect v-model="form.priority" class="mt-1" size="md" :options="priorityOptions" />
         </label>
       </div>
 

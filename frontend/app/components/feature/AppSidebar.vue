@@ -45,6 +45,9 @@ const groups = computed(() => [filtered.value.filter((p) => p.pinned), filtered.
 /** 라우트가 프로젝트 화면이면 그 id, 아니면 페이지가 알려준 프로젝트(QA 상세·테스트 런) */
 const routeProjectId = computed(() => (route.path.startsWith('/project/') ? Number(route.params.id) : null))
 const currentProjectId = computed(() => routeProjectId.value ?? sidebar.activeProjectId)
+/** 현재 프로젝트의 하위 메뉴를 사용자가 접어 둔 상태. 다른 프로젝트로 옮겨가면 다시 펼친다 */
+const treeCollapsed = ref(false)
+watch(currentProjectId, () => { treeCollapsed.value = false })
 
 /** 프로젝트의 새 알림 수 — 프로젝트를 열면 지워진다 (stores/sidebar.ts) */
 function badge(p: Project) {
@@ -334,8 +337,8 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
       <template v-for="(group, gi) in groups" :key="gi">
         <div v-if="gi === 1 && groups[0]!.length > 0 && group.length > 0" class="mx-2.5 my-1.5 h-px bg-slate-100 dark:bg-slate-800" />
         <template v-for="p in group" :key="p.id">
-          <NuxtLink
-            :to="`/project/${p.id}`"
+          <!-- 행 전체가 링크, 현재 프로젝트면 오른쪽 화살표로 하위 메뉴를 접고 펼친다 (링크 안에 버튼을 넣지 않으려고 div 로 감쌈) -->
+          <div
             :class="[
               rowBase,
               p.id === currentProjectId
@@ -344,16 +347,26 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
             ]"
             @contextmenu.prevent="openCtx($event, p)"
           >
-            <span :class="['h-2 w-2 shrink-0 rounded-full', dotClass(p)]" />
-            <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
-            <ChevronDown v-if="p.id === currentProjectId" class="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
+            <NuxtLink :to="`/project/${p.id}`" class="flex min-w-0 flex-1 items-center gap-2.5 self-stretch" @click="treeCollapsed = false">
+              <span :class="['h-2 w-2 shrink-0 rounded-full', dotClass(p)]" />
+              <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
+            </NuxtLink>
+            <button
+              v-if="p.id === currentProjectId"
+              type="button"
+              class="-mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-slate-200/70 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+              :title="treeCollapsed ? $t('shell.sidebar.expandMenu') : $t('shell.sidebar.collapseMenu')"
+              @click.stop="treeCollapsed = !treeCollapsed"
+            >
+              <ChevronDown :class="['h-3.5 w-3.5 transition-transform', treeCollapsed && '-rotate-90']" />
+            </button>
             <span
               v-else-if="badge(p) > 0"
               class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-50 px-1.5 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
               :title="$t('shell.sidebar.newNotifications', { n: badge(p) })"
             >{{ badge(p) }}</span>
-          </NuxtLink>
-          <div v-if="p.id === currentProjectId" class="mb-1.5 ml-[23px] mt-0.5 flex flex-col gap-0.5 border-l border-slate-200 dark:border-slate-800">
+          </div>
+          <div v-if="p.id === currentProjectId && !treeCollapsed" class="mb-1.5 ml-[23px] mt-0.5 flex flex-col gap-0.5 border-l border-slate-200 dark:border-slate-800">
             <NuxtLink
               v-for="s in subItems"
               :key="s.key"

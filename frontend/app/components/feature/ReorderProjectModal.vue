@@ -3,6 +3,7 @@ import draggable from 'vuedraggable'
 import { GripVertical, Pin } from '@lucide/vue'
 import AppDialog from '~/components/base/AppDialog.vue'
 import StatusBadge from '~/components/base/StatusBadge.vue'
+import { sortableOptions } from '~/utils/sortable'
 import type { Project } from '~/types/api'
 
 /**
@@ -60,7 +61,7 @@ const rowCls = 'flex items-center gap-3 rounded-lg border border-slate-200 bg-wh
       <p class="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
         <Pin class="h-3 w-3" /> {{ $t('shell.sidebar.reorderModal.pinnedSection') }}
       </p>
-      <draggable v-model="pinnedList" item-key="id" handle=".drag-handle" tag="ul" class="mb-4 flex flex-col gap-2" ghost-class="opacity-50">
+      <draggable v-model="pinnedList" item-key="id" tag="ul" class="mb-4 flex flex-col gap-2" v-bind="sortableOptions">
         <template #item="{ element: p }">
           <li :class="rowCls">
             <button type="button" class="drag-handle cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing dark:text-slate-600 dark:hover:text-slate-400" :title="$t('shell.sidebar.reorderModal.dragHandle')">
@@ -76,7 +77,7 @@ const rowCls = 'flex items-center gap-3 rounded-lg border border-slate-200 bg-wh
     <p v-if="pinnedList.length > 0 && otherList.length > 0" class="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
       {{ $t('shell.sidebar.reorderModal.othersSection') }}
     </p>
-    <draggable v-model="otherList" item-key="id" handle=".drag-handle" tag="ul" class="flex flex-col gap-2" ghost-class="opacity-50">
+    <draggable v-model="otherList" item-key="id" tag="ul" class="flex flex-col gap-2" v-bind="sortableOptions">
       <template #item="{ element: p }">
         <li :class="rowCls">
           <button type="button" class="drag-handle cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing dark:text-slate-600 dark:hover:text-slate-400" :title="$t('shell.sidebar.reorderModal.dragHandle')">
