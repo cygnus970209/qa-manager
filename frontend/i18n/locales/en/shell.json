@@ -23,7 +23,19 @@
         "testFlow": "Test flows",
         "testRuns": "Test runs"
       },
-      "newNotifications": "{n} new notifications"
+      "newNotifications": "{n} new notifications",
+      "reorder": "Reorder projects",
+      "pin": "Pin to top",
+      "unpin": "Unpin",
+      "reorderModal": {
+        "title": "Reorder projects",
+        "hint": "Drag items to change their order in the sidebar, then save. This applies only to you; pinned projects always stay on top.",
+        "pinnedSection": "Pinned",
+        "othersSection": "Others",
+        "dragHandle": "Drag to move",
+        "empty": "No projects to reorder.",
+        "saveFailed": "Could not save the order."
+      }
     },
     "notifications": {
       "title": "Notifications",
@@ -60,7 +72,6 @@
       "items": {
         "account": "My account",
         "notifications": "Notifications",
-        "teams": "MS Teams",
         "appearance": "Appearance",
         "language": "Language",
         "desktop": "Desktop app",
@@ -73,11 +84,10 @@
       },
       "notifications": {
         "title": "Notifications",
-        "subtitle": "Choose which notifications you receive."
-      },
-      "teams": {
-        "title": "MS Teams",
-        "subtitle": "Receive 1:1 notifications through the Teams bot."
+        "subtitle": "Choose which notifications you receive and where. The MS Teams bot is managed here too.",
+        "sectionTeams": "MS Teams",
+        "sectionTypes": "Notification types",
+        "sectionQuiet": "Quiet hours"
       },
       "appearance": {
         "title": "Appearance",

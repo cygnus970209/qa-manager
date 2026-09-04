@@ -50,6 +50,19 @@ const lower = (v: string | undefined): string => (v ?? '').toLowerCase()
 /* ─────────────── 로그인 OTP (데모: 코드 123456 고정) ───────────────
  * 챌린지는 인메모리 보관 — 새로고침하면 만료되어 처음부터 다시 로그인 (백엔드 만료와 동일 UX). */
 const OTP_DEMO_CODE = '123456'
+
+/** 프로젝트 정렬: 핀 우선 → 사용자별 저장 순서 → 배열 순서(신규가 앞). 서버 ProjectService.list 와 같은 규칙 */
+function sortedProjects(db: DemoDb) {
+  const uid = db.state.currentUserId
+  const order = (uid != null && db.state.projectOrder?.[String(uid)]) || []
+  const rank = new Map(order.map((id, i) => [id, i]))
+  return [...db.state.projects].sort((a, b) => {
+    const ap = uid != null && a.pinnedBy.includes(uid) ? 1 : 0
+    const bp = uid != null && b.pinnedBy.includes(uid) ? 1 : 0
+    if (ap !== bp) return bp - ap
+    return (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity)
+  })
+}
 const OTP_MAX_ATTEMPTS = 5
 const otpChallenges = new Map<string, { memberId: number; attempts: number }>()
 let otpSeq = 0
@@ -237,14 +250,18 @@ const ROUTES: Route[] = [
     method: 'GET',
     pattern: /^\/api\/projects$/,
     handler: ({ db }) => {
-      const uid = db.state.currentUserId
-      // 핀 우선, 그 외는 배열 순서(신규가 앞) 유지.
-      const sorted = [...db.state.projects].sort((a, b) => {
-        const ap = uid != null && a.pinnedBy.includes(uid) ? 1 : 0
-        const bp = uid != null && b.pinnedBy.includes(uid) ? 1 : 0
-        return bp - ap
-      })
-      return sorted.map((p) => db.projectDto(p))
+      return sortedProjects(db).map((p) => db.projectDto(p))
+    },
+  },
+  {
+    method: 'PUT',
+    pattern: /^\/api\/projects\/order$/,
+    handler: ({ body, db }) => {
+      const me = requireUser(db)
+      const ids = ((body?.projectIds ?? []) as number[]).filter((id) => db.state.projects.some((p) => p.id === id))
+      db.state.projectOrder = { ...(db.state.projectOrder ?? {}), [String(me.id)]: ids }
+      db.save()
+      return sortedProjects(db).map((p) => db.projectDto(p))
     },
   },
   {

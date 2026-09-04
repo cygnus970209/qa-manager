@@ -69,7 +69,7 @@ function maybeShowTeamsNotice() {
 
 function onTeamsNoticeConfirm() {
   teamsNoticeOpen.value = false
-  router.push('/settings/teams')
+  router.push('/settings/notifications#teams')
 }
 
 if (import.meta.client) {

@@ -180,6 +180,13 @@ const itemsByUpdate = computed(() => {
   return map
 })
 
+// 사이드바 우클릭 메뉴로 고정을 바꾸면 헤더의 핀 상태도 따라간다
+watch(() => sidebar.projects.find((p) => p.id === projectId.value)?.pinned, (pinned) => {
+  if (pinned != null && project.value && project.value.pinned !== pinned) {
+    project.value = { ...project.value, pinned }
+  }
+})
+
 /** 상단 고정 토글 — 사이드바 정렬(고정 우선)에 바로 반영 */
 async function onTogglePin() {
   if (!project.value) return

@@ -17,5 +17,8 @@ export function useProjects() {
       api(`/api/projects/${id}`, { method: 'DELETE' }),
     togglePin: (id: number) =>
       api<{ pinned: boolean }>(`/api/projects/${id}/pin`, { method: 'POST' }),
+    /** 사이드바 프로젝트 순서 저장 (사용자별). 저장 후 정렬된 목록을 돌려준다. */
+    reorder: (projectIds: number[]) =>
+      api<Project[]>('/api/projects/order', { method: 'PUT', body: { projectIds } }),
   }
 }

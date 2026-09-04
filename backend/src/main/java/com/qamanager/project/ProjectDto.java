@@ -60,4 +60,6 @@ public class ProjectDto {
         /** GitHub repo 연결 목록 전체 교체. null 이면 '변경 없음', 빈 목록이면 전부 해제. */
         List<@Valid GithubRepoRef> githubRepos
     ) {}
+    /** 사이드바 프로젝트 순서 저장 — 전체 id 배열 (사용자별). */
+    public record ReorderRequest(@NotNull @Size(max = 500) List<Long> projectIds) {}
 }

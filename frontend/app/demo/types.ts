@@ -121,4 +121,6 @@ export interface DemoState {
   seq: number
   /** 현재 로그인한 데모 사용자 id (없으면 미인증) */
   currentUserId: number | null
+  /** 사용자별 사이드바 프로젝트 순서 (memberId → projectId[]). 없으면 기본 정렬 */
+  projectOrder?: Record<string, number[]>
 }

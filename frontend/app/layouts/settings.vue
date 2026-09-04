@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bell, GitBranch, Languages, LogOut, Monitor, MonitorSmartphone, Palette, UserRound, Users, X } from '@lucide/vue'
+import { Bell, GitBranch, Languages, LogOut, Monitor, Palette, UserRound, Users, X } from '@lucide/vue'
 
 /**
  * 설정 레이아웃 — 앱 사이드바 없이 전체 화면으로 열린다 — 설정 항목만 남기고 나머지 UI 는 닫는다.
@@ -24,7 +24,6 @@ const groups = computed<{ label: string; items: Item[] }[]>(() => {
       items: [
         { to: '/settings/account', icon: UserRound, label: 'shell.settings.items.account' },
         { to: '/settings/notifications', icon: Bell, label: 'shell.settings.items.notifications' },
-        { to: '/settings/teams', icon: MonitorSmartphone, label: 'shell.settings.items.teams' },
       ],
     },
     {

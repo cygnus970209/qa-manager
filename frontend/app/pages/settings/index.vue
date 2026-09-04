@@ -7,11 +7,11 @@ definePageMeta({ layout: 'settings' })
 
 const route = useRoute()
 const sub = route.query.sub
-const target = sub === 'ms-teams' ? '/settings/teams'
+const target = sub === 'ms-teams' ? '/settings/notifications#teams'
   : sub === 'github' ? '/settings/github'
   : sub === 'notifications' ? '/settings/notifications'
   : '/settings/account'
-await navigateTo({ path: target, query: { ...route.query, sub: undefined } }, { replace: true })
+await navigateTo(target, { replace: true })
 </script>
 
 <template>

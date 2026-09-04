@@ -35,6 +35,7 @@
 | GET | `/api/projects/{id}` | 상세 (연결된 GitHub repo 포함) |
 | POST / PATCH / DELETE | `/api/projects`, `/{id}` | CRUD (`githubRepos` 배열은 전체 교체 방식) |
 | POST | `/api/projects/{id}/pin` | 핀 토글 → `{pinned}` |
+| PUT | `/api/projects/order` | 사이드바 순서 저장 (사용자별, 전체 id 배열 `{projectIds}`) → 정렬된 목록. 정렬은 핀 → 개인 순서 → 생성일 desc |
 
 ## 업데이트(버전)
 

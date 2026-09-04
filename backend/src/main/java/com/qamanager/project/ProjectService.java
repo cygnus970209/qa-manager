@@ -6,7 +6,9 @@ import com.qamanager.member.TeamMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -19,15 +21,18 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectPinRepository pinRepository;
+    private final ProjectMemberOrderRepository orderRepository;
     private final TeamMemberRepository memberRepository;
     private final ProjectGithubRepoRepository githubRepoRepository;
 
     public ProjectService(ProjectRepository projectRepository,
                           ProjectPinRepository pinRepository,
+                          ProjectMemberOrderRepository orderRepository,
                           TeamMemberRepository memberRepository,
                           ProjectGithubRepoRepository githubRepoRepository) {
         this.projectRepository = projectRepository;
         this.pinRepository = pinRepository;
+        this.orderRepository = orderRepository;
         this.memberRepository = memberRepository;
         this.githubRepoRepository = githubRepoRepository;
     }
@@ -39,6 +44,11 @@ public class ProjectService {
             : projectRepository.findAllByStatusOrderByCreatedAtDesc(statusFilter.getCode());
 
         Set<Long> pinned = new HashSet<>(pinRepository.findPinnedProjectIdsByMember(currentMemberId));
+        // 사용자가 저장한 개인 순서 — 없는 프로젝트는 뒤로 (생성일 desc)
+        Map<Long, Integer> rank = new HashMap<>();
+        for (ProjectMemberOrder o : orderRepository.findAllByMemberIdOrderBySortOrderAsc(currentMemberId)) {
+            rank.put(o.getProjectId(), o.getSortOrder());
+        }
 
         List<Long> ids = projects.stream().map(Project::getId).toList();
         Map<Long, List<ProjectDto.GithubRepoLink>> repoMap = ids.isEmpty() ? Map.of()
@@ -48,11 +58,27 @@ public class ProjectService {
 
         return projects.stream()
             .map(p -> ProjectDto.Response.from(p, pinned.contains(p.getId()), repoMap.getOrDefault(p.getId(), List.of())))
-            // pinned 우선, 그다음 createdAt desc
+            // pinned 우선 → 개인 순서 → createdAt desc
             .sorted(Comparator
                 .comparing(ProjectDto.Response::pinned).reversed()
+                .thenComparing(Comparator.comparingInt((ProjectDto.Response r) -> rank.getOrDefault(r.id(), Integer.MAX_VALUE)))
                 .thenComparing(ProjectDto.Response::createdAt, Comparator.nullsLast(Comparator.reverseOrder())))
             .toList();
+    }
+
+    /** 사이드바 프로젝트 순서 저장 (사용자별). 전체 id 배열을 받아 통째로 교체한다. */
+    @Transactional
+    public List<ProjectDto.Response> reorder(Long memberId, List<Long> projectIds) {
+        Set<Long> existing = new HashSet<>(projectRepository.findAllById(projectIds).stream().map(Project::getId).toList());
+        orderRepository.deleteByMemberId(memberId);
+        orderRepository.flush(); // 같은 PK 로 다시 insert 하므로 delete 를 먼저 반영
+        List<ProjectMemberOrder> rows = new ArrayList<>();
+        int i = 0;
+        for (Long pid : new LinkedHashSet<>(projectIds)) {
+            if (existing.contains(pid)) rows.add(new ProjectMemberOrder(memberId, pid, i++));
+        }
+        orderRepository.saveAll(rows);
+        return list(memberId, null);
     }
 
     @Transactional(readOnly = true)

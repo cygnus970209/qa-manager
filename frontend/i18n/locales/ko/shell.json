@@ -23,7 +23,19 @@
         "testFlow": "테스트 플로우",
         "testRuns": "테스트 런"
       },
-      "newNotifications": "새 알림 {n}건"
+      "newNotifications": "새 알림 {n}건",
+      "reorder": "프로젝트 순서 변경",
+      "pin": "상단 고정",
+      "unpin": "고정 해제",
+      "reorderModal": {
+        "title": "프로젝트 순서 변경",
+        "hint": "항목을 끌어서 사이드바에 보일 순서를 바꾼 뒤 저장하세요. 나에게만 적용되고, 고정한 프로젝트는 항상 위에 옵니다.",
+        "pinnedSection": "고정",
+        "othersSection": "나머지",
+        "dragHandle": "드래그하여 이동",
+        "empty": "순서를 변경할 프로젝트가 없습니다.",
+        "saveFailed": "순서 저장에 실패했습니다."
+      }
     },
     "notifications": {
       "title": "알림",
@@ -60,7 +72,6 @@
       "items": {
         "account": "내 계정",
         "notifications": "알림",
-        "teams": "MS Teams",
         "appearance": "모양",
         "language": "언어",
         "desktop": "데스크톱 앱",
@@ -73,11 +84,10 @@
       },
       "notifications": {
         "title": "알림",
-        "subtitle": "어떤 알림을 받을지 정합니다."
-      },
-      "teams": {
-        "title": "MS Teams",
-        "subtitle": "Teams 봇으로 1:1 알림을 받습니다."
+        "subtitle": "어떤 알림을 어디로 받을지 정합니다. MS Teams 봇 연동도 여기서 관리합니다.",
+        "sectionTeams": "MS Teams",
+        "sectionTypes": "알림 종류",
+        "sectionQuiet": "방해금지"
       },
       "appearance": {
         "title": "모양",

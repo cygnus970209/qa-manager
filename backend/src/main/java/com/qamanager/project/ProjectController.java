@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -58,5 +59,11 @@ public class ProjectController {
     public Map<String, Boolean> togglePin(@PathVariable Long id) {
         boolean pinned = projectService.togglePin(id, CurrentUser.getIdOrThrow());
         return Map.of("pinned", pinned);
+    }
+
+    /** 사이드바 프로젝트 순서 저장 (사용자별). 저장 후 정렬된 목록을 돌려준다. */
+    @PutMapping("/order")
+    public List<ProjectDto.Response> reorder(@RequestBody @Valid ProjectDto.ReorderRequest req) {
+        return projectService.reorder(CurrentUser.getIdOrThrow(), req.projectIds());
     }
 }

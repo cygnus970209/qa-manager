@@ -174,6 +174,7 @@ QA 저장 트랜잭션 커밋
 | V16 | 테스트 케이스 관리 — `test_suite` / `test_case` / 테스트 런 테이블 |
 | V17 | 테스트 런 실행 항목의 플랫폼(PC / Android / iOS) 구분 |
 | V18 | 알림 `title` 컬럼 — QA 제목 스냅샷 (알림 페이지 첫 줄 · 데스크톱/Teams 알림 제목) |
+| V19 | `project_member_order` — 사용자별 사이드바 프로젝트 순서 (핀 → 개인 순서 → 생성일 desc) |
 
 ## 6. 기술 결정 기록
 

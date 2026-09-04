@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import {
-  Bell, Check, ChevronDown, ClipboardList, Folder, GitBranch, Home, LayoutDashboard, LogOut,
-  Monitor, Moon, PanelLeftClose, PanelLeftOpen, Play, Plus, Search, Settings, ShieldCheck, Sun,
+  ArrowUpDown, Bell, Check, ChevronDown, ClipboardList, Folder, GitBranch, Home, LayoutDashboard, LogOut,
+  Monitor, Moon, PanelLeftClose, PanelLeftOpen, Pin, PinOff, Play, Plus, Search, Settings, ShieldCheck, Sun,
   UserRound, Users, X,
 } from '@lucide/vue'
 import NewProjectModal from '~/components/feature/NewProjectModal.vue'
+import ReorderProjectModal from '~/components/feature/ReorderProjectModal.vue'
 import type { Project } from '~/types/api'
 
 /**
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<{ mode?: 'desktop' | 'drawer' }>(), { mod
 const sidebar = useSidebarStore()
 const auth = useAuthStore()
 const notifs = useNotificationsStore()
+const projectsApi = useProjects()
 const route = useRoute()
 const router = useRouter()
 
@@ -87,6 +89,41 @@ async function onProjectCreated(p: Project) {
   router.push(`/project/${p.id}`)
 }
 
+/* ─── 프로젝트 순서 변경 (사용자별, 서버 저장) ─── */
+const reorderOpen = ref(false)
+function onReordered(list: Project[]) {
+  sidebar.projects = list
+}
+
+/* ─── 프로젝트 우클릭 메뉴 (고정/해제) ─── */
+const ctx = ref<{ x: number; y: number; project: Project } | null>(null)
+const ctxRef = ref<HTMLElement | null>(null)
+function openCtx(e: MouseEvent, p: Project) {
+  // 메뉴가 화면 밖으로 나가지 않게 오른쪽/아래 여백을 남긴다
+  const x = Math.min(e.clientX, window.innerWidth - 200)
+  const y = Math.min(e.clientY, window.innerHeight - 60)
+  ctx.value = { x, y, project: p }
+}
+const pinBusy = ref(false)
+async function togglePin(p: Project) {
+  ctx.value = null
+  if (pinBusy.value) return
+  pinBusy.value = true
+  try {
+    await projectsApi.togglePin(p.id)
+    await sidebar.reload()
+  } catch (e) {
+    console.warn('[sidebar] 고정 변경 실패:', e)
+  } finally {
+    pinBusy.value = false
+  }
+}
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') ctx.value = null
+}
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
+
 /* ─── 접힘 상태의 프로젝트 팝오버 ─── */
 const popoverOpen = ref(false)
 const popoverRef = ref<HTMLElement | null>(null)
@@ -109,14 +146,16 @@ function onDocClick(e: MouseEvent) {
   const t = e.target as Node
   if (themeRef.value && !themeRef.value.contains(t)) themeOpen.value = false
   if (popoverRef.value && !popoverRef.value.contains(t)) popoverOpen.value = false
+  if (ctxRef.value && !ctxRef.value.contains(t)) ctx.value = null
 }
 onMounted(() => document.addEventListener('mousedown', onDocClick))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
 
-// 화면이 바뀌면 팝오버/드로어를 닫는다
+// 화면이 바뀌면 팝오버/드로어/우클릭 메뉴를 닫는다
 watch(() => route.fullPath, () => {
   popoverOpen.value = false
   sidebar.mobileOpen = false
+  ctx.value = null
 })
 
 async function onLogout() {
@@ -265,6 +304,9 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
           <button type="button" :class="[iconBtn, 'h-5 w-5', searchOpen && 'text-slate-700 dark:text-slate-200']" :title="$t('shell.sidebar.searchProjects')" @click="toggleSearch">
             <Search class="h-3.5 w-3.5" />
           </button>
+          <button type="button" :class="[iconBtn, 'h-5 w-5']" :title="$t('shell.sidebar.reorder')" @click="reorderOpen = true">
+            <ArrowUpDown class="h-3.5 w-3.5" />
+          </button>
           <button type="button" :class="[iconBtn, 'h-5 w-5']" :title="$t('shell.sidebar.newProject')" @click="projectModalOpen = true">
             <Plus class="h-3.5 w-3.5" />
           </button>
@@ -292,6 +334,7 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
                 ? 'font-semibold text-slate-800 dark:text-slate-100'
                 : p.status === 'completed' ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200',
             ]"
+            @contextmenu.prevent="openCtx($event, p)"
           >
             <span :class="['h-2 w-2 shrink-0 rounded-full', dotClass(p)]" />
             <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
@@ -367,5 +410,29 @@ const iconBtn = 'flex h-7 w-7 items-center justify-center rounded text-slate-400
       </button>
     </footer>
     <NewProjectModal :open="projectModalOpen" @close="projectModalOpen = false" @created="onProjectCreated" />
+    <ReorderProjectModal :open="reorderOpen" :projects="sidebar.projects" @close="reorderOpen = false" @reordered="onReordered" />
+
+    <!-- 프로젝트 우클릭 메뉴 -->
+    <Teleport to="body">
+      <div
+        v-if="ctx"
+        ref="ctxRef"
+        class="fixed z-50 w-44 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900"
+        :style="{ left: `${ctx.x}px`, top: `${ctx.y}px` }"
+        role="menu"
+      >
+        <p class="truncate px-3 py-1.5 text-[11px] text-slate-400 dark:text-slate-500">{{ ctx.project.name }}</p>
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/60"
+          :disabled="pinBusy"
+          @click="togglePin(ctx.project)"
+        >
+          <component :is="ctx.project.pinned ? PinOff : Pin" class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+          {{ ctx.project.pinned ? $t('shell.sidebar.unpin') : $t('shell.sidebar.pin') }}
+        </button>
+      </div>
+    </Teleport>
   </aside>
 </template>
