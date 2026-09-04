@@ -114,3 +114,9 @@ html.dark .bg-rose-500 {
 html.dark .bg-emerald-400 {
   background-color: #059669;
 }
+
+/* 순서 변경(vuedraggable forceFallback) 중 커서를 따라다니는 행 복제본 — utils/sortable.ts */
+.qam-drag-fallback {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+  cursor: grabbing;
+}
