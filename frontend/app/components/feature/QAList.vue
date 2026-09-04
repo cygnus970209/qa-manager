@@ -199,7 +199,7 @@ function rememberFilter() {
             @click="rememberFilter(); $router.push(`/qa/${item.id}`)"
           >
             <td class="px-5 py-4">
-              <p class="line-clamp-1 text-sm font-medium text-slate-800 dark:text-slate-100">{{ item.title }}</p>
+              <p class="line-clamp-1 text-sm font-medium text-slate-800 dark:text-slate-100"><span class="mr-1.5 font-normal tabular-nums text-slate-400 dark:text-slate-500">#{{ item.id }}</span>{{ item.title }}</p>
               <!-- wrapper 가 hidden/block 을 담당해, 클램프(display:-webkit-box)가 sm:block 에 덮이지 않게 함 -->
               <div class="mt-1 hidden sm:block">
                 <p class="line-clamp-2 text-xs text-slate-400 dark:text-slate-500">{{ item.description }}</p>

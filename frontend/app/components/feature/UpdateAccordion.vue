@@ -148,7 +148,7 @@ function rememberFilter() {
         >
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="line-clamp-1 text-sm font-medium text-slate-800 dark:text-slate-100">{{ q.title }}</p>
+              <p class="line-clamp-1 text-sm font-medium text-slate-800 dark:text-slate-100"><span class="mr-1.5 font-normal tabular-nums text-slate-400 dark:text-slate-500">#{{ q.id }}</span>{{ q.title }}</p>
               <p v-if="q.description" class="mt-0.5 line-clamp-1 text-xs text-slate-400 dark:text-slate-500">{{ q.description }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-2">

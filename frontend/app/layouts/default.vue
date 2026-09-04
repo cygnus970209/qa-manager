@@ -49,7 +49,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 <template>
   <div class="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-slate-950 dark:text-slate-100">
     <!-- 데스크톱 사이드바 (md 이상) -->
-    <div class="sticky top-0 hidden h-screen shrink-0 md:block">
+    <!-- z-20: sticky 는 스태킹 컨텍스트를 만들어, 뒤에 오는 본문의 sticky 패널(QA 상세 필터)이 사이드바 팝오버를 덮지 않게 위로 올린다 -->
+    <div class="sticky top-0 z-20 hidden h-screen shrink-0 md:block">
       <AppSidebar />
     </div>
 
