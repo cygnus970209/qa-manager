@@ -156,8 +156,9 @@ QA 저장 트랜잭션 커밋
 - **별도 인덱스 테이블** `search_document` — QA · 코멘트 · 프로젝트 · 업데이트 · 테스트 케이스가 한 행씩. 원본 테이블에는 인덱스도 컬럼도 추가하지 않는다. 프로젝트 이름은 질의 시점에 붙인다(이름이 바뀌어도 인덱스가 낡지 않게)
 - **한국어 부분 일치** — MariaDB InnoDB FULLTEXT 는 공백 단위 단어라 "카드결제"에서 "결제"를 못 찾는다. `SearchTokenizer` 가 단어마다 연속 두 글자(바이그램) 토큰을 만들어 `ngram_text` 에 넣고, 질의도 같은 토큰으로 `MATCH … AGAINST('+결제0 +제화0' IN BOOLEAN MODE)`. 토큰 뒤에 `0` 을 붙여 3글자로 만들어 기본 최소 토큰 길이(3)와 영문 불용어에 걸리지 않게 했으므로 DB 옵션 변경이 없다. 한 글자 질의는 `search_text LIKE` 폴백
 - **정렬** — 제목 일치 → MATCH 관련도 → 최신순. `#123`/숫자 질의는 그 QA 를 맨 앞에
-- **갱신** — 5개 엔티티에 `@EntityListeners(SearchIndexListener)`. 저장·수정·삭제가 커밋된 뒤(`afterCommit`) `SearchIndexService` 가 새 트랜잭션(REQUIRES_NEW)에서 해당 행만 다시 쓴다. 어느 서비스 경로로 바뀌든 잡히고, 원래 트랜잭션이 실패하면 아무것도 하지 않으며, 인덱스 실패는 로그만 남긴다. 프로젝트·업데이트·QA 삭제는 DB cascade 로 하위 행이 사라지므로 인덱스도 상위 id(`project_id`/`update_id`/`qa_item_id`) 기준으로 함께 지운다
-- **재생성** — 앱 시작 시 테이블이 비어 있으면 백그라운드 스레드로 전체를 채우고(`SearchIndexBootstrap`), 관리자는 설정 > 검색 인덱스에서 `POST /api/search/reindex`
+- **갱신** — 5개 엔티티에 `@EntityListeners(SearchIndexListener)`. 저장·수정·삭제가 커밋된 뒤(`afterCommit`) `SearchIndexService` 가 새 트랜잭션(REQUIRES_NEW)에서 해당 행만 다시 쓴다. 어느 서비스 경로로 바뀌든 잡히고, 원래 트랜잭션이 실패하면 아무것도 하지 않으며, 인덱스 실패는 로그만 남긴다
+- **DB cascade 대응** — JPA 를 거치지 않고 DB FK 로 지워지는 행은 리스너가 못 잡는다. 프로젝트·업데이트·QA 삭제는 인덱스도 상위 id(`project_id`/`update_id`/`qa_item_id`) 기준으로 함께 지우고, 코멘트 삭제(답글 cascade)는 그 QA 의 코멘트 문서를 실제 코멘트 기준으로 다시 맞춘다. 벌크 JPQL(`@Modifying`)은 검색 대상 엔티티에 쓰지 않는다 — 쓰게 되면 인덱스 갱신을 직접 불러야 한다
+- **재생성** — 앱 시작 시 테이블이 비어 있으면 백그라운드 스레드로 전체를 채우고(`SearchIndexBootstrap`), **매일 04:00 전체 재색인**(커밋 후 갱신이 일시 실패했거나 SQL 로 직접 고친 데이터가 있어도 하루 안에 맞춰지는 안전망), 관리자는 설정 > 검색 인덱스에서 `POST /api/search/reindex`
 - **데모 모드** — 같은 응답 모양을 localStorage 상태에서 부분 일치로 흉내 낸다 (`demo/api.ts` `demoSearch`)
 
 ## 5. DB 스키마 히스토리 (Flyway)

@@ -85,6 +85,18 @@ public class SearchIndexService {
         }
     }
 
+    /** QA 하나의 코멘트 문서를 실제 코멘트와 맞춘다 (코멘트 삭제 시 답글 cascade 대응) */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void resyncComments(Long qaItemId) {
+        try {
+            documents.findAllByEntityTypeAndQaItemId(SearchDocument.TYPE_COMMENT, qaItemId).forEach(documents::delete);
+            documents.flush();
+            comments.findAllByQaItemIdOrderByCreatedAtAsc(qaItemId).forEach(this::indexComment);
+        } catch (RuntimeException e) {
+            log.warn("검색 인덱스 코멘트 재동기화 실패 qaItemId={}: {}", qaItemId, e.toString());
+        }
+    }
+
     /* ─────────────── 전체 재생성 ─────────────── */
 
     @Transactional

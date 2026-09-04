@@ -41,6 +41,12 @@ public class SearchIndexListener {
         String type = typeOf(entity);
         Long id = idOf(entity);
         if (type == null || id == null) return;
+        if (entity instanceof QaComment c) {
+            // 답글은 DB FK cascade 로 함께 지워져 리스너가 돌지 않는다 → 그 QA 의 코멘트 문서를 실제 코멘트 기준으로 다시 맞춘다
+            Long qaItemId = c.getQaItem().getId();
+            afterCommit(() -> indexService.resyncComments(qaItemId));
+            return;
+        }
         afterCommit(() -> indexService.remove(type, id));
     }
 
