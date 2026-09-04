@@ -74,21 +74,91 @@ onMounted(() => {
 watch(leftOpen, (v) => localStorage.setItem(LEFT_KEY, v ? '1' : '0'))
 watch(rightOpen, (v) => localStorage.setItem(RIGHT_KEY, v ? '1' : '0'))
 
+/** 사이드바 목록을 받는 중(수동 새로고침·범위 변경) — 새로고침 아이콘 스핀 */
+const sideRefreshing = ref(false)
+
+/* ─── 사이드바 목록의 조회 범위 ───
+ * 전체 QA 를 다 받지 않고, 사이드바 필터의 프로젝트/업데이트 범위만 서버에서 가져온다
+ * (업데이트가 정해져 있으면 그 업데이트만, 아니면 프로젝트만, 둘 다 '전체'면 전부).
+ * 나머지 필터(상태/우선순위/담당자/검색)는 받은 목록에 클라이언트에서 적용한다. */
+type SideScope = { projectId: string; updateId: string }
+/** 지금 allItems 가 담고 있는 범위 */
+const sideScope = ref<SideScope | null>(null)
+let sideLoadSeq = 0
+
+function scopeParams(s: SideScope) {
+  if (s.updateId !== 'all') return { updateId: Number(s.updateId) }
+  if (s.projectId !== 'all') return { projectId: Number(s.projectId) }
+  return undefined
+}
+/** 이미 받아 둔 범위(loaded)가 next 범위를 포함하는지 — 좁히는 방향이면 재요청 없이 클라이언트 필터만으로 충분하다 */
+function covers(loaded: SideScope, next: SideScope) {
+  if (loaded.updateId !== 'all') return next.updateId === loaded.updateId
+  if (loaded.projectId === 'all') return true
+  const nextPid = next.updateId !== 'all'
+    ? String(updateToProject.value.get(Number(next.updateId)) ?? '')
+    : next.projectId
+  return nextPid === loaded.projectId
+}
+/** 범위의 QA 목록을 받아 allItems 에 반영. 받아 둔 범위로 충분하면 재요청하지 않는다(force 면 항상). */
+async function loadSideItems(scope: SideScope, force = false) {
+  if (!force && sideScope.value && covers(sideScope.value, scope)) return
+  const seq = ++sideLoadSeq
+  const list = await qaApi.list(scopeParams(scope))
+  if (seq !== sideLoadSeq) return // 그 사이 다른 범위 요청이 나갔으면 이 결과는 버린다
+  allItems.value = list
+  sideScope.value = scope
+}
+
 /**
- * 사이드바 초기 필터 결정.
+ * 사이드바 초기 필터 결정 (필요한 범위의 목록도 함께 받는다).
  * - 목록에서 저장된 필터가 있고, 그 결과에 현재 항목이 포함되면 그대로 사용.
  * - 아니면(직접 URL 진입 / 오래된 필터) 현재 항목의 프로젝트·업데이트로 스코프해 폴백.
  */
-function resolveInitialFilter(all: QaItem[], current: QaItem): QaFilterState {
+async function resolveInitialFilter(current: QaItem): Promise<QaFilterState> {
   const saved = loadQaFilter()
-  if (saved && applyQaFilter(all, saved, auth.user?.id, updateToProject.value).some((q) => q.id === current.id)) {
-    return saved
+  if (saved) {
+    await loadSideItems({ projectId: saved.projectId, updateId: saved.updateId })
+    if (applyQaFilter(allItems.value, saved, auth.user?.id, updateToProject.value).some((q) => q.id === current.id)) {
+      return saved
+    }
   }
   const pid = updateToProject.value.get(current.updateId)
-  return {
+  const fallback: QaFilterState = {
     ...emptyQaFilter(),
     projectId: pid != null ? String(pid) : 'all',
     updateId: String(current.updateId),
+  }
+  await loadSideItems({ projectId: fallback.projectId, updateId: fallback.updateId })
+  return fallback
+}
+
+/** 사이드바(프로젝트/업데이트 옵션 + 범위 목록 + 초기 필터)는 최초 1회만. 이후 항목 이동 시 재요청하지 않는다. */
+async function loadSidebar(current: QaItem) {
+  try {
+    if (sideProjects.value.length === 0 || sideUpdates.value.length === 0) {
+      const [projects, updates] = await Promise.all([projectsApi.list(), updatesApi.listAll()])
+      sideProjects.value = projects
+      sideUpdates.value = updates
+    }
+    sidebar.activeProjectId = updateToProject.value.get(current.updateId) ?? null
+    initialFilter.value = await resolveInitialFilter(current)
+  } catch (e) {
+    console.warn('[qa-detail] 사이드바 목록 로드 실패:', e)
+  }
+}
+
+/** 사이드바에서 프로젝트/업데이트 필터를 바꾸면 그 범위를 새로 받는다 */
+let sideBusy = 0
+async function onSideScope(scope: SideScope) {
+  sideBusy++
+  sideRefreshing.value = true
+  try {
+    await loadSideItems(scope)
+  } catch (e) {
+    console.warn('[qa-detail] 사이드바 범위 변경 실패:', e)
+  } finally {
+    if (--sideBusy === 0) sideRefreshing.value = false
   }
 }
 
@@ -96,28 +166,21 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    item.value = await qaApi.get(qaId.value)
-    sidebar.activeProjectId = updateToProject.value.get(item.value.updateId) ?? null
+    const current = await qaApi.get(qaId.value)
+    item.value = current
+    sidebar.activeProjectId = updateToProject.value.get(current.updateId) ?? null
     // 이 QA 를 봤으니 관련 안읽은 알림은 읽음 처리 (알림센터 뱃지 갱신). 페이지 로드를 막지 않게 기다리지 않는다.
     void notifs.markReadForQa(qaId.value)
-    history.value = await qaApi.history(qaId.value)
-    comments.value = await qaApi.listComments(qaId.value)
-    members.value = await membersApi.list()
-    // 사이드바 목록/옵션은 최초 1회만 로드(이후 항목 이동 시 재요청하지 않음).
-    if (allItems.value.length === 0) {
-      allItems.value = await qaApi.list()
-    }
-    if (sideProjects.value.length === 0) {
-      sideProjects.value = await projectsApi.list()
-    }
-    if (sideUpdates.value.length === 0) {
-      sideUpdates.value = await updatesApi.listAll()
-    }
-    if (item.value) sidebar.activeProjectId = updateToProject.value.get(item.value.updateId) ?? null
-    // 초기 필터도 최초 1회만 산출(이동/필터 조정 시 사이드바 상태를 초기화하지 않기 위함).
-    if (initialFilter.value === null && item.value) {
-      initialFilter.value = resolveInitialFilter(allItems.value, item.value)
-    }
+    // 본문에 필요한 것만 병렬로 기다린다. 사이드바 목록은 본문 표시를 막지 않게 뒤에서 채운다.
+    const [h, c, m] = await Promise.all([
+      qaApi.history(qaId.value),
+      qaApi.listComments(qaId.value),
+      membersApi.list(),
+    ])
+    history.value = h
+    comments.value = c
+    members.value = m
+    if (initialFilter.value === null) void loadSidebar(current)
   } catch (e: any) {
     error.value = e?.data?.message ?? t('qa.detail.loadError')
   } finally {
@@ -143,16 +206,15 @@ function scrollToHashComment() {
 }
 
 /* ─── 사이드바 수동 새로고침 ───
- * 페이지 재사용(고정 key)으로 목록은 최초 1회만 로드되므로, 최신화는 이 버튼으로 한다. */
-const sideRefreshing = ref(false)
+ * 페이지 재사용(고정 key)으로 목록은 최초 1회만 로드되므로, 최신화는 이 버튼으로 한다. 지금 범위를 다시 받는다. */
 async function refreshSidebar() {
   if (sideRefreshing.value) return
   sideRefreshing.value = true
   try {
-    const [items, projects, updates] = await Promise.all([
-      qaApi.list(), projectsApi.list(), updatesApi.listAll(),
+    const scope = sideScope.value ?? { projectId: 'all', updateId: 'all' }
+    const [, projects, updates] = await Promise.all([
+      loadSideItems(scope, true), projectsApi.list(), updatesApi.listAll(),
     ])
-    allItems.value = items
     sideProjects.value = projects
     sideUpdates.value = updates
   } catch (e) {
@@ -251,6 +313,7 @@ function goNext() {
               :initial-filter="initialFilter"
               :refreshing="sideRefreshing"
               @update:order="navIds = $event"
+              @update:scope="onSideScope"
               @refresh="refreshSidebar"
             />
           </div>

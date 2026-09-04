@@ -51,9 +51,9 @@ public class QaItemService {
     }
 
     @Transactional(readOnly = true)
-    public List<QaDto.Response> list(Long updateId, String status, String priority,
+    public List<QaDto.Response> list(Long projectId, Long updateId, String status, String priority,
                                      Long assigneeId, Long testerId) {
-        Specification<QaItem> spec = filterSpec(updateId, status, priority, assigneeId, testerId)
+        Specification<QaItem> spec = filterSpec(projectId, updateId, status, priority, assigneeId, testerId)
             .and((root, q, cb) -> {
                 q.orderBy(cb.desc(root.get("createdAt")));
                 return cb.conjunction();
@@ -62,10 +62,10 @@ public class QaItemService {
     }
 
     @Transactional(readOnly = true)
-    public QaDto.PageResponse page(Long updateId, String status, String priority,
+    public QaDto.PageResponse page(Long projectId, Long updateId, String status, String priority,
                                    Long assigneeId, Long testerId, int page, int size) {
         Page<QaItem> result = qaRepository.findAll(
-            filterSpec(updateId, status, priority, assigneeId, testerId),
+            filterSpec(projectId, updateId, status, priority, assigneeId, testerId),
             PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
         return new QaDto.PageResponse(
             result.getContent().stream().map(QaDto.Response::from).toList(),
@@ -111,9 +111,12 @@ public class QaItemService {
                 .toList());
     }
 
-    private Specification<QaItem> filterSpec(Long updateId, String status, String priority,
+    private Specification<QaItem> filterSpec(Long projectId, Long updateId, String status, String priority,
                                              Long assigneeId, Long testerId) {
         Specification<QaItem> spec = Specification.unrestricted();
+        if (projectId != null) {
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("projectUpdate").get("project").get("id"), projectId));
+        }
         if (updateId != null) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("projectUpdate").get("id"), updateId));
         }

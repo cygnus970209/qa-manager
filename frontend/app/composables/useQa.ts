@@ -14,6 +14,7 @@ export function useQa() {
   const api = useApi()
   return {
     list: (params?: {
+      projectId?: number
       updateId?: number
       status?: string
       priority?: string
@@ -25,6 +26,7 @@ export function useQa() {
     page: (params?: {
       page?: number
       size?: number
+      projectId?: number
       updateId?: number
       status?: string
       priority?: string

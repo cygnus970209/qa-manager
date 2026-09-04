@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import org.hibernate.annotations.BatchSize;
 import jakarta.persistence.Table;
 
 import java.util.ArrayList;
@@ -65,6 +66,8 @@ public class QaItem extends BaseEntity {
     @Column(name = "priority", nullable = false, length = 20)
     private String priority;
 
+    // 목록 DTO 변환 시 QA 한 건마다 이미지 쿼리가 나가지 않도록 100건씩 묶어 읽는다.
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "qaItem", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     private final List<QaItemImage> images = new ArrayList<>();

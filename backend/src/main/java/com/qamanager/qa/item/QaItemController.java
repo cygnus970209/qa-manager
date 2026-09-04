@@ -26,18 +26,21 @@ public class QaItemController {
         this.qaService = qaService;
     }
 
+    /** 목록. projectId 로 프로젝트 전체, updateId 로 업데이트 하나로 범위를 좁힐 수 있다. */
     @GetMapping
-    public List<QaDto.Response> list(@RequestParam(required = false) Long updateId,
+    public List<QaDto.Response> list(@RequestParam(required = false) Long projectId,
+                                     @RequestParam(required = false) Long updateId,
                                      @RequestParam(required = false) String status,
                                      @RequestParam(required = false) String priority,
                                      @RequestParam(required = false) Long assigneeId,
                                      @RequestParam(required = false) Long testerId) {
-        return qaService.list(updateId, status, priority, assigneeId, testerId);
+        return qaService.list(projectId, updateId, status, priority, assigneeId, testerId);
     }
 
     /** 페이징 목록. size 는 10/50/100 만 허용 (그 외 값은 10 으로 보정). */
     @GetMapping("/page")
-    public QaDto.PageResponse page(@RequestParam(required = false) Long updateId,
+    public QaDto.PageResponse page(@RequestParam(required = false) Long projectId,
+                                   @RequestParam(required = false) Long updateId,
                                    @RequestParam(required = false) String status,
                                    @RequestParam(required = false) String priority,
                                    @RequestParam(required = false) Long assigneeId,
@@ -45,7 +48,7 @@ public class QaItemController {
                                    @RequestParam(defaultValue = "0") int page,
                                    @RequestParam(defaultValue = "10") int size) {
         int safeSize = (size == 10 || size == 50 || size == 100) ? size : 10;
-        return qaService.page(updateId, status, priority, assigneeId, testerId, Math.max(0, page), safeSize);
+        return qaService.page(projectId, updateId, status, priority, assigneeId, testerId, Math.max(0, page), safeSize);
     }
 
     /** 대시보드 수치 집계. mine=true 면 현재 로그인 사용자가 테스터/담당자인 QA 만 집계. */

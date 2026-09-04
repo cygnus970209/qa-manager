@@ -563,6 +563,11 @@ const ROUTES: Route[] = [
     pattern: /^\/api\/qa$/,
     handler: ({ query, db }) => {
       let list = db.state.qa
+      if (query.projectId != null && query.projectId !== '') {
+        const pid = Number(query.projectId)
+        const updateIds = new Set(db.state.updates.filter((u) => u.projectId === pid).map((u) => u.id))
+        list = list.filter((q) => updateIds.has(q.updateId))
+      }
       if (query.updateId != null && query.updateId !== '') list = list.filter((q) => q.updateId === Number(query.updateId))
       if (query.status) list = list.filter((q) => q.status === lower(String(query.status)))
       if (query.priority) list = list.filter((q) => q.priority === lower(String(query.priority)))

@@ -106,13 +106,17 @@ async function load() {
   error.value = null
   try {
     project.value = await projectsApi.get(projectId.value)
-    updates.value = await updatesApi.listByProject(projectId.value)
-    const updateIds = new Set(updates.value.map((u) => u.id))
-    const all = await qaApi.list()
-    items.value = all.filter((q) => updateIds.has(q.updateId))
-    // 모달용 보조 데이터
-    members.value = await membersApi.list()
-    allProjects.value = await projectsApi.list()
+    // 서로 독립인 요청은 병렬로. QA 는 이 프로젝트 것만 서버에서 거른다 (전체 QA 를 받아 클라이언트에서 거르지 않는다).
+    const [ups, qas, mem, projs] = await Promise.all([
+      updatesApi.listByProject(projectId.value),
+      qaApi.list({ projectId: projectId.value }),
+      membersApi.list(), // 모달용 보조 데이터
+      projectsApi.list(),
+    ])
+    updates.value = ups
+    items.value = qas
+    members.value = mem
+    allProjects.value = projs
     await loadRuns()
   } catch (e: any) {
     error.value = e?.data?.message ?? t('project.errors.loadFailed')

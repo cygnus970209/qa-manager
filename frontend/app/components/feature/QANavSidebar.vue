@@ -26,6 +26,8 @@ const emit = defineEmits<{
   (e: 'update:order', ids: number[]): void
   /** 목록 수동 새로고침 요청. 데이터 재조회는 상위(상세 페이지)가 담당. */
   (e: 'refresh'): void
+  /** 프로젝트/업데이트 필터가 바뀌었다 — 상위가 그 범위의 목록을 받아 items 를 갱신한다. */
+  (e: 'update:scope', scope: { projectId: string; updateId: string }): void
 }>()
 
 const auth = useAuthStore()
@@ -121,6 +123,8 @@ watch(projectId, (pid) => {
   const u = props.updates.find((x) => String(x.id) === updateId.value)
   if (!u || String(u.projectId) !== pid) updateId.value = 'all'
 })
+// 범위(프로젝트/업데이트)가 바뀌면 상위가 그 범위의 목록을 다시 받는다. 위 watch 가 updateId 를 되돌리는 경우도 한 번에 반영되게 flush 'post'.
+watch([projectId, updateId], ([p, u]) => emit('update:scope', { projectId: p, updateId: u }), { flush: 'post' })
 
 const filterState = computed<QaFilterState>(() => ({
   status: status.value,
